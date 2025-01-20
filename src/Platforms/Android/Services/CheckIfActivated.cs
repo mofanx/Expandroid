@@ -7,6 +7,7 @@ using Android.Views.Accessibility;
 using AndroidX.Core.App;
 using AndroidX.Core.Content;
 using Expandroid.Models;
+using Microsoft.Maui.ApplicationModel;
 
 namespace Expandroid.Services
 {

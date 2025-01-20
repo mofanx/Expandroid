@@ -32,7 +32,7 @@
                 <MudButton @onclick="ForceQuit" Color="Color.Error" Variant="Variant.Outlined">Force Quit App</MudButton>
             </div>
             @*<div class="d-flex justify-center">
-        <MudCheckBox Label="Case sensitive" @onclick="ToggleSens" Checked="@sens" Color="Color.Success"></MudCheckBox>
+        <MudCheckBox Label="Case sensitive" @onclick="ToggleSens" Value="@sens" Color="Color.Success"></MudCheckBox>
         </div>*@
             <MudText class="mb-3">Keywords</MudText>
             <div class="d-flex">
@@ -61,7 +61,7 @@
             <MudPaper class="mt-2">
 
                 <div class="d-flex justify-center">
-                    <MudCheckBox @bind-Checked="currentMatch.Word" Label="Word" />
+                    <MudCheckBox @bind-Value="currentMatch.Word" Label="Word" />
                 </div>
             </MudPaper>
             <MudExpansionPanels Elevation="0" class="mt-2">
@@ -142,25 +142,25 @@
         <MudTabs class="mt-3" Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-2">
             <MudTabPanel Text="Basic">
                 <div class="d-flex flex-wrap">
-                    <MudCheckBox Label="Compare" @bind-Checked="@compare" Color="Color.Primary"></MudCheckBox>
-                    <MudCheckBox Label="Ignore Case" @bind-Checked="@ignoreCase" Color="Color.Secondary"></MudCheckBox>
-                    <MudCheckBox Label="Compare Length" @bind-Checked="@lengthCompare" Color="Color.Warning"></MudCheckBox>
-                    <MudCheckBox Label="Contains" @bind-Checked="@contains" Color="Color.Primary"></MudCheckBox>
-                    <MudCheckBox Label="Replace" @bind-Checked="@replace" Color="Color.Secondary"></MudCheckBox>
-                    <MudCheckBox Label="To Upper" @bind-Checked="@toUpper" Color="Color.Warning"></MudCheckBox>
-                    <MudCheckBox Label="To Lower" @bind-Checked="@toLower" Color="Color.Tertiary"></MudCheckBox>
+                    <MudCheckBox Label="Compare" @bind-Value="@compare" Color="Color.Primary"></MudCheckBox>
+                    <MudCheckBox Label="Ignore Case" @bind-Value="@ignoreCase" Color="Color.Secondary"></MudCheckBox>
+                    <MudCheckBox Label="Compare Length" @bind-Value="@lengthCompare" Color="Color.Warning"></MudCheckBox>
+                    <MudCheckBox Label="Contains" @bind-Value="@contains" Color="Color.Primary"></MudCheckBox>
+                    <MudCheckBox Label="Replace" @bind-Value="@replace" Color="Color.Secondary"></MudCheckBox>
+                    <MudCheckBox Label="To Upper" @bind-Value="@toUpper" Color="Color.Warning"></MudCheckBox>
+                    <MudCheckBox Label="To Lower" @bind-Value="@toLower" Color="Color.Tertiary"></MudCheckBox>
                 </div>
             </MudTabPanel>
             <MudTabPanel Text="Discord (& Markdown)">
                 <div class="d-flex flex-wrap">
-                    <MudCheckBox Label="Bold" @bind-Checked="@makeBold" Color="Color.Primary"></MudCheckBox>
-                    <MudCheckBox Label="Italic" @bind-Checked="@makeItalic" Color="Color.Secondary"></MudCheckBox>
-                    <MudCheckBox Label="Underline" @bind-Checked="@makeUnderline" Color="Color.Warning"></MudCheckBox>
-                    <MudCheckBox Label="Strikethrough" @bind-Checked="@makeStrike" Color="Color.Primary"></MudCheckBox>
-                    <MudCheckBox Label="Spoilers" @bind-Checked="@makeSpoiler" Color="Color.Secondary"></MudCheckBox>
-                    <MudCheckBox Label="Code Block" @bind-Checked="@makeCode" Color="Color.Warning"></MudCheckBox>
-                    <MudCheckBox Label="Quote" @bind-Checked="@makeQuote" Color="Color.Tertiary"></MudCheckBox>
-                    <MudCheckBox Label="Add timestamp" @bind-Checked="@addTimeStamp" Color="Color.Tertiary"></MudCheckBox>
+                    <MudCheckBox Label="Bold" @bind-Value="@makeBold" Color="Color.Primary"></MudCheckBox>
+                    <MudCheckBox Label="Italic" @bind-Value="@makeItalic" Color="Color.Secondary"></MudCheckBox>
+                    <MudCheckBox Label="Underline" @bind-Value="@makeUnderline" Color="Color.Warning"></MudCheckBox>
+                    <MudCheckBox Label="Strikethrough" @bind-Value="@makeStrike" Color="Color.Primary"></MudCheckBox>
+                    <MudCheckBox Label="Spoilers" @bind-Value="@makeSpoiler" Color="Color.Secondary"></MudCheckBox>
+                    <MudCheckBox Label="Code Block" @bind-Value="@makeCode" Color="Color.Warning"></MudCheckBox>
+                    <MudCheckBox Label="Quote" @bind-Value="@makeQuote" Color="Color.Tertiary"></MudCheckBox>
+                    <MudCheckBox Label="Add timestamp" @bind-Value="@addTimeStamp" Color="Color.Tertiary"></MudCheckBox>
                 </div>
             </MudTabPanel>
             @if (contains)
@@ -204,10 +204,10 @@
                     <MudDivider class="mb-2 mt-2" />
                     <div class="d-flex flex-wrap">
 
-                        <MudCheckBox Label="Is text equal" ReadOnly="true" Checked="@compareResult" Color="Color.Success"></MudCheckBox>
-                        <MudCheckBox Label="Contains the word specified" ReadOnly="true" Checked="@containsResult" Color="Color.Primary"></MudCheckBox>
-                        <MudCheckBox Label="Is length equal" ReadOnly="true" Checked="@lengthCompareResult" Color="Color.Warning"></MudCheckBox>
-                        <MudCheckBox Label="Can text expand" ReadOnly="true" Checked="@canTextExpand" Color="Color.Warning"></MudCheckBox>
+                        <MudCheckBox Label="Is text equal" ReadOnly="true" Value="@compareResult" Color="Color.Success"></MudCheckBox>
+                        <MudCheckBox Label="Contains the word specified" ReadOnly="true" Value="@containsResult" Color="Color.Primary"></MudCheckBox>
+                        <MudCheckBox Label="Is length equal" ReadOnly="true" Value="@lengthCompareResult" Color="Color.Warning"></MudCheckBox>
+                        <MudCheckBox Label="Can text expand" ReadOnly="true" Value="@canTextExpand" Color="Color.Warning"></MudCheckBox>
                     </div>
                 </MudCardContent>
             </MudCard>

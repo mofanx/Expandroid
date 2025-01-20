@@ -1,4 +1,5 @@
-﻿namespace Expandroid.Models
+﻿using Microsoft.Maui.Storage;
+namespace Expandroid.Models
 {
     internal static class AppSettings
     {

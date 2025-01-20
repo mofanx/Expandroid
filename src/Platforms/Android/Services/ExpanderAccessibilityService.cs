@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Expandroid.Models;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.Maui.ApplicationModel.DataTransfer;
 
 [Service(Exported = false, Label = "Expandroid", Permission = Manifest.Permission.BindAccessibilityService)]
 [IntentFilter(["android.accessibilityservice.AccessibilityService"])]
