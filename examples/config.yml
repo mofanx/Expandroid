@@ -15,11 +15,17 @@ matches:
       format: dd/MM/%y
 - trigger: :cursor
   replace: '<div>$|$</div>'
-- trigger: ":clip"
-  replace: "clip: {{clipb}}"
+- trigger: :clip
+  form: |
+      [[type :cl here]],
+  form_fields:
+      text:
+        multiline: true
+- trigger: :cl
+  replace: 'here is the replacement from cb: {{cx}}'
   vars:
-  - name: "clipb"
-    type: "clipboard"
+  - name: cx
+    type: clipboard
 - trigger: :yesterday
   replace: '{{date}}'
   vars:
