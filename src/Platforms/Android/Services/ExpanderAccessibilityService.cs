@@ -430,6 +430,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             };
             floatView.SetOnTouchListener(this);
             rowContainer = floatView.FindViewById<LinearLayout>(Microsoft.Maui.Resource.Id.rowContainer);
+            windowManager = GetSystemService(WindowService).JavaCast<IWindowManager>();
         }
     }
 
