@@ -15,8 +15,8 @@ matches:
       format: dd/MM/%y
 - trigger: :cursor
   replace: '<div>$|$</div>'
-- trigger: ":a"
-  replace: "<a href='{{clipb}}' />$|$</a>"
+- trigger: ":clip"
+  replace: "clip: {{clipb}}"
   vars:
   - name: "clipb"
     type: "clipboard"
