@@ -15,6 +15,11 @@ matches:
       format: dd/MM/%y
 - trigger: :cursor
   replace: '<div>$|$</div>'
+- trigger: :cx
+  replace: 'here is the replacement from cb: {{cxx}}'
+  vars:
+  - name: cxx
+    type: clipboard
 - trigger: :yesterday
   replace: '{{date}}'
   vars:
@@ -67,6 +72,14 @@ matches:
         values:
           - First choice
           - Second choice
+
+- trigger: :clip
+  form: |
+      [[text]],
+  form_fields:
+      text:
+        multiline: true
+        
 - trigger: ":list"
   form: |
       [[choices]]

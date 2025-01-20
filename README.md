@@ -26,7 +26,9 @@ Espanso configuration YML files will take a few tries to parse correctly. Try re
 
 You can further customize date time formats by referring to the C# DateTime.ToString() method documentation from Microsoft.
 
-Clipboard extension will not work on android 10 or higher due to security measures introduced by google. (Note: I have not tested this app on android versions below 12)
+Clipboard extension will not work on android 10 or higher due to security measures introduced by google. However a workaround is available at issue: <a href="https://github.com/lochidev/Expandroid/issues/35#issue-2531110035">#35</a>
+
+Note: I have not tested this app on android versions below 12.
 
 Starting with v7.0.0 forms support has been added.
 Multi-line, choice & list have been added.
