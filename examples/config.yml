@@ -15,10 +15,10 @@ matches:
       format: dd/MM/%y
 - trigger: :cursor
   replace: '<div>$|$</div>'
-- trigger: :cl
-  replace: 'here is the replacement from cb: {{cx}}'
+- trigger: :cx
+  replace: 'here is the replacement from cb: {{cxx}}'
   vars:
-  - name: cx
+  - name: cxx
     type: clipboard
 - trigger: :yesterday
   replace: '{{date}}'
