@@ -15,12 +15,6 @@ matches:
       format: dd/MM/%y
 - trigger: :cursor
   replace: '<div>$|$</div>'
-- trigger: :clip
-  form: |
-      [[type :cl here]],
-  form_fields:
-      text:
-        multiline: true
 - trigger: :cl
   replace: 'here is the replacement from cb: {{cx}}'
   vars:
@@ -78,6 +72,14 @@ matches:
         values:
           - First choice
           - Second choice
+
+- trigger: :clip
+  form: |
+      [[text]],
+  form_fields:
+      text:
+        multiline: true
+        
 - trigger: ":list"
   form: |
       [[choices]]
