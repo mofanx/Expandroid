@@ -103,10 +103,12 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
                     string expansionStr = Text[0].ToString();
                     string og = expansionStr; //not modified
                     CheckAndUpdateCursorArgs(expansionStr, sendIfCursorFound: true, e);
-                    var arr = expansionStr.Split(_separators, StringSplitOptions.RemoveEmptyEntries);
                     bool send = false;
                     bool storeOg = true;
-                    var text = arr[^1];
+                    int cursorPosition = e.Source.TextSelectionStart;
+                    var textBeforeCursor = expansionStr[..cursorPosition];
+                    var arr = textBeforeCursor.Split(_separators, StringSplitOptions.RemoveEmptyEntries);
+                    var text = arr.Length > 0 ? arr[^1] : string.Empty;
                     if (previousOg == og)
                     {
                         return;
