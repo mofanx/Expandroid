@@ -204,10 +204,10 @@
                     <MudDivider class="mb-2 mt-2" />
                     <div class="d-flex flex-wrap">
 
-                        <MudCheckBox Label="Is text equal" ReadOnly="true" Value="@compareResult" Color="Color.Success"></MudCheckBox>
-                        <MudCheckBox Label="Contains the word specified" ReadOnly="true" Value="@containsResult" Color="Color.Primary"></MudCheckBox>
-                        <MudCheckBox Label="Is length equal" ReadOnly="true" Value="@lengthCompareResult" Color="Color.Warning"></MudCheckBox>
-                        <MudCheckBox Label="Can text expand" ReadOnly="true" Value="@canTextExpand" Color="Color.Warning"></MudCheckBox>
+                        <MudCheckBox Label="Is text equal" ReadOnly="true" @bind-Value="@compareResult" Color="Color.Success"></MudCheckBox>
+                        <MudCheckBox Label="Contains the word specified" ReadOnly="true" @bind-Value="@containsResult" Color="Color.Primary"></MudCheckBox>
+                        <MudCheckBox Label="Is length equal" ReadOnly="true" @bind-Value="@lengthCompareResult" Color="Color.Warning"></MudCheckBox>
+                        <MudCheckBox Label="Can text expand" ReadOnly="true" @bind-Value="@canTextExpand" Color="Color.Warning"></MudCheckBox>
                     </div>
                 </MudCardContent>
             </MudCard>
