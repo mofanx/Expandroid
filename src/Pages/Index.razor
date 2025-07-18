@@ -41,7 +41,7 @@
                 <MudButton @onclick="AddItemAsync" Color="Color.Primary" Variant="Variant.Text">Add</MudButton>
             </div>
             <MudPaper class="mt-2">
-                <MudList Clickable="false">
+                <MudList Clickable="false" T="Var">
                     <MudListSubheader>
                         Variables:
                         <MudChip Color="Color.Secondary">
@@ -217,13 +217,13 @@
 
 @code {
     List<string> textList = new();
-    bool compare = true;
-    bool ignoreCase = false;
-    bool processing = false;
-    bool compareResult = false;
-    bool lengthCompare = false;
-    bool lengthCompareResult = false;
-    bool contains = false;
+    public bool compare { get; set; } = true;
+    public bool ignoreCase { get; set; } = false;
+    public bool processing { get; set; } = false;
+    public bool compareResult { get; set; } = false;
+    public bool lengthCompare { get; set; } = false;
+    public bool lengthCompareResult { get; set; } = false;
+    public bool contains { get; set; } = false
     string containsText = string.Empty;
     bool containsResult = false;
     int index = 1;
