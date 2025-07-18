@@ -60,6 +60,10 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             {
                 DisableSelf();
             }
+            else if (cmd == "Reset")
+            {
+                ImportConfigFromFile();
+            }
             else if (cmd is not "_")
             {
                 dict.Remove(item.Trigger, out var _);
@@ -69,6 +73,11 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
         {
             globals = m.Value;
         });
+        ImportConfigFromFile();
+    }
+
+    private void ImportConfigFromFile()
+    {
         try
         {
             if (File.Exists(AppSettings.DictPath))

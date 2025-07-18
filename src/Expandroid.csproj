@@ -1,9 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 	<PropertyGroup>
-		<TargetFrameworks>net9.0-android35.0</TargetFrameworks>
+		<TargetFrameworks>net9.0-android36.0</TargetFrameworks>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net9.0-tizen</TargetFrameworks> -->
-		<RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>
+		<!--<RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>-->
+		<!--<RuntimeIdentifiers>android-arm</RuntimeIdentifiers>-->
+
 		<OutputType>Exe</OutputType>
 		<RootNamespace>Expandroid</RootNamespace>
 		<UseMaui>true</UseMaui>
@@ -16,39 +18,79 @@
 		<ApplicationId>com.dingleinc.texttoolspro</ApplicationId>
 		<ApplicationIdGuid>A9E98E65-AE83-5428-9AB1-578DC0552CB8</ApplicationIdGuid>
 		<!-- Versions -->
-		<ApplicationDisplayVersion>7.1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>24</ApplicationVersion>
+		<ApplicationDisplayVersion>7.1.2</ApplicationDisplayVersion>
+		<ApplicationVersion>200026</ApplicationVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+		<Configurations>Debug;Release</Configurations>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
 		<AndroidPackageFormat>aab</AndroidPackageFormat>
 		<AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 		<AndroidUseAapt2>True</AndroidUseAapt2>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='APK-rel|net9.0-android|AnyCPU'">
+	  <AndroidPackageFormat>aab</AndroidPackageFormat>
+	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='APK-rel|net9.0-android|AnyCPU'">
+	  <AndroidPackageFormat>aab</AndroidPackageFormat>
+	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='APK-rel|net9.0-android|AnyCPU'">
+	  <AndroidPackageFormat>aab</AndroidPackageFormat>
+	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
 		<AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 		<AndroidUseAapt2>True</AndroidUseAapt2>
 		<AndroidPackageFormat>aab</AndroidPackageFormat>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='APK-rel|net9.0-android|AnyCPU'">
+	  <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	  <AndroidPackageFormat>aab</AndroidPackageFormat>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android.0|AnyCPU'">
 		<AndroidPackageFormat>apk</AndroidPackageFormat>
 		<AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
 		<AndroidUseAapt2>True</AndroidUseAapt2>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='APK-rel|net9.0-android.0|AnyCPU'">
+	  <AndroidPackageFormat>apk</AndroidPackageFormat>
+	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='APK-rel|net9.0-android.0|AnyCPU'">
+	  <AndroidPackageFormat>apk</AndroidPackageFormat>
+	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='APK-rel|net9.0-android.0|AnyCPU'">
+	  <AndroidPackageFormat>apk</AndroidPackageFormat>
+	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android.0|AnyCPU'">
 		<AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
 		<AndroidUseAapt2>True</AndroidUseAapt2>
 		<AndroidPackageFormat>apk</AndroidPackageFormat>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='APK-rel|net9.0-android.0|AnyCPU'">
+	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
+	  <AndroidUseAapt2>True</AndroidUseAapt2>
+	  <AndroidPackageFormat>apk</AndroidPackageFormat>
+	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android35.0|AnyCPU'">
 		<AndroidPackageFormat>apk</AndroidPackageFormat>
 		<AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
-		<AndroidLinkTool>r8</AndroidLinkTool>
 		<AndroidUseAapt2>True</AndroidUseAapt2>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android35.0|AnyCPU'">
@@ -74,12 +116,12 @@
 		<None Remove="Platforms\Android\Resources\xml\accessibility_service.xml" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="MudBlazor" Version="6.19.1" />
-		<PackageReference Include="YamlDotNet" Version="15.1.4" />
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-		<PackageReference Include="CommunityToolkit.Maui" Version="7.0.1" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.6" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.6" />
+		<PackageReference Include="MudBlazor" Version="8.9.0" />
+		<PackageReference Include="YamlDotNet" Version="16.3.0" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="CommunityToolkit.Maui" Version="12.1.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="9.0.90" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.90" />
 	</ItemGroup>
 	<ItemGroup>
 		<Folder Include="Resources\Images\" />
