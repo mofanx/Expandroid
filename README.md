@@ -27,7 +27,7 @@ I've decided that I will only update the app once every 6 months. This is due to
 - Uses no internet permissions.
 - Provides a way to keep your config files in sync with desktop espanso program. See <a href="https://github.com/lochidev/Expandroid/issues/55">#55</a> 
 
-The app will surely recieve updates for all major android releases. Thank you for using the app and all the stars :D
+The app will surely receive updates for all major android releases. Thank you for using the app and all the stars :D
 
 # Notes 
 Espanso configuration YML files will take a few tries to parse correctly. Try removing some matches, and make sure it's compliant with the YML specs. Some working examples are provided below for your convenience to copy and paste. Please also note that only the following extensions are supported -> date, clipboard, random and echo. Finally, note that not all espanso/rust chrono date time formats are supported. Supported formats are,
