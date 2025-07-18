@@ -11,13 +11,13 @@ using YamlDotNet.Serialization.NamingConventions;
 [IntentFilter(new[] { "com.dingleinc.texttoolspro.IMPORT_CONFIG" })]
 public class ConfigImportReceiver : BroadcastReceiver
 {
-    // Tasker and MacroDroid package names
-    private static readonly string[] AllowedPackages = new[]
-    {
-        "net.dinglisch.android.taskerm",    // Tasker
-        "com.arlosoft.macrodroid",           // MacroDroid
-        "com.dingleinc.texttoolspro"
-    };
+    //// Tasker and MacroDroid package names
+    //private static readonly string[] AllowedPackages = new[]
+    //{
+    //    "net.dinglisch.android.taskerm",    // Tasker
+    //    "com.arlosoft.macrodroid",           // MacroDroid
+    //    "com.dingleinc.texttoolspro"
+    //};
     private void SendMessage(string cmd, Match value)
     {
         WeakReferenceMessenger.Default.Send(new AcServiceMessage((cmd, value)));
@@ -27,18 +27,16 @@ public class ConfigImportReceiver : BroadcastReceiver
         // Only check on Android 4.4+ (API 19+)
         if (Build.VERSION.SdkInt >= BuildVersionCodes.JellyBeanMr1)
         {
-            int callingUid = Binder.CallingUid;
-            var pm = context.PackageManager;
-            var packages = pm.GetPackagesForUid(callingUid);
-            if (packages == null || !packages.Any(pkg => AllowedPackages.Contains(pkg)))
-                return;
-
-            try
+            //int callingUid = Binder.CallingUid;
+            //var pm = context.PackageManager;
+            //var packages = pm.GetPackagesForUid(callingUid);
+            //if (packages == null || !packages.Any(pkg => AllowedPackages.Contains(pkg)))
+            //    return;
+            var configStr = intent.GetStringExtra("config_string");
+            if (!string.IsNullOrEmpty(configStr))
             {
-                var configStr = intent.GetStringExtra("config_string");
-                if (!string.IsNullOrEmpty(configStr))
+                try
                 {
-                    File.WriteAllText(AppSettings.DictPath, configStr);
                     var deserializer = new DeserializerBuilder()
                                 .WithNamingConvention(UnderscoredNamingConvention.Instance).IgnoreUnmatchedProperties()
                                 .Build();
@@ -73,7 +71,6 @@ public class ConfigImportReceiver : BroadcastReceiver
                             if (notSupported)
                                 continue;
                         }
-                        SendMessage("Add", item);
                     }
                     if (localDict.Global_vars is not null)
                     {
@@ -81,20 +78,27 @@ public class ConfigImportReceiver : BroadcastReceiver
                         File.WriteAllText(AppSettings.GlobalVarsPath, str);
                         WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(localDict.Global_vars));
                     }
+                    Dictionary<string, Match> dict = new();
+                    foreach (var match in localDict.Matches)
+                    {
+                        dict.Add(match.Trigger, match);
+                    }
+                    var jsonStr = JsonSerializer.Serialize(dict);
+                    File.WriteAllText(AppSettings.DictPath, jsonStr);
+                    SendMessage("Reset", new Match());
                     Intent resultIntent = new Intent("com.dingleinc.texttoolspro.CONFIG_RESULT");
                     resultIntent.PutExtra("status", 0); // or 1 for failure
                     context.SendBroadcast(resultIntent);
 
                 }
+                catch (Exception e)
+                {
+                    Intent resultIntent = new Intent("com.dingleinc.texttoolspro.CONFIG_RESULT");
+                    resultIntent.PutExtra("status", e.Message); // or 1 for failure
+                    context.SendBroadcast(resultIntent);
+                }
             }
-            catch (Exception)
-            {
-                Intent resultIntent = new Intent("com.dingleinc.texttoolspro.CONFIG_RESULT");
-                resultIntent.PutExtra("status", 1); // or 1 for failure
-                context.SendBroadcast(resultIntent);
 
-            }
-            
         }
     }
 }

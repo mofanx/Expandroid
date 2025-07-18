@@ -348,6 +348,20 @@
                 await dialogService.DisplayConfirmAsync("Migrated successfully!", "All your data in cache has been moved to app data directory instead successfully!");
             }
         }
+        ImportConfigFromFile();
+        WeakReferenceMessenger.Default.Register<AcServiceMessage>(this, (r, m) =>
+        {
+            var cmd = m.Value.Item1;
+            var item = m.Value.Item2;
+            if (cmd == "Reset")
+            {
+                ImportConfigFromFile();
+                StateHasChanged();
+            }
+        });
+    }
+    private void ImportConfigFromFile()
+    {
         if (File.Exists(AppSettings.DictPath))
         {
             using var stream = File.OpenRead(AppSettings.DictPath);
