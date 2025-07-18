@@ -7,6 +7,8 @@
     <a href="https://github.com/lochidev/TextComparePro/releases">Releases</a>
     ·
     <a href="https://github.com/lochidev/TextComparePro/blob/master/examples/config.yml">Example config</a>
+    ·
+    <a href="https://espanso.org/docs/get-started/">Espanso docs</a>
   </p>
 
 Send custom messages with a trigger. Want to quickly type out the current date in a specific format? Or do you want your emojis to replace your triggers? You can do it all cross platform with espanso but now on android too with this app!
