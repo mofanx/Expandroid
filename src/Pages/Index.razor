@@ -234,7 +234,7 @@
     bool toLower = false;
     ulong processCount = 0;
     public MudTabs Tabs;
-    bool makeBold = true;
+    bool makeBold = false;
     bool makeItalic = false;
     bool makeStrike = false;
     bool makeCode = false;
@@ -626,7 +626,7 @@
         processCount++;
         try
         {
-            if (Tabs.ActivePanelIndex == 0)
+            if (Tabs.ActivePanelIndex != 0)
             {
                 if (compare)
                 {
@@ -653,9 +653,6 @@
                 {
                     textList[index - 1] = textList[index - 1].ToLower();
                 }
-            }
-            else
-            {
                 if (makeBold)
                 {
                     textList[index - 1] = "**" + textList[index - 1] + "**";
