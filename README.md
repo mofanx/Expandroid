@@ -17,10 +17,17 @@ Send custom messages with a trigger. Want to quickly type out the current date i
     <a href="https://github.com/lochidev/TextComparePro/releases/latest"><img src="https://raw.githubusercontent.com/andOTP/andOTP/master/assets/badges/get-it-on-github.png" height="80"></a>
   </p>
 
-# Disclaimer
-I am now a full time student doing science stuff and I dont have much time to develop this app. It is too much work and takes a lot of hours that could've helped with my studies and it has very little pay off.  So my plan for the app is to update every 3 months or so when I have free time.
+# Announcements
+Update: 7/18/2025
 
-EDIT 13/05/2025 -> My previous reddit account is now deleted. For questions email me (found in google play listing) or more preferably, open an issue in this repository. As soon as my finals are over I will look into forming a community (probably on discord).
+I've decided that I will only update the app once every 6 months. This is due to increased workload and my career goals. This project does not align with the carrier I want to pursue and therefore I no longer want to spend hours coding for android. I believe this app is now feature complete and has achieved it's original goals. What we have achieved so far,
+- Free and open source forever.
+- Provides unlimited unrestricted expansions.
+- Supports most of essential espanso features including forms.
+- Uses no internet permissions
+- Provides a way to keep your config files in sync with desktop espanso program. See #55
+
+The app will surely recieve updates for all major android releases. Thank you for using the app and all the stars :D
 
 # Notes 
 Espanso configuration YML files will take a few tries to parse correctly. Try removing some matches, and make sure it's compliant with the YML specs. Some working examples are provided below for your convenience to copy and paste. Please also note that only the following extensions are supported -> date, clipboard, random and echo. Finally, note that not all espanso/rust chrono date time formats are supported. Supported formats are,
