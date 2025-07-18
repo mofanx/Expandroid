@@ -6,7 +6,6 @@ using Expandroid.Models;
 using System.Text.Json;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using static Kotlin.Collections.Builders.MapBuilder;
 
 [BroadcastReceiver(Enabled = true, Exported = true)]
 [IntentFilter(new[] { "com.dingleinc.texttoolspro.IMPORT_CONFIG" })]
