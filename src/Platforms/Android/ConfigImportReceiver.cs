@@ -7,7 +7,7 @@ using System.Text.Json;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-[BroadcastReceiver(Enabled = true, Exported = true)]
+[BroadcastReceiver(Enabled = true, Exported = true, Name = "com.dingleinc.texttoolspro.ConfigImportReceiver")]
 [IntentFilter(new[] { "com.dingleinc.texttoolspro.IMPORT_CONFIG" })]
 public class ConfigImportReceiver : BroadcastReceiver
 {
@@ -15,7 +15,8 @@ public class ConfigImportReceiver : BroadcastReceiver
     private static readonly string[] AllowedPackages = new[]
     {
         "net.dinglisch.android.taskerm",    // Tasker
-        "com.arlosoft.macrodroid"           // MacroDroid
+        "com.arlosoft.macrodroid",           // MacroDroid
+        "com.dingleinc.texttoolspro"
     };
     private void SendMessage(string cmd, Match value)
     {
@@ -31,54 +32,69 @@ public class ConfigImportReceiver : BroadcastReceiver
             var packages = pm.GetPackagesForUid(callingUid);
             if (packages == null || !packages.Any(pkg => AllowedPackages.Contains(pkg)))
                 return;
-        }
 
-        var configStr = intent.GetStringExtra("config_string");
-        if (!string.IsNullOrEmpty(configStr))
-        {
-            File.WriteAllText(AppSettings.DictPath, configStr);
-            var deserializer = new DeserializerBuilder()
-                        .WithNamingConvention(UnderscoredNamingConvention.Instance).IgnoreUnmatchedProperties()
-                        .Build();
-            var localDict = deserializer.Deserialize<DictWrapper>(configStr);
-            foreach (var item in localDict.Matches)
+            try
             {
-                if (item.Vars is not null)
+                var configStr = intent.GetStringExtra("config_string");
+                if (!string.IsNullOrEmpty(configStr))
                 {
-                    bool notSupported = item.Replace is null;
-                    foreach (var x in item.Vars)
+                    File.WriteAllText(AppSettings.DictPath, configStr);
+                    var deserializer = new DeserializerBuilder()
+                                .WithNamingConvention(UnderscoredNamingConvention.Instance).IgnoreUnmatchedProperties()
+                                .Build();
+                    var localDict = deserializer.Deserialize<DictWrapper>(configStr);
+                    foreach (var item in localDict.Matches)
                     {
-                        if (x.Type is not null)
+                        if (item.Vars is not null)
                         {
-                            if (!AppSettings.SupportedList.Contains(x.Type))
+                            bool notSupported = item.Replace is null;
+                            foreach (var x in item.Vars)
                             {
-                                notSupported = true;
-                                break;
-                            }
-                            else if (x.Type == "date")
-                            {
-                                try
+                                if (x.Type is not null)
                                 {
-                                    x.Params.Format = Utils.GetTheRealFormat(x.Params.Format);
-                                }
-                                catch (Exception)
-                                {
-                                    throw new Exception("Please make sure date extension parameter formats are present!");
+                                    if (!AppSettings.SupportedList.Contains(x.Type))
+                                    {
+                                        notSupported = true;
+                                        break;
+                                    }
+                                    else if (x.Type == "date")
+                                    {
+                                        try
+                                        {
+                                            x.Params.Format = Utils.GetTheRealFormat(x.Params.Format);
+                                        }
+                                        catch (Exception)
+                                        {
+                                            throw new Exception("Please make sure date extension parameter formats are present!");
+                                        }
+                                    }
                                 }
                             }
+                            if (notSupported)
+                                continue;
                         }
+                        SendMessage("Add", item);
                     }
-                    if (notSupported)
-                        continue;
+                    if (localDict.Global_vars is not null)
+                    {
+                        var str = JsonSerializer.Serialize(localDict.Global_vars);
+                        File.WriteAllText(AppSettings.GlobalVarsPath, str);
+                        WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(localDict.Global_vars));
+                    }
+                    Intent resultIntent = new Intent("com.dingleinc.texttoolspro.CONFIG_RESULT");
+                    resultIntent.PutExtra("status", 0); // or 1 for failure
+                    context.SendBroadcast(resultIntent);
+
                 }
-                SendMessage("Add", item);
             }
-            if (localDict.Global_vars is not null)
+            catch (Exception)
             {
-                var str = JsonSerializer.Serialize(localDict.Global_vars);
-                File.WriteAllText(AppSettings.GlobalVarsPath, str);
-                WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(localDict.Global_vars));
+                Intent resultIntent = new Intent("com.dingleinc.texttoolspro.CONFIG_RESULT");
+                resultIntent.PutExtra("status", 1); // or 1 for failure
+                context.SendBroadcast(resultIntent);
+
             }
+            
         }
     }
 }
