@@ -24,8 +24,8 @@ I've decided that I will only update the app once every 6 months. This is due to
 - Free and open source forever.
 - Provides unlimited unrestricted expansions.
 - Supports most of essential espanso features including forms.
-- Uses no internet permissions
-- Provides a way to keep your config files in sync with desktop espanso program. See #55
+- Uses no internet permissions.
+- Provides a way to keep your config files in sync with desktop espanso program. See <a href="https://github.com/lochidev/Expandroid/issues/55">#55</a> 
 
 The app will surely recieve updates for all major android releases. Thank you for using the app and all the stars :D
 
