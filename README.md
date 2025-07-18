@@ -1,4 +1,4 @@
-# Espanso compatible app for android. X-platform expansions
+# Configuration based espanso compatible app for android. X-platform expansions
   <p align="center">
     <a href="https://github.com/lochidev/TextComparePro/issues">Report Bug</a>
     ·
