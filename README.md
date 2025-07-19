@@ -22,7 +22,7 @@ Send custom messages with a trigger. Want to quickly type out the current date i
 # Announcements
 Update: 7/18/2025
 
-I've decided that I will only update the app once every 6 months. This is due to increased workload and my career goals. This project does not align with the carrier I want to pursue and therefore I no longer want to spend hours coding for android. I believe this app is now feature complete and has achieved it's original goals. What we have achieved so far,
+I've decided that I will only update the app once every 6 months. This is due to increased workload from my studies and due to my career goals. This project does not align with the career I want to pursue and therefore I no longer want to spend hours coding for android. I believe this app is now feature complete and has achieved it's original goals. What we have achieved so far,
 - Free and open source forever.
 - Provides unlimited unrestricted expansions.
 - Supports most of essential espanso features including forms.
