@@ -146,7 +146,7 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                 val className = node.className?.toString() ?: ""
                 val isEditText = className.contains("EditText") && node.isEditable
 
-                if (isEditText && event.text != null && event.text.isNotEmpty()) {
+                if (isEditText && event.text.isNotEmpty()) {
                     val expansionStr = node.text?.toString() ?: ""
                     if (expansionStr.isNotBlank()) {
                         val changed = lastKnownText[packageName] != expansionStr
@@ -294,7 +294,7 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                         match.vars?.forEach { item ->
                             replace = parseItem(item, replace)
                         }
-                        if (replace != null) {
+                        if (replace.isNotEmpty()) {
                             val end = expansionStr.substring(triggerIndex).replace(text, replace)
                             val newStr = expansionStr.substring(0, triggerIndex) + end
                             doExpansion(event, newStr)

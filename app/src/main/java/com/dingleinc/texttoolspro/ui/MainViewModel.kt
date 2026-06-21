@@ -5,7 +5,6 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dingleinc.texttoolspro.data.AppSettings
-import com.dingleinc.texttoolspro.data.DictWrapper
 import com.dingleinc.texttoolspro.data.Match
 import com.dingleinc.texttoolspro.data.SerializationHelper
 import com.dingleinc.texttoolspro.data.ServiceCommandBus
