@@ -13,28 +13,17 @@ import com.dingleinc.texttoolspro.data.Var
 import com.dingleinc.texttoolspro.ui.theme.ThemeMode
 import com.dingleinc.texttoolspro.util.AccessibilityChecker
 import com.dingleinc.texttoolspro.util.Utils
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 
-private val Context.dataStore by preferencesDataStore("settings")
+import com.fasterxml.jackson.core.type.TypeReference
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = getApplication<Application>().getSharedPreferences("settings", Context.MODE_PRIVATE)
 
-    val themeMode: StateFlow<ThemeMode> = MutableStateFlow(
-        ThemeMode.valueOf(prefs.getString("theme_mode", "Auto") ?: "Auto")
-    ).also { }
     private val _themeMode = MutableStateFlow(
         ThemeMode.valueOf(prefs.getString("theme_mode", "Auto") ?: "Auto")
     )
@@ -101,11 +90,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (File(AppSettings.oldDictPath).exists()) {
                 try {
                     val content = File(AppSettings.oldDictPath).readText()
-                    val loaded = SerializationHelper.jsonMapper.readValue(content, Map::class.java) as Map<String, Map<String, Any?>>
-                    val migrated = mutableMapOf<String, Match>()
-                    loaded.forEach { (key, value) ->
-                        migrated[key] = SerializationHelper.jsonMapper.convertValue(value, Match::class.java)
-                    }
+                    val migrated = SerializationHelper.jsonMapper.readValue(
+                        content,
+                        object : TypeReference<MutableMap<String, Match>>() {}
+                    )
                     _dict.value = migrated
                     if (_canTextExpand.value) {
                         migrated.values.forEach { ServiceCommandBus.trySend(ServiceCommandBus.Command.Add(it)) }
@@ -123,7 +111,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val content = File(AppSettings.dictPath).readText()
                     val loaded = SerializationHelper.jsonMapper.readValue(
                         content,
-                        TypeReferenceMap()
+                        object : TypeReference<MutableMap<String, Match>>() {}
                     )
                     _dict.value = loaded
                     if (_canTextExpand.value) {
@@ -140,7 +128,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val content = File(AppSettings.globalVarsPath).readText()
                     val loaded = SerializationHelper.jsonMapper.readValue(
                         content,
-                        TypeReferenceListVar()
+                        object : TypeReference<List<Var>>() {}
                     )
                     _globalVars.value = loaded
                     if (_canTextExpand.value) {
@@ -283,7 +271,4 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearSnackbar() {
         _snackbarMessage.value = null
     }
-
-    private class TypeReferenceMap : com.fasterxml.jackson.core.type.TypeReference<MutableMap<String, Match>>()
-    private class TypeReferenceListVar : com.fasterxml.jackson.core.type.TypeReference<List<Var>>()
 }

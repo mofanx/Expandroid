@@ -118,15 +118,17 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
         try {
             if (File(AppSettings.dictPath).exists()) {
                 val content = File(AppSettings.dictPath).readText()
-                val type = kotlinx.serialization.builtins.MapSerializer(
-                    kotlinx.serialization.builtins.serializer<String>(),
-                    kotlinx.serialization.builtins.serializer<Match>()
+                dict = SerializationHelper.jsonMapper.readValue(
+                    content,
+                    object : com.fasterxml.jackson.core.type.TypeReference<MutableMap<String, Match>>() {}
                 )
-                dict = SerializationHelper.json.decodeFromString(content) as MutableMap<String, Match>
             }
             if (File(AppSettings.globalVarsPath).exists()) {
                 val content = File(AppSettings.globalVarsPath).readText()
-                globals = SerializationHelper.json.decodeFromString(content)
+                globals = SerializationHelper.jsonMapper.readValue(
+                    content,
+                    object : com.fasterxml.jackson.core.type.TypeReference<List<Var>>() {}
+                )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error loading files: ${e.message}")
@@ -246,8 +248,8 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
             if (previousOriginal == original) {
                 return
             } else if (formExpansion != "") {
-                var modified = original.replace(formKey, formExpansion)
-                expansionStrHandleTextExpansion(expansionStr, modified, event)
+                val modified = original.replace(formKey, formExpansion)
+                doExpansion(event, modified)
                 storeOriginal = true
                 send = true
                 formExpansion = ""
@@ -319,10 +321,6 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
         } catch (e: Exception) {
             Log.e(TAG, "HandleTextExpansion error: ${e}")
         }
-    }
-
-    private fun expansionStrHandleTextExpansion(original: String, modified: String, event: AccessibilityEvent) {
-        doExpansion(event, modified)
     }
 
     private fun showForm(match: Match, text: String, event: AccessibilityEvent) {

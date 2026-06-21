@@ -8,7 +8,9 @@ import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 import com.dingleinc.texttoolspro.ui.theme.ThemeMode
 
 @Composable
@@ -18,21 +20,21 @@ fun ThemeSwitcher(currentMode: ThemeMode, onModeChange: (ThemeMode) -> Unit) {
             Icon(
                 Icons.Default.WbSunny,
                 contentDescription = "Light",
-                tint = if (currentMode == ThemeMode.Light) androidx.compose.material3.MaterialTheme.colorScheme.primary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                tint = if (currentMode == ThemeMode.Light) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             )
         }
         IconButton(onClick = { onModeChange(ThemeMode.Dark) }) {
             Icon(
                 Icons.Default.NightsStay,
                 contentDescription = "Dark",
-                tint = if (currentMode == ThemeMode.Dark) androidx.compose.material3.MaterialTheme.colorScheme.primary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                tint = if (currentMode == ThemeMode.Dark) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             )
         }
         IconButton(onClick = { onModeChange(ThemeMode.Auto) }) {
             Icon(
                 Icons.Default.BrightnessAuto,
                 contentDescription = "Auto",
-                tint = if (currentMode == ThemeMode.Auto) androidx.compose.material3.MaterialTheme.colorScheme.primary else androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                tint = if (currentMode == ThemeMode.Auto) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             )
         }
     }

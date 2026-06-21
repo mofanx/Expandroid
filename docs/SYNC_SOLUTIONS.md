@@ -600,7 +600,103 @@ Register-ScheduledTask -TaskName "EspansoWebDAVSync" `
   -Action $action -Trigger $trigger
 ```
 
-方式 3 — 纯 PowerShell 脚本（零安装，适合完全受限环境）：
+方式 3 — 文件监控 + 即时同步（事件驱动，推荐用于受限环境）：
+
+通过文件系统监控替代轮询，文件变化时立即触发同步，延迟 < 1 秒。
+
+**Windows**（PowerShell `FileSystemWatcher`，.NET 内置）：
+```powershell
+# espanso-watch-sync.ps1 — 常驻后台，文件变化时立即 rclone sync
+$local = "$env:APPDATA\espanso\match"
+$remote = "webdav:espanso-match"
+
+$watcher = New-Object System.IO.FileSystemWatcher $local
+$watcher.IncludeSubdirectories = $false
+$watcher.EnableRaisingEvents = $true
+
+# 防抖：短时间内多次变化只同步一次
+$lastSync = [DateTime]::MinValue
+function SyncNow {
+    $now = Get-Date
+    if (($now - $lastSync).TotalMilliseconds -gt 500) {
+        rclone sync $local $remote --exclude "*.tmp"
+        rclone sync $remote $local --exclude "*.tmp"
+        $lastSync = $now
+    }
+}
+
+Register-ObjectEvent $watcher "Changed" -Action { SyncNow }
+Register-ObjectEvent $watcher "Created" -Action { SyncNow }
+Register-ObjectEvent $watcher "Deleted" -Action { SyncNow }
+
+# 同时定时拉取远程变更（30s，防止桌面端未感知的远程变化）
+while ($true) {
+    Start-Sleep 30
+    rclone sync $remote $local --exclude "*.tmp"
+}
+```
+
+注册为开机自启（不需要管理员权限）：
+```powershell
+# 放入 shell:startup 文件夹
+$shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut(
+    "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\espanso-sync.lnk")
+$shortcut.TargetPath = "powershell.exe"
+$shortcut.Arguments = "-WindowStyle Hidden -File C:\Scripts\espanso-watch-sync.ps1"
+$shortcut.Save()
+```
+
+**Linux**（inotifywait，内核级 inotify 机制）：
+```bash
+# 安装 inotify-tools
+sudo apt install inotify-tools
+
+# 创建监控脚本 espanso-watch-sync.sh
+#!/bin/bash
+LOCAL="$HOME/.config/espanso/match"
+REMOTE="webdav:espanso-match"
+
+# 后台定时拉取远程变更（30s）
+while true; do
+    rclone sync $REMOTE $LOCAL --exclude "*.tmp"
+    sleep 30
+done &
+
+# 监控本地文件变化，立即推送
+inotifywait -m -e modify,create,delete "$LOCAL" |
+  while read path event file; do
+      # 防抖：500ms 内多次变化只同步一次
+      sleep 0.5
+      rclone sync $LOCAL $REMOTE --exclude "*.tmp"
+  done
+```
+
+注册为 systemd 用户服务（不需要 root）：
+```ini
+# ~/.config/systemd/user/espanso-sync.service
+[Unit]
+Description=Espanso WebDAV Sync
+
+[Service]
+ExecStart=/home/user/scripts/espanso-watch-sync.sh
+Restart=always
+
+[Install]
+WantedBy=default.target
+```
+```bash
+systemctl --user enable --now espanso-sync
+```
+
+**macOS**（fswatch，类似 inotify）：
+```bash
+brew install fswatch
+fswatch -o ~/.config/espanso/match | while read; do
+    rclone sync ~/.config/espanso/match webdav:espanso-match
+done
+```
+
+方式 4 — 纯 PowerShell 脚本（零安装，适合完全受限环境）：
 ```powershell
 # espanso-webdav-sync.ps1 — 无需安装任何工具
 $baseUrl = "https://nas.local:5244/dav/espanso-match"
@@ -622,19 +718,23 @@ Get-ChildItem "$local\*.yml" | ForEach-Object {
 ```
 
 **受限环境特别说明**：
-- 优先使用方式 2（rclone sync）或方式 3（纯脚本），无需 WinFsp / 管理员权限
-- 计划任务可能需要用户首次登录后手动创建，或由 IT 管理员统一下发
+- 优先使用方式 3（文件监控），本地修改 < 1s 即同步到远程，同时 30s 定时拉取远程变更
+- 方式 2（计划任务）和方式 4（纯脚本）更简单但延迟 30s
+- 均不需要 WinFsp / 管理员权限
 - 确认桌面环境到 WebDAV 服务器的网络连通性（若 WebDAV 在本地 NAS，需通过公网 IP 或 VPN 访问）
-- espanso 的 `auto_restart` 会检测 `$env:APPDATA\espanso\match\` 下的文件变化，rclone sync / 脚本写入后自动重载
+- espanso 的 `auto_restart` 会检测 match 目录下的文件变化，同步后自动重载
 
 **桌面端方案对比**：
 
-| 方式 | 平台 | 需要安装 | 需要管理员 | 实时性 | 适合场景 |
-|------|------|---------|-----------|--------|---------|
+| 方式 | 平台 | 需要安装 | 需要管理员 | 本地→远程延迟 | 适合场景 |
+|------|------|---------|-----------|--------------|---------|
 | rclone mount | 全平台 | rclone + WinFsp | 是（Windows） | 实时 | 个人电脑，有完整权限 |
-| rclone sync + 计划任务 | 全平台 | 仅 rclone | 否 | 30s | 受限环境，无管理员权限 |
+| 文件监控 + rclone sync | 全平台 | rclone + 平台监控工具¹ | 否 | < 1s | 受限环境，推荐 |
+| rclone sync + 计划任务 | 全平台 | 仅 rclone | 否 | 30s | 受限环境，最简单 |
 | 纯 PowerShell 脚本 | Windows | 无 | 否 | 30s | 完全受限环境 |
 | davfs2 | Linux | davfs2 | 是 | 实时 | Linux 服务器/桌面 |
+
+> ¹ 平台监控工具：Windows 用 `FileSystemWatcher`（PowerShell/.NET 内置，无需安装）；Linux 用 `inotifywait`（`apt install inotify-tools`）；macOS 用 `fswatch`（`brew install fswatch`）。
 
 **云文件夹方式**：
 ```bash

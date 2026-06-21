@@ -38,8 +38,7 @@
 
         <receiver
             android:name=".service.ConfigImportReceiver"
-            android:exported="true"
-            android:name="com.dingleinc.texttoolspro.ConfigImportReceiver">
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.dingleinc.texttoolspro.IMPORT_CONFIG" />
             </intent-filter>
