@@ -9,6 +9,20 @@ android {
     namespace = "com.dingleinc.texttoolspro"
     compileSdk = 35
 
+    val keystorePath = System.getenv("KEYSTORE_PATH") ?: "/home/yan/ubuntu/project/backup/app/keystore/expandroid.jks"
+    val keystorePass = System.getenv("KEYSTORE_PASS") ?: "Expandroid2024!"
+    val keyAlias = System.getenv("KEY_ALIAS") ?: "expandroid-key"
+    val keyPass = System.getenv("KEY_PASS") ?: "Expandroid2024!"
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(keystorePath)
+            storePassword = keystorePass
+            keyAlias = keyAlias
+            keyPassword = keyPass
+        }
+    }
+
     defaultConfig {
         applicationId = "com.dingleinc.texttoolspro"
         minSdk = 24
@@ -26,6 +40,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            // Use the same fixed signing for debug builds too
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
