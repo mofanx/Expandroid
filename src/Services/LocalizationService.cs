@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Resources;
-using Expandroid.Resources;
 
 namespace Expandroid.Services;
 
@@ -16,7 +15,7 @@ public class LocalizationService : ILocalizationService
 
     public LocalizationService()
     {
-        _resourceManager = new ResourceManager("Expandroid.Resources.AppResources", typeof(AppResources).Assembly);
+        _resourceManager = new ResourceManager("Expandroid.Resources.AppResources", typeof(Expandroid.AppResources).Assembly);
         _currentCulture = CultureInfo.CurrentCulture;
         
         // 初始化可用语言列表
