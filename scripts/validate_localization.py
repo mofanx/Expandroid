@@ -9,6 +9,10 @@ import re
 import sys
 from pathlib import Path
 
+# Windows CI 默认 cp1252 编码无法输出 emoji，强制 UTF-8
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
+
 def get_culture_name(file):
     """从资源文件名提取 culture 名称"""
     stem = file.stem
