@@ -260,7 +260,7 @@
     <value>Basic</value>
   </data>
   <data name="DiscordMarkdown" xml:space="preserve">
-    <value>Discord (& Markdown)</value>
+    <value>Discord (&amp; Markdown)</value>
   </data>
   <data name="Bold" xml:space="preserve">
     <value>Bold</value>
