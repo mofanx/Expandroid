@@ -361,3 +361,24 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Android / Gradle
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+app/build/
+app/debug/
+app/release/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Keep gradle wrapper
+!gradle/wrapper/gradle-wrapper.jar
