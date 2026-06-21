@@ -1,60 +1,172 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Expandroid.Models
 {
     public static class Utils
     {
+        private static readonly Dictionary<string, string> ChronoToDotNet = new()
+        {
+            { "%Y", "yyyy" },
+            { "%y", "yy" },
+            { "%m", "MM" },
+            { "%b", "MMM" },
+            { "%B", "MMMM" },
+            { "%h", "MMM" },
+            { "%d", "dd" },
+            { "%e", "d" },
+            { "%a", "ddd" },
+            { "%A", "dddd" },
+            { "%j", "DayOfYearPlaceholder" },
+            { "%w", "DayOfWeekNumPlaceholder" },
+            { "%u", "IsoDayOfWeekPlaceholder" },
+            { "%D", "MM/dd/yyyy" },
+            { "%F", "yyyy/MM/dd" },
+            { "%H", "HH" },
+            { "%I", "hh" },
+            { "%p", "tt" },
+            { "%M", "mm" },
+            { "%S", "ss" },
+            { "%R", "HH:mm" },
+            { "%T", "HH:mm:ss" },
+            { "%r", "hh:mm:ss tt" },
+            { "%n", "\n" },
+            { "%t", "\t" },
+            { "%%", "%" },
+            { "%N", "fffffff" },
+            { "%z", "zzz" },
+            { "%Z", "TimeZoneNamePlaceholder" },
+            { "%C", "CenturyPlaceholder" },
+            { "%G", "IsoYearPlaceholder" },
+            { "%V", "IsoWeekPlaceholder" },
+        };
+
+        private static readonly Dictionary<string, string> DotNetToChrono = new()
+        {
+            { "yyyy/MM/dd", "%F" },
+            { "MM/dd/yyyy", "%D" },
+            { "hh:mm:ss tt", "%r" },
+            { "HH:mm:ss", "%T" },
+            { "HH:mm", "%R" },
+            { "yyyy", "%Y" },
+            { "MMMM", "%B" },
+            { "MMM", "%b" },
+            { "MM", "%m" },
+            { "dddd", "%A" },
+            { "ddd", "%a" },
+            { "dd", "%d" },
+            { "d", "%e" },
+            { "HH", "%H" },
+            { "hh", "%I" },
+            { "tt", "%p" },
+            { "mm", "%M" },
+            { "ss", "%S" },
+            { "yy", "%y" },
+            { "fffffff", "%N" },
+            { "zzz", "%z" },
+        };
+
         public static string GetTheRealFormat(string format)
         {
-            format = format.Replace("%Y", "yyyy");
-            format = format.Replace("%m", "MM");
-            format = format.Replace("%b", "MMM");
-            format = format.Replace("%B", "MMMM");
-            format = format.Replace("%h", "MMM");
-            format = format.Replace("%d", "dd");
-            format = format.Replace("%e", "d");
-            format = format.Replace("%a", "ddd");
-            format = format.Replace("%A", "dddd");
-            format = format.Replace("%j", DateTime.Now.DayOfYear.ToString());
-            format = format.Replace("%w", DateTime.Now.DayOfWeek.ToString());
-            format = format.Replace("%u", (DateTime.Now.DayOfWeek + 1).ToString());
-            format = format.Replace("%D", "MM/dd/yyyy");
-            format = format.Replace("%F", "yyyy/MM/dd");
-            format = format.Replace("%H", "HH");
-            format = format.Replace("%I", "hh");
-            format = format.Replace("%p", "tt");
-            format = format.Replace("%M", "mm");
-            format = format.Replace("%S", "ss");
-            format = format.Replace("%R", "HH:mm");
-            format = format.Replace("%T", "HH:mm:ss");
-            format = format.Replace("%r", "hh:mm:ss tt");
-            return format;
+            if (string.IsNullOrEmpty(format))
+                return format;
+
+            var tokens = Regex.Matches(format, "%[A-Za-z%]");
+            var result = format;
+            var replacements = new Dictionary<string, string>();
+
+            int tokenIndex = 0;
+            foreach (Match m in tokens)
+            {
+                string key = m.Value;
+                string placeholder = $"\u0001{tokenIndex}\u0001";
+                tokenIndex++;
+
+                if (ChronoToDotNet.TryGetValue(key, out var dotNetFmt))
+                {
+                    if (dotNetFmt == "DayOfYearPlaceholder")
+                        replacements[placeholder] = DateTime.Now.DayOfYear.ToString();
+                    else if (dotNetFmt == "DayOfWeekNumPlaceholder")
+                        replacements[placeholder] = ((int)DateTime.Now.DayOfWeek).ToString();
+                    else if (dotNetFmt == "IsoDayOfWeekPlaceholder")
+                    {
+                        int d = (int)DateTime.Now.DayOfWeek;
+                        replacements[placeholder] = (d == 0 ? 7 : d).ToString();
+                    }
+                    else if (dotNetFmt == "TimeZoneNamePlaceholder")
+                        replacements[placeholder] = TimeZoneInfo.Local.DisplayName;
+                    else if (dotNetFmt == "CenturyPlaceholder")
+                        replacements[placeholder] = ((DateTime.Now.Year / 100) + 1).ToString();
+                    else if (dotNetFmt == "IsoYearPlaceholder")
+                        replacements[placeholder] = GetIsoYear(DateTime.Now).ToString();
+                    else if (dotNetFmt == "IsoWeekPlaceholder")
+                        replacements[placeholder] = GetIsoWeek(DateTime.Now).ToString("D2");
+                    else
+                        replacements[placeholder] = dotNetFmt;
+                }
+                else
+                {
+                    replacements[placeholder] = key;
+                }
+
+                result = result.Replace(key, placeholder, 1);
+            }
+
+            foreach (var (placeholder, value) in replacements)
+            {
+                result = result.Replace(placeholder, value);
+            }
+
+            return result;
         }
+
         public static string GetOriginalFormat(string format)
         {
-            format = format.Replace("yyyy", "%Y");
-            format = format.Replace("MM", "%m");
-            format = format.Replace("MMM", "%b");
-            format = format.Replace("MMMM", "%B");
-            format = format.Replace("dd", "%d");
-            format = format.Replace("d", "%e");
-            format = format.Replace("ddd", "%a");
-            format = format.Replace("dddd", "%A");
-            format = format.Replace("MM/dd/yyyy", "%D");
-            format = format.Replace("yyyy/MM/dd", "%F");
-            format = format.Replace("HH", "%H");
-            format = format.Replace("hh", "%I");
-            format = format.Replace("tt", "%p");
-            format = format.Replace("mm", "%M");
-            format = format.Replace("ss", "%S");
-            format = format.Replace("HH:mm", "%R");
-            format = format.Replace("HH:mm:ss", "%T");
-            format = format.Replace("hh:mm:ss tt", "%r");
-            return format;
+            if (string.IsNullOrEmpty(format))
+                return format;
+
+            var result = format;
+            var placeholders = new List<(string placeholder, string chronoFmt)>();
+
+            var sortedKeys = new List<string>(DotNetToChrono.Keys);
+            sortedKeys.Sort((a, b) => b.Length.CompareTo(a.Length));
+
+            int idx = 0;
+            foreach (var dotNetFmt in sortedKeys)
+            {
+                while (result.Contains(dotNetFmt))
+                {
+                    var placeholder = $"\u0001{idx}\u0001";
+                    idx++;
+                    result = result.Replace(dotNetFmt, placeholder, 1);
+                    placeholders.Add((placeholder, DotNetToChrono[dotNetFmt]));
+                }
+            }
+
+            foreach (var (placeholder, chronoFmt) in placeholders)
+            {
+                result = result.Replace(placeholder, chronoFmt);
+            }
+
+            return result;
+        }
+
+        private static int GetIsoWeek(DateTime date)
+        {
+            return CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
+                date, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+        }
+
+        private static int GetIsoYear(DateTime date)
+        {
+            int week = GetIsoWeek(date);
+            if (week == 1 && date.Month == 12)
+                return date.Year + 1;
+            if (week >= 52 && date.Month == 1)
+                return date.Year - 1;
+            return date.Year;
         }
     }
 }

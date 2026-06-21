@@ -279,7 +279,9 @@
             if (await dialogService.DisplayConfirmAsync(localizationService.GetString("Warning"), localizationService.GetString("ImportWarningMessage"), localizationService.GetString("Proceed"), localizationService.GetString("Nevermind")))
             {
                 int skips = 0;
+                var skipDetails = new List<string>();
                 DictWrapper localDict;
+                string baseDir = null;
                 if (await dialogService.DisplayConfirmAsync(localizationService.GetString("ChooseFormat"), localizationService.GetString("SelectYmlIfEspansoConfigFull"), "Json", "Yml"))
                 {
                     var result = await FilePicker.PickAsync(new PickOptions
@@ -300,42 +302,10 @@
                         .WithNamingConvention(UnderscoredNamingConvention.Instance).IgnoreUnmatchedProperties()
                         .Build();
                     using TextReader tr = new StreamReader(strm);
-                    localDict = deserializer.Deserialize<DictWrapper>(tr); // I hate yaml smhhhhhhhhhhhhhhh
+                    localDict = deserializer.Deserialize<DictWrapper>(tr);
+                    baseDir = Path.GetDirectoryName(result?.FullPath);
                 }
-                foreach (var item in localDict.Matches)
-                {
-                    if (item.Vars is not null)
-                    {
-                        bool notSupported = item.Replace is null;
-                        foreach (var x in item.Vars)
-                        {
-                            if (x.Type is not null)
-                            {
-                                if (!AppSettings.SupportedList.Contains(x.Type))
-                                {
-                                    skips++;
-                                    notSupported = true;
-                                    break;
-                                }
-                                else if (x.Type == "date")
-                                {
-                                    try
-                                    {
-                                        x.Params.Format = GetTheRealFormat(x.Params.Format);
-                                    }
-                                    catch (Exception)
-                                    {
-                                        throw new Exception(localizationService.GetString("DateExtensionParameterFormatsError"));
-                                    }
-                                }
-                            }
-                        }
-                        if (notSupported)
-                            continue;
-                    }
-                    dict[item.Trigger] = item;
-                    SendMessage("Add", item);
-                }
+                ProcessImport(localDict, baseDir, ref skips, skipDetails, isRoot: true);
                 if (localDict.Global_vars is not null)
                 {
                     globalVars.AddRange(localDict.Global_vars);
@@ -343,12 +313,103 @@
                     await File.WriteAllTextAsync(AppSettings.GlobalVarsPath, str);
                     WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(globalVars));
                 }
-                await dialogService.DisplayConfirmAsync(localizationService.GetString("ImportSuccessful"), string.Format(localizationService.GetString("ImportSuccessfulMessage"), skips));
+                await SaveDictAsync();
+                var msg = string.Format(localizationService.GetString("ImportSuccessfulMessage"), skips);
+                if (skipDetails.Count > 0)
+                    msg += "\n" + string.Join("\n", skipDetails);
+                await dialogService.DisplayConfirmAsync(localizationService.GetString("ImportSuccessful"), msg);
             }
         }
         catch (Exception e)
         {
             await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), localizationService.GetString("RestartAppToEnsureSync") + e.Message);
+        }
+    }
+
+    private void ProcessImport(DictWrapper localDict, string baseDir, ref int skips, List<string> skipDetails, bool isRoot, int depth = 0)
+    {
+        if (depth > 5 || localDict?.Matches is null)
+            return;
+
+        foreach (var item in localDict.Matches)
+        {
+            if (item.Vars is not null)
+            {
+                bool notSupported = item.Replace is null;
+                string skipReason = null;
+                foreach (var x in item.Vars)
+                {
+                    if (x.Type is not null)
+                    {
+                        if (!AppSettings.SupportedList.Contains(x.Type))
+                        {
+                            skips++;
+                            notSupported = true;
+                            skipReason = $"{item.Trigger ?? "?"}: unsupported var type '{x.Type}'";
+                            break;
+                        }
+                        else if (x.Type == "date")
+                        {
+                            try
+                            {
+                                x.Params.Format = Utils.GetTheRealFormat(x.Params.Format);
+                            }
+                            catch (Exception)
+                            {
+                                throw new Exception(localizationService.GetString("DateExtensionParameterFormatsError"));
+                            }
+                        }
+                    }
+                }
+                if (notSupported)
+                {
+                    if (skipReason is not null)
+                        skipDetails.Add(skipReason);
+                    continue;
+                }
+            }
+            // Expand triggers (multi-trigger) into separate entries
+            if (item.Triggers is not null && item.Triggers.Count > 0)
+            {
+                foreach (var t in item.Triggers)
+                {
+                    var clone = new Match(item) { Trigger = t };
+                    dict[t] = clone;
+                    SendMessage("Add", clone);
+                }
+            }
+            else if (!string.IsNullOrEmpty(item.Trigger))
+            {
+                dict[item.Trigger] = item;
+                SendMessage("Add", item);
+            }
+            else if (!string.IsNullOrEmpty(item.Regex))
+            {
+                dict[$"__regex_{item.Regex}"] = item;
+                SendMessage("Add", item);
+            }
+        }
+
+        // Recursively resolve imports (YAML only, relative to baseDir)
+        if (isRoot && localDict.Imports is not null && baseDir is not null)
+        {
+            foreach (var importPath in localDict.Imports)
+            {
+                try
+                {
+                    var fullPath = Path.Combine(baseDir, importPath);
+                    if (File.Exists(fullPath))
+                    {
+                        var yamlText = File.ReadAllText(fullPath);
+                        var deserializer = new DeserializerBuilder()
+                            .WithNamingConvention(UnderscoredNamingConvention.Instance).IgnoreUnmatchedProperties()
+                            .Build();
+                        var imported = deserializer.Deserialize<DictWrapper>(yamlText);
+                        ProcessImport(imported, Path.GetDirectoryName(fullPath), ref skips, skipDetails, isRoot: false, depth: depth + 1);
+                    }
+                }
+                catch (Exception) { }
+            }
         }
     }
     private async Task ExportAsync()
@@ -373,7 +434,7 @@
                         {
                             if (x.Type == "date")
                             {
-                                x.Params.Format = GetOriginalFormat(x.Params.Format);
+                                x.Params.Format = Utils.GetOriginalFormat(x.Params.Format);
                             }
                         }
                     }
@@ -392,6 +453,7 @@
                     .WithNamingConvention(UnderscoredNamingConvention.Instance)
                     .Build();
                 text = serializer.Serialize(dictWrapper);
+                text = "# yaml-language-server: $schema=https://raw.githubusercontent.com/espanso/espanso/master/schemas/match.schema.json\n" + text;
                 name = "ttconfig.yml";
             }
             if (OperatingSystem.IsAndroidVersionAtLeast(33))
@@ -420,7 +482,7 @@
         Var copy = new(currentVar) { Params = new(currentVar.Params) };
         if (!string.IsNullOrEmpty(copy.Params.Format))
         {
-            copy.Params.Format = GetTheRealFormat(copy.Params.Format);
+            copy.Params.Format = Utils.GetTheRealFormat(copy.Params.Format);
         }
         currentMatch.Vars.Add(copy);
     }
@@ -519,55 +581,6 @@
     {
         WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Quit", null)));
         Application.Current.Quit();
-    }
-
-    private static string GetTheRealFormat(string format)
-    {
-        format = format.Replace("%Y", "yyyy");
-        format = format.Replace("%m", "MM");
-        format = format.Replace("%b", "MMM");
-        format = format.Replace("%B", "MMMM");
-        format = format.Replace("%h", "MMM");
-        format = format.Replace("%d", "dd");
-        format = format.Replace("%e", "d");
-        format = format.Replace("%a", "ddd");
-        format = format.Replace("%A", "dddd");
-        format = format.Replace("%j", DateTime.Now.DayOfYear.ToString());
-        format = format.Replace("%w", DateTime.Now.DayOfWeek.ToString());
-        format = format.Replace("%u", (DateTime.Now.DayOfWeek + 1).ToString());
-        format = format.Replace("%D", "MM/dd/yyyy");
-        format = format.Replace("%F", "yyyy/MM/dd");
-        format = format.Replace("%H", "HH");
-        format = format.Replace("%I", "hh");
-        format = format.Replace("%p", "tt");
-        format = format.Replace("%M", "mm");
-        format = format.Replace("%S", "ss");
-        format = format.Replace("%R", "HH:mm");
-        format = format.Replace("%T", "HH:mm:ss");
-        format = format.Replace("%r", "hh:mm:ss tt");
-        return format;
-    }
-    private static string GetOriginalFormat(string format)
-    {
-        format = format.Replace("yyyy", "%Y");
-        format = format.Replace("MM", "%m");
-        format = format.Replace("MMM", "%b");
-        format = format.Replace("MMMM", "%B");
-        format = format.Replace("dd", "%d");
-        format = format.Replace("d", "%e");
-        format = format.Replace("ddd", "%a");
-        format = format.Replace("dddd", "%A");
-        format = format.Replace("MM/dd/yyyy", "%D");
-        format = format.Replace("yyyy/MM/dd", "%F");
-        format = format.Replace("HH", "%H");
-        format = format.Replace("hh", "%I");
-        format = format.Replace("tt", "%p");
-        format = format.Replace("mm", "%M");
-        format = format.Replace("ss", "%S");
-        format = format.Replace("HH:mm", "%R");
-        format = format.Replace("HH:mm:ss", "%T");
-        format = format.Replace("hh:mm:ss tt", "%r");
-        return format;
     }
 
     private void EditItem(KeyValuePair<string, Match> item)

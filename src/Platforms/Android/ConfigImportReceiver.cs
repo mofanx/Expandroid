@@ -53,6 +53,7 @@ public class ConfigImportReceiver : BroadcastReceiver
                                     if (!AppSettings.SupportedList.Contains(x.Type))
                                     {
                                         notSupported = true;
+                                        Android.Util.Log.Warn("ConfigImport", $"Skipped match '{item.Trigger}': unsupported var type '{x.Type}'");
                                         break;
                                     }
                                     else if (x.Type == "date")
@@ -69,7 +70,11 @@ public class ConfigImportReceiver : BroadcastReceiver
                                 }
                             }
                             if (notSupported)
+                            {
+                                if (item.Replace is null)
+                                    Android.Util.Log.Warn("ConfigImport", $"Skipped match '{item.Trigger}': missing replace field");
                                 continue;
+                            }
                         }
                     }
                     if (localDict.Global_vars is not null)
@@ -81,7 +86,22 @@ public class ConfigImportReceiver : BroadcastReceiver
                     Dictionary<string, Match> dict = new();
                     foreach (var match in localDict.Matches)
                     {
-                        dict.Add(match.Trigger, match);
+                        if (match.Triggers is not null && match.Triggers.Count > 0)
+                        {
+                            foreach (var t in match.Triggers)
+                            {
+                                var clone = new Match(match) { Trigger = t };
+                                dict[t] = clone;
+                            }
+                        }
+                        else if (!string.IsNullOrEmpty(match.Trigger))
+                        {
+                            dict[match.Trigger] = match;
+                        }
+                        else if (!string.IsNullOrEmpty(match.Regex))
+                        {
+                            dict[$"__regex_{match.Regex}"] = match;
+                        }
                     }
                     var jsonStr = JsonSerializer.Serialize(dict);
                     File.WriteAllText(AppSettings.DictPath, jsonStr);

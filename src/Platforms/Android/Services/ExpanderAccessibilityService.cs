@@ -15,8 +15,8 @@ using Microsoft.Maui.ApplicationModel.DataTransfer;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text.Json;
-using Android.Views.Accessibility;
-using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 [Service(Exported = false, Label = "Expandroid", Permission = Manifest.Permission.BindAccessibilityService)]
 [IntentFilter(["android.accessibilityservice.AccessibilityService"])]
@@ -24,6 +24,7 @@ using System.Collections.Concurrent;
 public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.View.IOnTouchListener
 {
     private Dictionary<string, Match> dict;
+    private Dictionary<Regex, Match> regexDict;
     private List<Var> globals;
     private readonly Bundle CursorArgs = new();
     private readonly Bundle TextArgs = new();
@@ -31,7 +32,8 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
     private WindowManagerLayoutParams layoutParams;
     private Android.Views.View floatView;
     private IWindowManager windowManager;
-    private static readonly string[] _separators = [" ", "\n", "\r\n", " ,"];
+    private static readonly string[] _separators = [" ", "\n", "\r\n", ","];
+    private static readonly HashSet<char> _wordSeparators = [' ', '\n', '\r', '\t', ','];
     private static readonly string[] _formSeparators = [" ", "|", "\r\n", "\n"];
     private static readonly string[] _lineSeparators = ["\r\n", "\n"];
     private float xDown, yDown;
@@ -47,6 +49,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
     {
         base.OnCreate();
         dict = new();
+        regexDict = new();
         WeakReferenceMessenger.Default.Register<AcServiceMessage>(this, (r, m) =>
         {
             var cmd = m.Value.Item1;
@@ -55,9 +58,16 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             {
                 if (!string.IsNullOrEmpty(item.Form) || !(string.IsNullOrEmpty(item.Trigger) || string.IsNullOrEmpty(item.Replace)))
                 {
-                    //dict.AddOrUpdate(item.Trigger, item,
-                    //(key, oldValue) => item);
                     dict[item.Trigger] = item;
+                }
+                if (!string.IsNullOrEmpty(item.Regex))
+                {
+                    try
+                    {
+                        var regex = new Regex(item.Regex, RegexOptions.Compiled);
+                        regexDict[regex] = item;
+                    }
+                    catch (Exception) { }
                 }
             }
             else if (cmd == "Quit")
@@ -67,6 +77,12 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             else if (cmd is not "_")
             {
                 dict.Remove(item.Trigger, out var _);
+                if (!string.IsNullOrEmpty(item.Regex))
+                {
+                    var toRemove = regexDict.Where(kvp => kvp.Value.Regex == item.Regex).Select(kvp => kvp.Key).ToList();
+                    foreach (var key in toRemove)
+                        regexDict.Remove(key);
+                }
             }
         });
         WeakReferenceMessenger.Default.Register<AcGlobalsMessage>(this, (r, m) =>
@@ -79,6 +95,14 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             {
                 using var stream = File.OpenRead(AppSettings.DictPath);
                 dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(stream);
+                foreach (var item in dict.Values)
+                {
+                    if (!string.IsNullOrEmpty(item.Regex))
+                    {
+                        try { regexDict[new Regex(item.Regex, RegexOptions.Compiled)] = item; }
+                        catch (Exception) { }
+                    }
+                }
             }
             else
                 dict = new();
@@ -328,22 +352,23 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             {
                 string replace = match.Replace;
                 var triggerIndex = expansionStr.IndexOf(text);
-                // echo, random, clipboard and date only supported
-                if (match.Word)
+                // word / left_word / right_word boundary checks
+                if (match.Word || match.LeftWord || match.RightWord)
                 {
-                    //check the start
-                    if (triggerIndex == 0)
+                    bool leftOk = true, rightOk = true;
+                    if (match.Word || match.LeftWord)
                     {
-                        if (!_separators.Contains(expansionStr[triggerIndex + text.Length].ToString()))
-                        {
-                            return;
-                        }
+                        if (triggerIndex > 0)
+                            leftOk = _wordSeparators.Contains(expansionStr[triggerIndex - 1]);
                     }
-                    //check the start and end
-                    else if (!_separators.Contains(expansionStr[triggerIndex - 1].ToString()) || !_separators.Contains(expansionStr[triggerIndex + text.Length].ToString()))
+                    if (match.Word || match.RightWord)
                     {
+                        int afterIdx = triggerIndex + text.Length;
+                        if (afterIdx < expansionStr.Length)
+                            rightOk = _wordSeparators.Contains(expansionStr[afterIdx]);
+                    }
+                    if (!leftOk || !rightOk)
                         return;
-                    }
                 }
                 if (!string.IsNullOrEmpty(match.Form))
                 {
@@ -474,9 +499,42 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
                     }
                     if (replace is not null)
                     {
+                        if (match.PropagateCase)
+                            replace = ApplyPropagateCase(text, replace, match.UppercaseStyle);
                         var end = expansionStr[triggerIndex..].Replace(text, replace);
                         expansionStr = expansionStr[..triggerIndex] + end;
                         send = true;
+                    }
+                }
+            }
+            else if (regexDict.Count > 0)
+            {
+                foreach (var (regex, match) in regexDict)
+                {
+                    var m = regex.Match(expansionStr);
+                    if (m.Success)
+                    {
+                        string replace = match.Replace;
+                        var triggerIndex = m.Index;
+                        var matchedText = m.Value;
+                        if (globals is not null)
+                        {
+                            foreach (var item in globals)
+                                replace = await ParseItemAsync(item, replace);
+                        }
+                        if (match.Vars is not null && match.Vars.Count > 0)
+                        {
+                            foreach (var item in match.Vars)
+                                replace = await ParseItemAsync(item, replace);
+                        }
+                        if (replace is not null)
+                        {
+                            if (match.PropagateCase)
+                                replace = ApplyPropagateCase(matchedText, replace, match.UppercaseStyle);
+                            expansionStr = expansionStr[..triggerIndex] + replace + expansionStr[(triggerIndex + matchedText.Length)..];
+                            send = true;
+                        }
+                        break;
                     }
                 }
             }
@@ -589,7 +647,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
         }
     }
 
-    private static async Task<string> ParseItemAsync(Var item, string replace)
+    private async Task<string> ParseItemAsync(Var item, string replace)
     {
         try
         {
@@ -616,6 +674,15 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
                         var date = (DateTime.Now + TimeSpan.FromSeconds(param.Offset)).ToString(param.Format);
                         replace = replace.Replace(WrapName(item.Name), date);
                         break;
+                    case "choice":
+                        var values = item.Params.Values ?? item.Params.Choices;
+                        if (values is not null && values.Count > 0)
+                        {
+                            var selected = await ShowChoiceSelectionAsync(item.Name, values);
+                            if (selected is not null)
+                                replace = replace.Replace(WrapName(item.Name), selected);
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -630,6 +697,87 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
     private static string WrapName(string name)
     {
         return "{{" + name + "}}";
+    }
+
+    private Task<string> ShowChoiceSelectionAsync(string varName, List<string> values)
+    {
+        var tcs = new TaskCompletionSource<string>();
+        var handler = new Android.OS.Handler(Android.OS.Looper.MainLooper);
+        handler.Post(() =>
+        {
+            try
+            {
+                var container = new LinearLayout(BaseContext)
+                {
+                    Orientation = Orientation.Vertical
+                };
+                var title = new TextView(BaseContext) { Text = varName };
+                title.SetPadding(24, 16, 24, 8);
+                container.AddView(title);
+
+                var listView = new Android.Widget.ListView(BaseContext);
+                var adapter = new ArrayAdapter<string>(BaseContext, Android.Resource.Layout.SimpleListItem1, values);
+                listView.Adapter = adapter;
+                listView.ItemClick += (sender, e) =>
+                {
+                    windowManager.RemoveView(container);
+                    tcs.TrySetResult(values[e.Position]);
+                };
+                container.AddView(listView);
+
+                var cancelButton = new Android.Widget.Button(BaseContext) { Text = "Cancel" };
+                cancelButton.Click += (sender, e) =>
+                {
+                    windowManager.RemoveView(container);
+                    tcs.TrySetResult(null);
+                };
+                container.AddView(cancelButton);
+
+                var choiceLayoutParams = new WindowManagerLayoutParams
+                {
+                    Type = WindowManagerTypes.AccessibilityOverlay,
+                    Format = Format.Translucent,
+                    Width = ViewGroup.LayoutParams.WrapContent,
+                    Height = ViewGroup.LayoutParams.WrapContent,
+                    Gravity = GravityFlags.Center
+                };
+                windowManager.AddView(container, choiceLayoutParams);
+            }
+            catch (Exception)
+            {
+                tcs.TrySetResult(null);
+            }
+        });
+        return tcs.Task;
+    }
+
+    private static string ApplyPropagateCase(string trigger, string replace, string uppercaseStyle)
+    {
+        if (string.IsNullOrEmpty(replace))
+            return replace;
+
+        var style = uppercaseStyle ?? "uppercase";
+        bool isAllUpper = trigger.All(c => !char.IsLetter(c) || char.IsUpper(c));
+
+        var firstLetter = trigger.FirstOrDefault(char.IsLetter);
+        bool isCapitalized = firstLetter != '\0' && char.IsUpper(firstLetter) &&
+                             trigger.Where(char.IsLetter).Skip(1).Any(char.IsLower);
+
+        if (isAllUpper)
+        {
+            return style switch
+            {
+                "capitalize" => string.Join(" ", replace.Split(' ').Select(w => w.Length > 0 ? char.ToUpper(w[0]) + w[1..] : w)),
+                "capitalize_words" => string.Join(" ", replace.Split(' ').Select(w => w.Length > 0 ? char.ToUpper(w[0]) + w[1..] : w)),
+                _ => replace.ToUpper(),
+            };
+        }
+        else if (isCapitalized)
+        {
+            if (replace.Length > 0)
+                return char.ToUpper(replace[0]) + (replace.Length > 1 ? replace[1..] : "");
+        }
+        return replace;
     }
     public override void OnInterrupt()
     {

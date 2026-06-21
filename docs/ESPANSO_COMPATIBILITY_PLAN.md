@@ -57,16 +57,18 @@ Expandroid 是 Android 端的 espanso 兼容文本扩展器，通过 Android Acc
 
 ## 实施计划
 
+> **实施状态**：所有阶段均已实现。以下标注各任务的实际完成情况。
+
 ### 阶段一：模型扩展与导入改进（高优先级）
 
-#### 1.1 扩展 `Match` 模型支持 `triggers` 多触发词
+#### 1.1 扩展 `Match` 模型支持 `triggers` 多触发词 ✅ 已完成
 
 **目标**：导入 espanso YAML 时，`triggers: [":a", ":b"]` 能正确展开为多个条目。
 
 **改动文件**：
-- `src/Models/DictWrapper.cs` — 添加 `Triggers` 字段
-- `src/Platforms/Android/ConfigImportReceiver.cs` — 导入时将 `triggers` 展开为多个 Match
-- `src/Pages/Index.razor` — 导入逻辑同步处理
+- `src/Models/DictWrapper.cs` — 添加 `Triggers` 字段 ✅
+- `src/Platforms/Android/ConfigImportReceiver.cs` — 导入时将 `triggers` 展开为多个 Match ✅
+- `src/Pages/Index.razor` — 导入逻辑同步处理 ✅
 
 **实施方案**：
 ```
@@ -84,13 +86,13 @@ DictWrapper.Match 添加:
 
 **验证**：导入包含 `triggers` 的 YAML 文件，确认每个触发词都能正确触发扩展。
 
-#### 1.2 支持 `imports` 跨文件引用
+#### 1.2 支持 `imports` 跨文件引用 ✅ 已完成（ConfigImportReceiver 除外）
 
 **目标**：导入 espanso 配置时，递归解析 `imports` 字段引用的其他 YAML 文件。
 
 **改动文件**：
-- `src/Platforms/Android/ConfigImportReceiver.cs` — 递归解析 imports
-- `src/Pages/Index.razor` — 导入逻辑同步处理
+- `src/Platforms/Android/ConfigImportReceiver.cs` — ⚠️ 未处理（通过 Intent 字符串接收配置，无文件路径上下文，属合理限制）
+- `src/Pages/Index.razor` — 递归解析 imports ✅
 
 **实施方案**：
 - 导入单个 YAML 文件时，读取 `imports` 列表
@@ -100,13 +102,13 @@ DictWrapper.Match 添加:
 
 **限制**：Android 文件系统权限限制下，只能解析应用可访问的路径。
 
-#### 1.3 完善 `left_word` / `right_word` 支持
+#### 1.3 完善 `left_word` / `right_word` 支持 ✅ 已完成
 
 **目标**：支持 espanso 的精细词边界匹配。
 
 **改动文件**：
-- `src/Models/DictWrapper.cs` — 添加 `LeftWord` / `RightWord` 字段
-- `src/Platforms/Android/Services/ExpanderAccessibilityService.cs` — 修改 `HandleTextExpansionAsync` 中的词边界检查
+- `src/Models/DictWrapper.cs` — 添加 `LeftWord` / `RightWord` 字段 ✅
+- `src/Platforms/Android/Services/ExpanderAccessibilityService.cs` — 修改 `HandleTextExpansionAsync` 中的词边界检查 ✅（使用 `HashSet<char>` 单字符检查）
 
 **实施方案**：
 ```
@@ -127,14 +129,14 @@ HandleTextExpansionAsync 中替换现有 word 逻辑:
 
 ### 阶段二：变量类型扩展（中优先级）
 
-#### 2.1 支持 `choice` 变量类型
+#### 2.1 支持 `choice` 变量类型 ✅ 已完成
 
 **目标**：独立 `choice` 变量类型弹出选择列表，复用现有 form 的 choice UI 逻辑。
 
 **改动文件**：
-- `src/Models/AppSettings.cs` — 将 `choice` 加入 `SupportedList`
-- `src/Models/DictWrapper.cs` — `Params` 添加 `Values` 字段（支持字符串和数组两种形式）
-- `src/Platforms/Android/Services/ExpanderAccessibilityService.cs` — `ParseItemAsync` 添加 `choice` case
+- `src/Models/AppSettings.cs` — 将 `choice` 加入 `SupportedList` ✅
+- `src/Models/DictWrapper.cs` — `Params` 添加 `Values` 字段 ✅
+- `src/Platforms/Android/Services/ExpanderAccessibilityService.cs` — `ParseItemAsync` 添加 `choice` case ✅（弹出浮动选择窗口 `ShowChoiceSelectionAsync`）
 
 **实施方案**：
 - `choice` 变量的 `params.values` 可以是换行分隔的字符串或数组
@@ -146,12 +148,12 @@ HandleTextExpansionAsync 中替换现有 word 逻辑:
 2. 显示浮动窗口 + 选项列表
 3. 用户选择 → 继续后续变量解析 → 完成扩展
 
-#### 2.2 修复日期格式转换
+#### 2.2 修复日期格式转换 ✅ 已完成
 
 **目标**：`GetTheRealFormat` 正确覆盖所有常用 chrono 格式说明符，且替换顺序不产生冲突。
 
 **改动文件**：
-- `src/Models/Utils.cs` — 重写 `GetTheRealFormat` 和 `GetOriginalFormat`
+- `src/Models/Utils.cs` — 重写 `GetTheRealFormat` 和 `GetOriginalFormat` ✅
 
 **实施方案**：
 - 使用 token 化方式而非简单字符串替换：先用占位符标记所有 `%X` 模式，再逐个替换为 .NET 等价格式
@@ -177,22 +179,29 @@ HandleTextExpansionAsync 中替换现有 word 逻辑:
 | `%p` | `tt` | AM/PM |
 | `%M` | `mm` | 分钟 |
 | `%S` | `ss` | 秒 |
-| `%y` | `yy` | 2位年份（**需添加**） |
-| `%n` | `\n` | 换行（**需添加**） |
-| `%t` | `\t` | 制表符（**需添加**） |
-| `%%` | `%` | 百分号字面量（**需添加**） |
+| `%y` | `yy` | 2位年份（**已添加**） |
+| `%n` | `\n` | 换行（**已添加**） |
+| `%t` | `\t` | 制表符（**已添加**） |
+| `%%` | `%` | 百分号字面量（**已添加**） |
+| `%N` | `fffffff` | 纳秒（**已添加**） |
+| `%z` | `zzz` | 时区偏移（**已添加**） |
+| `%Z` | 时区名 | 时区名称（**已添加**，直接求值） |
+| `%C` | 世纪 | 世纪数（**已添加**，直接求值） |
+| `%G` | ISO 年 | ISO 8601 年（**已添加**，直接求值） |
+| `%V` | ISO 周 | ISO 8601 周数（**已添加**，直接求值） |
+| `%u` | ISO 星期 | ISO 1-7（**已添加**，直接求值） |
 
 ---
 
 ### 阶段三：大小写传播（中优先级）
 
-#### 3.1 实现 `propagate_case` / `uppercase_style`
+#### 3.1 实现 `propagate_case` / `uppercase_style` ✅ 已完成
 
 **目标**：当触发词全大写或首字母大写时，替换文本也相应变换大小写。
 
 **改动文件**：
-- `src/Models/DictWrapper.cs` — 添加 `PropagateCase` / `UppercaseStyle` 字段
-- `src/Platforms/Android/Services/ExpanderAccessibilityService.cs` — 在 `HandleTextExpansionAsync` 中替换前应用大小写变换
+- `src/Models/DictWrapper.cs` — 添加 `PropagateCase` / `UppercaseStyle` 字段 ✅
+- `src/Platforms/Android/Services/ExpanderAccessibilityService.cs` — 在 `HandleTextExpansionAsync` 中替换前应用大小写变换 ✅
 
 **实施方案**：
 ```
@@ -217,12 +226,12 @@ HandleTextExpansionAsync 中:
 
 ### 阶段四：导出改进与双向兼容（低优先级）
 
-#### 4.1 导出为 espanso 兼容 YAML
+#### 4.1 导出为 espanso 兼容 YAML ✅ 已完成
 
 **目标**：导出的 YAML 文件能被 espanso 桌面版直接导入使用。
 
 **改动文件**：
-- `src/Pages/Index.razor` — `ExportAsync` 中 YAML 序列化逻辑
+- `src/Pages/Index.razor` — `ExportAsync` 中 YAML 序列化逻辑 ✅
 
 **实施方案**：
 - 导出时使用 espanso 的字段命名约定（`snake_case`，已通过 `UnderscoredNamingConvention` 实现）
@@ -230,25 +239,25 @@ HandleTextExpansionAsync 中:
 - 日期格式导出时调用 `GetOriginalFormat` 转回 chrono 格式
 - 添加 `yaml-language-server` schema 注释行
 
-#### 4.2 导入时保留不支持的字段
+#### 4.2 导入时保留不支持的字段 ✅ 已完成
 
 **目标**：导入 espanso 配置时，不支持的变量类型（如 `shell`、`script`）的 match 被跳过而非导致错误，同时保留原始信息以便用户参考。
 
 **实施方案**：
-- 在导入日志中记录被跳过的 match 及原因
-- 可选：在 UI 中显示导入摘要（成功 N 条，跳过 M 条，原因列表）
+- 在导入日志中记录被跳过的 match 及原因 ✅（`Index.razor` 显示摘要，`ConfigImportReceiver.cs` 输出 `Log.Warn`）
+- 可选：在 UI 中显示导入摘要（成功 N 条，跳过 M 条，原因列表）✅
 
 ---
 
 ### 阶段五：正则触发器（探索性，低优先级）
 
-#### 5.1 支持 `regex` 触发器
+#### 5.1 支持 `regex` 触发器 ✅ 已完成
 
 **目标**：支持 espanso 的正则表达式触发器。
 
 **改动文件**：
-- `src/Models/DictWrapper.cs` — 添加 `Regex` 字段
-- `src/Platforms/Android/Services/ExpanderAccessibilityService.cs` — 在 `HandleTextExpansionAsync` 中添加正则匹配逻辑
+- `src/Models/DictWrapper.cs` — 添加 `Regex` 字段 ✅
+- `src/Platforms/Android/Services/ExpanderAccessibilityService.cs` — 在 `HandleTextExpansionAsync` 中添加正则匹配逻辑 ✅
 
 **实施方案**：
 - 存储 regex 触发的 match 在单独的 `Dictionary<Regex, Match>` 中
@@ -280,11 +289,11 @@ HandleTextExpansionAsync 中:
 
 ## 验证策略
 
-### 单元测试
+### 单元测试 ❌ 未实现
 - `Utils.GetTheRealFormat` / `GetOriginalFormat`：覆盖所有 chrono 格式说明符的往返测试
 - `DictWrapper` YAML 序列化/反序列化：使用 espanso 示例配置文件验证
 
-### 集成测试
+### 集成测试 ❌ 未实现
 - 导入 espanso 官方示例配置（`espanso/src/res/config/base.yml`）验证兼容性
 - 导入包含 `triggers`、`imports`、`vars`（各类型）的完整配置文件
 - 导出 YAML 后用 espanso 的 JSON Schema（`schemas/match.schema.json`）验证

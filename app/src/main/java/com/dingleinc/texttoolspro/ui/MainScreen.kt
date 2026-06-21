@@ -183,13 +183,13 @@ private fun TextExpanderContent(
     ) {
         OutlinedTextField(
             value = currentMatch.trigger ?: "",
-            onValueChange = { currentMatch.trigger = it; viewModel.updateCurrentMatch(currentMatch) },
+            onValueChange = { viewModel.updateCurrentMatch(currentMatch.copy(trigger = it)) },
             label = { Text(stringResource(R.string.key)) },
             modifier = Modifier.weight(1f)
         )
         OutlinedTextField(
             value = currentMatch.replace ?: "",
-            onValueChange = { currentMatch.replace = it; viewModel.updateCurrentMatch(currentMatch) },
+            onValueChange = { viewModel.updateCurrentMatch(currentMatch.copy(replace = it)) },
             label = { Text(stringResource(R.string.value)) },
             modifier = Modifier.weight(1f)
         )
@@ -233,7 +233,7 @@ private fun TextExpanderContent(
     ) {
         Checkbox(
             checked = currentMatch.word,
-            onCheckedChange = { currentMatch.word = it; viewModel.updateCurrentMatch(currentMatch) }
+            onCheckedChange = { viewModel.updateCurrentMatch(currentMatch.copy(word = it)) }
         )
         Text(stringResource(R.string.word))
     }
