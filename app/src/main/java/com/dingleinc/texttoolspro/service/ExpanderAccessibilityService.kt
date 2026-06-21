@@ -374,9 +374,8 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                             }
                             else -> {
                                 row.post {
-                                    val et = EditText(context).apply {
-                                        hint = placeholderStr
-                                    }
+                                    val et = EditText(context)
+                                    et.setHint(placeholderStr)
                                     et.addTextChangedListener(object : android.text.TextWatcher {
                                         override fun afterTextChanged(s: android.text.Editable?) {
                                             replaceDict[placeholderStr] = s.toString()
@@ -398,7 +397,8 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
             rowContainer?.post { rowContainer?.addView(row) }
         }
 
-        val submitButton = Button(context).apply { text = "Submit" }
+        val submitButton = Button(context)
+        submitButton.setText("Submit")
         submitButton.setOnClickListener {
             var formText = match.form!!
             replaceDict.forEach { (key, value) ->
@@ -444,7 +444,9 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
 
     private fun addTextView(row: LinearLayout, word: String) {
         row.post {
-            row.addView(TextView(this).apply { text = word })
+            val tv = TextView(this)
+            tv.setText(word)
+            row.addView(tv)
         }
     }
 
