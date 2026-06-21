@@ -1,5 +1,5 @@
 @inject ILocalizationService localizationService
-@inject IDialogService dialogService
+@inject Expandroid.Services.IDialogService dialogService
 @inject ISnackbar Snackbar
 
 <MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[0].Length" Label="@localizationService.GetString("Text1")" Variant="Variant.Text" @bind-Value="@textList[0]" Lines="5" />
