@@ -1,0 +1,30 @@
+@using Expandroid.Services
+@inject ILocalizationService LocalizationService
+
+<MudSelect T="string" Label="@LocalizationService.GetString("Language")" Value="@currentLanguage" ValueChanged="ChangeLanguage" Variant="Variant.Outlined">
+    @foreach (var language in LocalizationService.GetAvailableLanguages())
+    {
+        <MudSelectItem T="string" Value="@language.Code">@language.NativeName</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    private string currentLanguage = "en";
+
+    protected override void OnInitialized()
+    {
+        currentLanguage = LocalizationService.CurrentCulture.Name.StartsWith("zh") ? "zh" : "en";
+        LocalizationService.OnLanguageChanged += StateHasChanged;
+    }
+
+    private void ChangeLanguage(string language)
+    {
+        currentLanguage = language;
+        LocalizationService.SetCulture(language);
+    }
+
+    public void Dispose()
+    {
+        LocalizationService.OnLanguageChanged -= StateHasChanged;
+    }
+}

@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Expandroid</value>
+  </data>
+  <data name="TextExpanderTab" xml:space="preserve">
+    <value>Text Expander (Accessibility Service)</value>
+  </data>
+  <data name="AccessibilityPermissionMessage" xml:space="preserve">
+    <value>Please provide access to the AccessibilityServices API in order to use this feature. Data collected through the API never leaves your device. Providing access will give our accessibility service the ability to replace the keywords you set up with the expanded text, whenever you type on an EditText widget, both inside and outside our app!</value>
+  </data>
+  <data name="ConsentAndOpenSettings" xml:space="preserve">
+    <value>Consent And Open Settings</value>
+  </data>
+  <data name="MakeSureToSave" xml:space="preserve">
+    <value>Make sure to save!</value>
+  </data>
+  <data name="Import" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="ForceQuitApp" xml:space="preserve">
+    <value>Force Quit App</value>
+  </data>
+  <data name="Keywords" xml:space="preserve">
+    <value>Keywords</value>
+  </data>
+  <data name="Key" xml:space="preserve">
+    <value>Key</value>
+  </data>
+  <data name="Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="Variables" xml:space="preserve">
+    <value>Variables:</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Word" xml:space="preserve">
+    <value>Word</value>
+  </data>
+  <data name="Templates" xml:space="preserve">
+    <value>Templates</value>
+  </data>
+  <data name="DateToday" xml:space="preserve">
+    <value>Date today</value>
+  </data>
+  <data name="AddVariable" xml:space="preserve">
+    <value>Add variable</value>
+  </data>
+  <data name="DateYesterday" xml:space="preserve">
+    <value>Date yesterday</value>
+  </data>
+  <data name="DateTomorrow" xml:space="preserve">
+    <value>Date tomorrow</value>
+  </data>
+  <data name="TimeNow" xml:space="preserve">
+    <value>Time now</value>
+  </data>
+  <data name="AddSelectionCursor" xml:space="preserve">
+    <value>Add selection cursor</value>
+  </data>
+  <data name="AddCursor" xml:space="preserve">
+    <value>Add cursor</value>
+  </data>
+  <data name="AdvancedOptions" xml:space="preserve">
+    <value>Advanced options for espanso users</value>
+  </data>
+  <data name="VariableName" xml:space="preserve">
+    <value>Variable name</value>
+  </data>
+  <data name="VariableType" xml:space="preserve">
+    <value>Variable type</value>
+  </data>
+  <data name="Params" xml:space="preserve">
+    <value>Params</value>
+  </data>
+  <data name="Format" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="Echo" xml:space="preserve">
+    <value>Echo</value>
+  </data>
+  <data name="Offset" xml:space="preserve">
+    <value>Offset</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="English" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Chinese" xml:space="preserve">
+    <value>中文</value>
+  </data>
+  <data name="PageNotFound" xml:space="preserve">
+    <value>Sorry, there's nothing at this address.</value>
+  </data>
+  <data name="CaseSensitive" xml:space="preserve">
+    <value>Case sensitive</value>
+  </data>
+  <data name="IgnoreCase" xml:space="preserve">
+    <value>Ignore Case</value>
+  </data>
+  <data name="CompareLength" xml:space="preserve">
+    <value>Compare Length</value>
+  </data>
+  <data name="Strikethrough" xml:space="preserve">
+    <value>Strikethrough</value>
+  </data>
+  <data name="AddTimestamp" xml:space="preserve">
+    <value>Add timestamp</value>
+  </data>
+  <data name="PickADate" xml:space="preserve">
+    <value>Pick a date</value>
+  </data>
+  <data name="PickATime" xml:space="preserve">
+    <value>Pick a time</value>
+  </data>
+  <data name="ProcessOnTextNumber" xml:space="preserve">
+    <value>Process on text number</value>
+  </data>
+  <data name="IsTextEqual" xml:space="preserve">
+    <value>Is text equal</value>
+  </data>
+  <data name="ContainsTheWordSpecified" xml:space="preserve">
+    <value>Contains the word specified</value>
+  </data>
+  <data name="IsLengthEqual" xml:space="preserve">
+    <value>Is length equal</value>
+  </data>
+  <data name="Results" xml:space="preserve">
+    <value>Results</value>
+  </data>
+  <data name="ProcessCount" xml:space="preserve">
+    <value>Process count:</value>
+  </data>
+  <data name="LoadMore" xml:space="preserve">
+    <value>Load more</value>
+  </data>
+  <data name="ToggledSensitivity" xml:space="preserve">
+    <value>Toggled Sensitivity</value>
+  </data>
+  <data name="RestartAppForChanges" xml:space="preserve">
+    <value>Please restart the app (Force Quit) for changes to take effect!</value>
+  </data>
+  <data name="ChooseFormat" xml:space="preserve">
+    <value>Choose format!</value>
+  </data>
+  <data name="SelectYmlIfEspansoConfig" xml:space="preserve">
+    <value>Select yml if this is an espanso config</value>
+  </data>
+  <data name="EmptyValues" xml:space="preserve">
+    <value>Empty values</value>
+  </data>
+  <data name="FillOutRequiredParameters" xml:space="preserve">
+    <value>Fill out all required parameters.</value>
+  </data>
+  <data name="CouldNotDeleteItem" xml:space="preserve">
+    <value>Could not delete item</value>
+  </data>
+  <data name="DeleteItemBugMessage" xml:space="preserve">
+    <value>This is a known bug being worked on. Click the save button and then force quit: </value>
+  </data>
+  <data name="NeedConsent" xml:space="preserve">
+    <value>Need consent!</value>
+  </data>
+  <data name="GiveConsentMessage" xml:space="preserve">
+    <value>Please give consent for this app to use the AccessibilityService API</value>
+  </data>
+  <data name="IGiveConsent" xml:space="preserve">
+    <value>I give consent!</value>
+  </data>
+  <data name="CopiedText" xml:space="preserve">
+    <value>Copied Text</value>
+  </data>
+  <data name="CopiedTextMessage" xml:space="preserve">
+    <value>Copied the text :D</value>
+  </data>
+  <data name="Compare" xml:space="preserve">
+    <value>Compare</value>
+  </data>
+  <data name="Contains" xml:space="preserve">
+    <value>Contains</value>
+  </data>
+  <data name="Replace" xml:space="preserve">
+    <value>Replace</value>
+  </data>
+  <data name="ToUpper" xml:space="preserve">
+    <value>To Upper</value>
+  </data>
+  <data name="ToLower" xml:space="preserve">
+    <value>To Lower</value>
+  </data>
+  <data name="Basic" xml:space="preserve">
+    <value>Basic</value>
+  </data>
+  <data name="DiscordMarkdown" xml:space="preserve">
+    <value>Discord (& Markdown)</value>
+  </data>
+  <data name="Bold" xml:space="preserve">
+    <value>Bold</value>
+  </data>
+  <data name="Italic" xml:space="preserve">
+    <value>Italic</value>
+  </data>
+  <data name="Underline" xml:space="preserve">
+    <value>Underline</value>
+  </data>
+  <data name="Spoilers" xml:space="preserve">
+    <value>Spoilers</value>
+  </data>
+  <data name="CodeBlock" xml:space="preserve">
+    <value>Code Block</value>
+  </data>
+  <data name="Quote" xml:space="preserve">
+    <value>Quote</value>
+  </data>
+  <data name="ContainsWhat" xml:space="preserve">
+    <value>Contains what?</value>
+  </data>
+  <data name="ReplaceWith" xml:space="preserve">
+    <value>Replace with?</value>
+  </data>
+  <data name="Processing" xml:space="preserve">
+    <value>Processing</value>
+  </data>
+  <data name="CopyText1" xml:space="preserve">
+    <value>Copy text 1</value>
+  </data>
+  <data name="CopyText2" xml:space="preserve">
+    <value>Copy text 2</value>
+  </data>
+  <data name="CanTextExpand" xml:space="preserve">
+    <value>Can text expand</value>
+  </data>
+  <data name="Tools" xml:space="preserve">
+    <value>Tools</value>
+  </data>
+  <data name="Text1" xml:space="preserve">
+    <value>Text 1</value>
+  </data>
+  <data name="Text2" xml:space="preserve">
+    <value>Text 2</value>
+  </data>
+  <data name="Length" xml:space="preserve">
+    <value>Length</value>
+  </data>
+  <data name="Process" xml:space="preserve">
+    <value>Process</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="RestartAppToEnsureSync" xml:space="preserve">
+    <value>Please restart the app to ensure sync: </value>
+  </data>
+  <data name="Deleted" xml:space="preserve">
+    <value>Deleted</value>
+  </data>
+  <data name="DeletedItem" xml:space="preserve">
+    <value>Deleted Item!</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warning!</value>
+  </data>
+  <data name="ImportWarningMessage" xml:space="preserve">
+    <value>This will try and add all the keywords in the .json file you specify. Existing keyword values maybe overwritten. Please ensure you've exported your current config to ensure there's no data loss!</value>
+  </data>
+  <data name="Proceed" xml:space="preserve">
+    <value>Proceed</value>
+  </data>
+  <data name="Nevermind" xml:space="preserve">
+    <value>Nevermind</value>
+  </data>
+  <data name="ImportSuccessful" xml:space="preserve">
+    <value>Import successful!</value>
+  </data>
+  <data name="ImportSuccessfulMessage" xml:space="preserve">
+    <value>Successfully imported keywords! Skipped: {0} unsupported variable types. Make sure to save your work!</value>
+  </data>
+  <data name="ExportSuccessful" xml:space="preserve">
+    <value>Export successful!</value>
+  </data>
+  <data name="ExportSuccessfulMessage" xml:space="preserve">
+    <value>Successfully exported all keywords!</value>
+  </data>
+  <data name="PickAConfigJsonFile" xml:space="preserve">
+    <value>Pick a config (json) file</value>
+  </data>
+  <data name="PickAConfigYmlFile" xml:space="preserve">
+    <value>Pick a config (yml) file</value>
+  </data>
+  <data name="SelectYmlIfEspansoConfigFull" xml:space="preserve">
+    <value>Select yml if this is an espanso config. NOTE: Espanso date time formats are not fully supported. Please adjust times in the format described at the playstore description. Also parsing Yml files is highly error prone, it will take you a few tries to get them working. Try removing some matches.</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="MigratedSuccessfully" xml:space="preserve">
+    <value>Migrated successfully!</value>
+  </data>
+  <data name="MigratedSuccessfullyMessage" xml:space="preserve">
+    <value>All your data in cache has been moved to app data directory instead successfully!</value>
+  </data>
+  <data name="DateExtensionParameterFormatsError" xml:space="preserve">
+    <value>Please make sure date extension parameter formats are present!</value>
+  </data>
+</root>

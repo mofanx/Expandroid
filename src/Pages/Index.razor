@@ -7,43 +7,45 @@
 
 @using YamlDotNet.Serialization;
 @using YamlDotNet.Serialization.NamingConventions;
-@inject Expandroid.Services.IDialogService dialogService
+@using Expandroid.Services;
+@inject IDialogService dialogService
+@inject ILocalizationService localizationService
 @inject ICheckIfActivated acService
 @inject IFileSaver fileSaver
 @inject IFilePicker filePicker
 <MudText Typo="Typo.h4" Align="Align.Center" class="mb-3">
-    Expandroid
+    @localizationService.GetString("AppTitle")
 </MudText>
 <MudTabs @ref="@Tabs" class="mt-3" Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-2">
-    <MudTabPanel Text="Text Expander (Accessibility Service)">
+    <MudTabPanel Text="@localizationService.GetString("TextExpanderTab")">
         @if (!canTextExpand)
         {
-            <MudText class="mb-3">Please provide access to the AccessibilityServices API in order to use this feature. Data collected through the API never leaves your device. Providing access will give our accessibility service the ability to replace the keywords you set up with the expanded text, whenever you type on an EditText widget, both inside and outside our app!</MudText>
-            <MudButton Color="Color.Primary" Variant="Variant.Outlined" @onclick="OpenSettings">Consent And Open Settings</MudButton>
+            <MudText class="mb-3">@localizationService.GetString("AccessibilityPermissionMessage")</MudText>
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined" @onclick="OpenSettings">@localizationService.GetString("ConsentAndOpenSettings")</MudButton>
         }
         else
         {
             <div class="mb-2 d-flex justify-center">
-                <MudButton @onclick="SaveDictAsync" Color="Color.Success" Variant="Variant.Outlined">Make sure to save!</MudButton>
-                <MudButton class="ml-2" @onclick="ImportAsync" Color="Color.Error" Variant="Variant.Outlined">Import</MudButton>
-                <MudButton class="ml-2" @onclick="ExportAsync" Color="Color.Success" Variant="Variant.Outlined">Export</MudButton>
+                <MudButton @onclick="SaveDictAsync" Color="Color.Success" Variant="Variant.Outlined">@localizationService.GetString("MakeSureToSave")</MudButton>
+                <MudButton class="ml-2" @onclick="ImportAsync" Color="Color.Error" Variant="Variant.Outlined">@localizationService.GetString("Import")</MudButton>
+                <MudButton class="ml-2" @onclick="ExportAsync" Color="Color.Success" Variant="Variant.Outlined">@localizationService.GetString("Export")</MudButton>
             </div>
             <div class="d-flex justify-center">
-                <MudButton @onclick="ForceQuit" Color="Color.Error" Variant="Variant.Outlined">Force Quit App</MudButton>
+                <MudButton @onclick="ForceQuit" Color="Color.Error" Variant="Variant.Outlined">@localizationService.GetString("ForceQuitApp")</MudButton>
             </div>
             @*<div class="d-flex justify-center">
-        <MudCheckBox Label="Case sensitive" @onclick="ToggleSens" Value="@sens" Color="Color.Success"></MudCheckBox>
+        <MudCheckBox Label="@localizationService.GetString("CaseSensitive")" @onclick="ToggleSens" Value="@sens" Color="Color.Success"></MudCheckBox>
         </div>*@
-            <MudText class="mb-3">Keywords</MudText>
+            <MudText class="mb-3">@localizationService.GetString("Keywords")</MudText>
             <div class="d-flex">
-                <MudTextField Lines="2" class="mr-1" @bind-Value="currentMatch.Trigger" Label="Key" Variant="Variant.Outlined"></MudTextField>
-                <MudTextField Lines="2" class="mr-1" @bind-Value="currentMatch.Replace" Label="Value" Variant="Variant.Outlined"></MudTextField>
-                <MudButton @onclick="AddItemAsync" Color="Color.Primary" Variant="Variant.Text">Add</MudButton>
+                <MudTextField Lines="2" class="mr-1" @bind-Value="currentMatch.Trigger" Label="@localizationService.GetString("Key")" Variant="Variant.Outlined"></MudTextField>
+                <MudTextField Lines="2" class="mr-1" @bind-Value="currentMatch.Replace" Label="@localizationService.GetString("Value")" Variant="Variant.Outlined"></MudTextField>
+                <MudButton @onclick="AddItemAsync" Color="Color.Primary" Variant="Variant.Text">@localizationService.GetString("Add")</MudButton>
             </div>
             <MudPaper class="mt-2">
                 <MudList Clickable="false">
                     <MudListSubheader>
-                        Variables:
+                        @localizationService.GetString("Variables")
                         <MudChip Color="Color.Secondary">
                             @currentMatch.Vars.Count
                         </MudChip>
@@ -53,7 +55,7 @@
 
                         <MudStack Justify="@Justify.SpaceBetween" Row="true">
                             <MudListItem Text="@item.Name" />
-                            <MudButton @onclick="() => RemoveVar(item)" Color="Color.Error" Variant="Variant.Text">Delete</MudButton>
+                            <MudButton @onclick="() => RemoveVar(item)" Color="Color.Error" Variant="Variant.Text">@localizationService.GetString("Delete")</MudButton>
                         </MudStack>
                     }
                 </MudList>
@@ -61,46 +63,46 @@
             <MudPaper class="mt-2">
 
                 <div class="d-flex justify-center">
-                    <MudCheckBox @bind-Value="currentMatch.Word" Label="Word" />
+                    <MudCheckBox @bind-Value="currentMatch.Word" Label="@localizationService.GetString("Word")" />
                 </div>
             </MudPaper>
             <MudExpansionPanels Elevation="0" class="mt-2">
-                <MudExpansionPanel Text="Templates" MaxHeight="1000">
+                <MudExpansionPanel Text="@localizationService.GetString("Templates")" MaxHeight="1000">
                     <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
-                        <MudText>Date today</MudText>
-                        <MudButton @onclick="() => AddPreBuiltVar(0)" Color="Color.Primary" Variant="Variant.Outlined">Add variable</MudButton>
+                        <MudText>@localizationService.GetString("DateToday")</MudText>
+                        <MudButton @onclick="() => AddPreBuiltVar(0)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
                     </MudStack>
                     <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
-                        <MudText>Date yesterday</MudText>
-                        <MudButton @onclick="() => AddPreBuiltVar(1)" Color="Color.Primary" Variant="Variant.Outlined">Add variable</MudButton>
+                        <MudText>@localizationService.GetString("DateYesterday")</MudText>
+                        <MudButton @onclick="() => AddPreBuiltVar(1)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
                     </MudStack>
                     <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
-                        <MudText>Date tomorrow</MudText>
-                        <MudButton @onclick="() => AddPreBuiltVar(2)" Color="Color.Primary" Variant="Variant.Outlined">Add variable</MudButton>
+                        <MudText>@localizationService.GetString("DateTomorrow")</MudText>
+                        <MudButton @onclick="() => AddPreBuiltVar(2)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
                     </MudStack>
                     <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
-                        <MudText>Time now</MudText>
-                        <MudButton @onclick="() => AddPreBuiltVar(3)" Color="Color.Primary" Variant="Variant.Outlined">Add variable</MudButton>
+                        <MudText>@localizationService.GetString("TimeNow")</MudText>
+                        <MudButton @onclick="() => AddPreBuiltVar(3)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
                     </MudStack>
                     <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
-                        <MudText>Add selection cursor</MudText>
-                        <MudButton @onclick="() => AddPreBuiltVar(4)" Color="Color.Primary" Variant="Variant.Outlined">Add cursor</MudButton>
+                        <MudText>@localizationService.GetString("AddSelectionCursor")</MudText>
+                        <MudButton @onclick="() => AddPreBuiltVar(4)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddCursor")</MudButton>
                     </MudStack>
                 </MudExpansionPanel>
             </MudExpansionPanels>
             <MudExpansionPanels Elevation="0" class="mt-2">
-                <MudExpansionPanel Text="Advanced options for espanso users" MaxHeight="1000">
-                    <MudTextField @bind-Value="currentVar.Name" T="string" Label="Variable name" />
-                    <MudTextField @bind-Value="currentVar.Type" T="string" Label="Variable type" />
+                <MudExpansionPanel Text="@localizationService.GetString("AdvancedOptions")" MaxHeight="1000">
+                    <MudTextField @bind-Value="currentVar.Name" T="string" Label="@localizationService.GetString("VariableName")" />
+                    <MudTextField @bind-Value="currentVar.Type" T="string" Label="@localizationService.GetString("VariableType")" />
                     <MudExpansionPanels Elevation="0">
-                        <MudExpansionPanel class="mt-1" Text="Params" MaxHeight="1000">
-                            <MudTextField @bind-Value="currentVar.Params.Format" T="string" Label="Format" />
-                            <MudTextField @bind-Value="currentVar.Params.Echo" T="string" Label="Echo" />
-                            <MudTextField @bind-Value="currentVar.Params.Offset" T="long" Label="Offset" />
+                        <MudExpansionPanel class="mt-1" Text="@localizationService.GetString("Params")" MaxHeight="1000">
+                            <MudTextField @bind-Value="currentVar.Params.Format" T="string" Label="@localizationService.GetString("Format")" />
+                            <MudTextField @bind-Value="currentVar.Params.Echo" T="string" Label="@localizationService.GetString("Echo")" />
+                            <MudTextField @bind-Value="currentVar.Params.Offset" T="long" Label="@localizationService.GetString("Offset")" />
                         </MudExpansionPanel>
                     </MudExpansionPanels>
                     <div class="d-flex justify-center">
-                        <MudButton @onclick="AddCurrentVar" Color="Color.Primary" Variant="Variant.Outlined">Add Variable</MudButton>
+                        <MudButton @onclick="AddCurrentVar" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
                     </div>
                 </MudExpansionPanel>
             </MudExpansionPanels>
@@ -116,8 +118,8 @@
                             </MudItem>
                             <MudItem>
                                 <MudStack Row="true">
-                                    <MudButton @onclick="() => EditItem(item)" Color="Color.Primary" Variant="Variant.Text">Edit</MudButton>
-                                    <MudButton @onclick="async () => await RemoveItemAsync(item.Value)" Color="Color.Error" Variant="Variant.Text">Delete</MudButton>
+                                    <MudButton @onclick="() => EditItem(item)" Color="Color.Primary" Variant="Variant.Text">@localizationService.GetString("Edit")</MudButton>
+                                    <MudButton @onclick="async () => await RemoveItemAsync(item.Value)" Color="Color.Error" Variant="Variant.Text">@localizationService.GetString("Delete")</MudButton>
                                 </MudStack>
                             </MudItem>
                         </MudStack>
@@ -128,7 +130,7 @@
                 {
                     <div class="d-flex justify-center mt-3">
                         <MudButton @onclick="AdjustLazyLoad" Color="Color.Primary" Variant="Variant.Filled">
-                            Load more
+                            @localizationService.GetString("LoadMore")
                         </MudButton>
                     </div>
                 }
@@ -136,78 +138,78 @@
             }
         }
     </MudTabPanel>
-    <MudTabPanel Text="Tools">
-        <MudTextField T="string" HelperText="Length" Counter="textList[0].Length" Label="Text 1" Variant="Variant.Text" @bind-Value="@textList[0]" Lines="5" />
-        <MudTextField T="string" HelperText="Length" Counter="textList[1].Length" Label="Text 2" Variant="Variant.Text" @bind-Value="@textList[1]" Lines="5" />
+    <MudTabPanel Text="@localizationService.GetString("Tools")">
+        <MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[0].Length" Label="@localizationService.GetString("Text1")" Variant="Variant.Text" @bind-Value="@textList[0]" Lines="5" />
+        <MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[1].Length" Label="@localizationService.GetString("Text2")" Variant="Variant.Text" @bind-Value="@textList[1]" Lines="5" />
         <MudTabs class="mt-3" Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-2">
-            <MudTabPanel Text="Basic">
+            <MudTabPanel Text="@localizationService.GetString("Basic")">
                 <div class="d-flex flex-wrap">
-                    <MudCheckBox Label="Compare" @bind-Value="@compare" Color="Color.Primary"></MudCheckBox>
-                    <MudCheckBox Label="Ignore Case" @bind-Value="@ignoreCase" Color="Color.Secondary"></MudCheckBox>
-                    <MudCheckBox Label="Compare Length" @bind-Value="@lengthCompare" Color="Color.Warning"></MudCheckBox>
-                    <MudCheckBox Label="Contains" @bind-Value="@contains" Color="Color.Primary"></MudCheckBox>
-                    <MudCheckBox Label="Replace" @bind-Value="@replace" Color="Color.Secondary"></MudCheckBox>
-                    <MudCheckBox Label="To Upper" @bind-Value="@toUpper" Color="Color.Warning"></MudCheckBox>
-                    <MudCheckBox Label="To Lower" @bind-Value="@toLower" Color="Color.Tertiary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("Compare")" @bind-Value="@compare" Color="Color.Primary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("IgnoreCase")" @bind-Value="@ignoreCase" Color="Color.Secondary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("CompareLength")" @bind-Value="@lengthCompare" Color="Color.Warning"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("Contains")" @bind-Value="@contains" Color="Color.Primary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("Replace")" @bind-Value="@replace" Color="Color.Secondary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("ToUpper")" @bind-Value="@toUpper" Color="Color.Warning"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("ToLower")" @bind-Value="@toLower" Color="Color.Tertiary"></MudCheckBox>
                 </div>
             </MudTabPanel>
-            <MudTabPanel Text="Discord (& Markdown)">
+            <MudTabPanel Text="@localizationService.GetString("DiscordMarkdown")">
                 <div class="d-flex flex-wrap">
-                    <MudCheckBox Label="Bold" @bind-Value="@makeBold" Color="Color.Primary"></MudCheckBox>
-                    <MudCheckBox Label="Italic" @bind-Value="@makeItalic" Color="Color.Secondary"></MudCheckBox>
-                    <MudCheckBox Label="Underline" @bind-Value="@makeUnderline" Color="Color.Warning"></MudCheckBox>
-                    <MudCheckBox Label="Strikethrough" @bind-Value="@makeStrike" Color="Color.Primary"></MudCheckBox>
-                    <MudCheckBox Label="Spoilers" @bind-Value="@makeSpoiler" Color="Color.Secondary"></MudCheckBox>
-                    <MudCheckBox Label="Code Block" @bind-Value="@makeCode" Color="Color.Warning"></MudCheckBox>
-                    <MudCheckBox Label="Quote" @bind-Value="@makeQuote" Color="Color.Tertiary"></MudCheckBox>
-                    <MudCheckBox Label="Add timestamp" @bind-Value="@addTimeStamp" Color="Color.Tertiary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("Bold")" @bind-Value="@makeBold" Color="Color.Primary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("Italic")" @bind-Value="@makeItalic" Color="Color.Secondary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("Underline")" @bind-Value="@makeUnderline" Color="Color.Warning"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("Strikethrough")" @bind-Value="@makeStrike" Color="Color.Primary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("Spoilers")" @bind-Value="@makeSpoiler" Color="Color.Secondary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("CodeBlock")" @bind-Value="@makeCode" Color="Color.Warning"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("Quote")" @bind-Value="@makeQuote" Color="Color.Tertiary"></MudCheckBox>
+                    <MudCheckBox Label="@localizationService.GetString("AddTimestamp")" @bind-Value="@addTimeStamp" Color="Color.Tertiary"></MudCheckBox>
                 </div>
             </MudTabPanel>
             @if (contains)
             {
-                <MudTextField class="mt-3" T="string" Label="Contains what?" @bind-Value="@containsText" Variant="Variant.Text" Lines="2" />
+                <MudTextField class="mt-3" T="string" Label="@localizationService.GetString("ContainsWhat")" @bind-Value="@containsText" Variant="Variant.Text" Lines="2" />
             }
             @if (addTimeStamp)
             {
-                <MudDatePicker Class="mt-3" Label="Pick a date" @bind-Date="date" />
-                <MudTimePicker Class="mt-3" Label="Pick a time" @bind-Time="timeSpan" />
+                <MudDatePicker Class="mt-3" Label="@localizationService.GetString("PickADate")" @bind-Date="date" />
+                <MudTimePicker Class="mt-3" Label="@localizationService.GetString("PickATime")" @bind-Time="timeSpan" />
             }
             @if (replace)
             {
-                <MudTextField class="mt-3" T="string" Label="Replace" @bind-Value="@replaceText" Variant="Variant.Text" Lines="2" />
-                <MudTextField class="mt-3" T="string" Label="Replace with?" @bind-Value="@replaceWithText" Variant="Variant.Text" Lines="2" />
+                <MudTextField class="mt-3" T="string" Label="@localizationService.GetString("Replace")" @bind-Value="@replaceText" Variant="Variant.Text" Lines="2" />
+                <MudTextField class="mt-3" T="string" Label="@localizationService.GetString("ReplaceWith")" @bind-Value="@replaceWithText" Variant="Variant.Text" Lines="2" />
             }
-            <MudNumericField Class="mt-3" Label="Process on text number" Min="1" Max="2" @bind-Value="@index"></MudNumericField>
+            <MudNumericField Class="mt-3" Label="@localizationService.GetString("ProcessOnTextNumber")" Min="1" Max="2" @bind-Value="@index"></MudNumericField>
             <div class="d-flex justify-center mt-3 mb-3">
                 <MudButtonGroup class="mb-3" Variant="Variant.Outlined" Color="Color.Primary">
                     <MudButton Disabled="@processing" OnClick="Process">
                         @if (processing)
                         {
                             <MudProgressCircular Class="ms-n1 mr-2" Size="Size.Small" Indeterminate="true" />
-                            <MudText Class="ms-2">Processing</MudText>
+                            <MudText Class="ms-2">@localizationService.GetString("Processing")</MudText>
                         }
                         else
                         {
-                            <MudText>Process</MudText>
+                            <MudText>@localizationService.GetString("Process")</MudText>
                         }
                     </MudButton>
-                    <MudButton OnClick="async () => await CopyTextAsync(1)">Copy text 1</MudButton>
-                    <MudButton OnClick="async () => await CopyTextAsync(2)">Copy text 2</MudButton>
+                    <MudButton OnClick="async () => await CopyTextAsync(1)">@localizationService.GetString("CopyText1")</MudButton>
+                    <MudButton OnClick="async () => await CopyTextAsync(2)">@localizationService.GetString("CopyText2")</MudButton>
 
                 </MudButtonGroup>
             </div>
             <MudDivider />
             <MudCard class="mt-3 mb-3">
                 <MudCardContent>
-                    <MudText Typo="Typo.h5">Results</MudText>
-                    <MudText Typo="Typo.h6">Process count: @processCount</MudText>
+                    <MudText Typo="Typo.h5">@localizationService.GetString("Results")</MudText>
+                    <MudText Typo="Typo.h6">@localizationService.GetString("ProcessCount") @processCount</MudText>
                     <MudDivider class="mb-2 mt-2" />
                     <div class="d-flex flex-wrap">
 
-                        <MudCheckBox Label="Is text equal" ReadOnly="true" Value="@compareResult" Color="Color.Success"></MudCheckBox>
-                        <MudCheckBox Label="Contains the word specified" ReadOnly="true" Value="@containsResult" Color="Color.Primary"></MudCheckBox>
-                        <MudCheckBox Label="Is length equal" ReadOnly="true" Value="@lengthCompareResult" Color="Color.Warning"></MudCheckBox>
-                        <MudCheckBox Label="Can text expand" ReadOnly="true" Value="@canTextExpand" Color="Color.Warning"></MudCheckBox>
+                        <MudCheckBox Label="@localizationService.GetString("IsTextEqual")" ReadOnly="true" Value="@compareResult" Color="Color.Success"></MudCheckBox>
+                        <MudCheckBox Label="@localizationService.GetString("ContainsTheWordSpecified")" ReadOnly="true" Value="@containsResult" Color="Color.Primary"></MudCheckBox>
+                        <MudCheckBox Label="@localizationService.GetString("IsLengthEqual")" ReadOnly="true" Value="@lengthCompareResult" Color="Color.Warning"></MudCheckBox>
+                        <MudCheckBox Label="@localizationService.GetString("CanTextExpand")" ReadOnly="true" Value="@canTextExpand" Color="Color.Warning"></MudCheckBox>
                     </div>
                 </MudCardContent>
             </MudCard>
@@ -319,11 +321,12 @@
     private async Task ToggleSens()
     {
         Preferences.Set("sens", sens = !sens);
-        await dialogService.DisplayConfirmAsync("Toggled Sensitivity", "Please restart the app (Force Quit) for changes to take effect!");
+        await dialogService.DisplayConfirmAsync(localizationService.GetString("ToggledSensitivity"), localizationService.GetString("RestartAppForChanges"));
     }
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        localizationService.OnLanguageChanged += OnLanguageChanged;
         textList.Add("");
         textList.Add("");
         canTextExpand = acService.IsActivated();
@@ -345,7 +348,7 @@
             if (File.Exists(backupFn))
             {
                 File.Delete(AppSettings.OldDictPath);
-                await dialogService.DisplayConfirmAsync("Migrated successfully!", "All your data in cache has been moved to app data directory instead successfully!");
+                await dialogService.DisplayConfirmAsync(localizationService.GetString("MigratedSuccessfully"), localizationService.GetString("MigratedSuccessfullyMessage"));
             }
         }
         if (File.Exists(AppSettings.DictPath))
@@ -376,15 +379,15 @@
     {
         try
         {
-            if (await dialogService.DisplayConfirmAsync("Warning!", "This will try and add all the keywords in the .json file you specify. Existing keyword values maybe overwritten. Please ensure you've exported your current config to ensure there's no data loss!", "Proceed", "Nevermind"))
+            if (await dialogService.DisplayConfirmAsync(localizationService.GetString("Warning"), localizationService.GetString("ImportWarningMessage"), localizationService.GetString("Proceed"), localizationService.GetString("Nevermind")))
             {
                 int skips = 0;
                 DictWrapper localDict;
-                if (await dialogService.DisplayConfirmAsync("Choose format!", "Select yml if this is an espanso config. NOTE: Espanso date time formats are not fully supported. Please adjust times in the format described at the playstore description. Also parsing Yml files is highly error prone, it will take you a few tries to get them working. Try removing some matches.", "Json", "Yml"))
+                if (await dialogService.DisplayConfirmAsync(localizationService.GetString("ChooseFormat"), localizationService.GetString("SelectYmlIfEspansoConfigFull"), "Json", "Yml"))
                 {
                     var result = await FilePicker.PickAsync(new PickOptions
                         {
-                            PickerTitle = "Pick a config (json) file"
+                            PickerTitle = localizationService.GetString("PickAConfigJsonFile")
                         });
                     using var strm = await result.OpenReadAsync();
                     localDict = await JsonSerializer.DeserializeAsync<DictWrapper>(strm);
@@ -393,7 +396,7 @@
                 {
                     var result = await FilePicker.PickAsync(new PickOptions
                         {
-                            PickerTitle = "Pick a config (yml) file"
+                            PickerTitle = localizationService.GetString("PickAConfigYmlFile")
                         });
                     using var strm = await result.OpenReadAsync();
                     var deserializer = new DeserializerBuilder()
@@ -425,7 +428,7 @@
                                     }
                                     catch (Exception)
                                     {
-                                        throw new Exception("Please make sure date extension parameter formats are present!");
+                                        throw new Exception(localizationService.GetString("DateExtensionParameterFormatsError"));
                                     }
                                 }
                             }
@@ -443,12 +446,12 @@
                     await File.WriteAllTextAsync(AppSettings.GlobalVarsPath, str);
                     WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(globalVars));
                 }
-                await dialogService.DisplayConfirmAsync("Import successful!", $"Successfully imported keywords! Skipped: {skips} unsupported variable types. Make sure to save your work!");
+                await dialogService.DisplayConfirmAsync(localizationService.GetString("ImportSuccessful"), string.Format(localizationService.GetString("ImportSuccessfulMessage"), skips));
             }
         }
         catch (Exception e)
         {
-            await dialogService.DisplayConfirmAsync("Error", "Please restart the app to ensure sync: " + e.Message);
+            await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), localizationService.GetString("RestartAppToEnsureSync") + e.Message);
         }
     }
     private async Task ExportAsync()
@@ -481,7 +484,7 @@
                 }
                 dictWrapper.Matches.Add(item.Value);
             }
-            if (await dialogService.DisplayConfirmAsync("Choose format!", "Select yml if this is an espanso config", "Json", "Yml"))
+            if (await dialogService.DisplayConfirmAsync(localizationService.GetString("ChooseFormat"), localizationService.GetString("SelectYmlIfEspansoConfig"), "Json", "Yml"))
             {
                 text = JsonSerializer.Serialize(dictWrapper);
                 name = "ttconfig.json";
@@ -508,11 +511,11 @@
             using MemoryStream strm = new(Encoding.UTF8.GetBytes(text));
             var fs = await fileSaver.SaveAsync(name, strm, CancellationToken.None);
             fs.EnsureSuccess();
-            await dialogService.DisplayConfirmAsync("Export successful!", "Successfully exported all keywords!");
+            await dialogService.DisplayConfirmAsync(localizationService.GetString("ExportSuccessful"), localizationService.GetString("ExportSuccessfulMessage"));
         }
         catch (Exception e)
         {
-            await dialogService.DisplayConfirmAsync("Error", "Please restart the app to ensure sync: " + e.Message);
+            await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), localizationService.GetString("RestartAppToEnsureSync") + e.Message);
         }
     }
     private void AddCurrentVar()
@@ -543,12 +546,12 @@
             }
             else
             {
-                await dialogService.DisplayConfirmAsync("Empty values", "Fill out all required parameters.");
+                await dialogService.DisplayConfirmAsync(localizationService.GetString("EmptyValues"), localizationService.GetString("FillOutRequiredParameters"));
             }
         }
         catch (Exception e)
         {
-            await dialogService.DisplayConfirmAsync("Error", "Please restart the app to ensure sync: " + e.Message);
+            await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), localizationService.GetString("RestartAppToEnsureSync") + e.Message);
         }
     }
     private async Task RemoveItemAsync(Match item)
@@ -558,16 +561,16 @@
             if (dict.Remove(item.Trigger, out var _))
             {
                 SendMessage("Remove", item);
-                await dialogService.DisplayConfirmAsync("Deleted", "Deleted Item!");
+                await dialogService.DisplayConfirmAsync(localizationService.GetString("Deleted"), localizationService.GetString("DeletedItem"));
             }
             else
             {
-                await dialogService.DisplayConfirmAsync("Could not delete item", "This is a known bug being worked on. Click the save button and then force quit: " + item.Trigger);
+                await dialogService.DisplayConfirmAsync(localizationService.GetString("CouldNotDeleteItem"), localizationService.GetString("DeleteItemBugMessage") + item.Trigger);
             }
         }
         catch (Exception e)
         {
-            await dialogService.DisplayConfirmAsync("Error", "Please restart the app to ensure sync: " + e.Message);
+            await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), localizationService.GetString("RestartAppToEnsureSync") + e.Message);
         }
     }
     private async Task SaveDictAsync()
@@ -583,11 +586,11 @@
             }
             var str = JsonSerializer.Serialize(dict);
             await File.WriteAllTextAsync(AppSettings.DictPath, str);
-            await dialogService.DisplayConfirmAsync("Success!", "File saved successfully to app data directory. Make sure to backup your data through the export feature!");
+            await dialogService.DisplayConfirmAsync(localizationService.GetString("ExportSuccessful"), localizationService.GetString("ExportSuccessfulMessage"));
         }
         catch (Exception e)
         {
-            await dialogService.DisplayConfirmAsync("An error occurred!", e.Message);
+            await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), e.Message);
         }
     }
 
@@ -599,7 +602,7 @@
     {
         try
         {
-            if (await dialogService.DisplayConfirmAsync("Need consent!", "Please give consent for this app to use the AccessibilityService API", "I give consent!", "Nevermind"))
+            if (await dialogService.DisplayConfirmAsync(localizationService.GetString("NeedConsent"), localizationService.GetString("GiveConsentMessage"), localizationService.GetString("IGiveConsent"), "Nevermind"))
             {
                 acService.OpenSettings();
                 ForceQuit();
@@ -607,7 +610,7 @@
         }
         catch (Exception e)
         {
-            await dialogService.DisplayConfirmAsync("Error", e.Message);
+            await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), e.Message);
         }
     }
     private void ForceQuit()
@@ -618,7 +621,7 @@
     private async Task CopyTextAsync(int n)
     {
         await Clipboard.Default.SetTextAsync(textList[n - 1]);
-        await dialogService.DisplayConfirmAsync("Copied Text", "Copied the text :D");
+        await dialogService.DisplayConfirmAsync(localizationService.GetString("CopiedText"), localizationService.GetString("CopiedTextMessage"));
     }
     private async Task Process()
     {
@@ -692,7 +695,7 @@
         }
         catch (Exception e)
         {
-            await dialogService.DisplayConfirmAsync("Error", e.Message);
+            await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), e.Message);
         }
         processing = false;
     }
@@ -766,6 +769,16 @@
         {
             lazyLoadIndex += diff;
         }
+    }
+
+    private void OnLanguageChanged()
+    {
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        localizationService.OnLanguageChanged -= OnLanguageChanged;
     }
 }
 

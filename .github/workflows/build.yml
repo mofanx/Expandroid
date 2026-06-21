@@ -1,0 +1,47 @@
+name: Build Expandroid
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+    
+    - name: Install MAUI Workload
+      run: dotnet workload install maui
+    
+    - name: Restore dependencies
+      run: dotnet restore src/Expandroid.csproj
+    
+    - name: Build Debug APK
+      run: dotnet build src/Expandroid.csproj -c Debug -f net9.0-android35.0
+    
+    - name: Build Release APK
+      run: dotnet build src/Expandroid.csproj -c Release -f net9.0-android35.0
+    
+    - name: Publish Release APK
+      run: dotnet publish src/Expandroid.csproj -c Release -f net9.0-android35.0
+    
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-apk
+        path: src/bin/Release/net9.0-android35.0/publish/*.apk
+    
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-apk
+        path: src/bin/Release/net9.0-android35.0/publish/*.apk

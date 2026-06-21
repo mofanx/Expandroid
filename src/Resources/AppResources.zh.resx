@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Expandroid</value>
+  </data>
+  <data name="TextExpanderTab" xml:space="preserve">
+    <value>文本扩展器（无障碍服务）</value>
+  </data>
+  <data name="AccessibilityPermissionMessage" xml:space="preserve">
+    <value>请提供无障碍服务 API 的访问权限以使用此功能。通过 API 收集的数据永远不会离开您的设备。提供访问权限将使我们的无障碍服务能够在您在 EditText 控件上输入时，无论是在应用内还是应用外，都能将您设置的关键词替换为扩展文本！</value>
+  </data>
+  <data name="ConsentAndOpenSettings" xml:space="preserve">
+    <value>同意并打开设置</value>
+  </data>
+  <data name="MakeSureToSave" xml:space="preserve">
+    <value>记得保存！</value>
+  </data>
+  <data name="Import" xml:space="preserve">
+    <value>导入</value>
+  </data>
+  <data name="Export" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="ForceQuitApp" xml:space="preserve">
+    <value>强制退出应用</value>
+  </data>
+  <data name="Keywords" xml:space="preserve">
+    <value>关键词</value>
+  </data>
+  <data name="Key" xml:space="preserve">
+    <value>键</value>
+  </data>
+  <data name="Value" xml:space="preserve">
+    <value>值</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="Variables" xml:space="preserve">
+    <value>变量：</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="Word" xml:space="preserve">
+    <value>单词</value>
+  </data>
+  <data name="Templates" xml:space="preserve">
+    <value>模板</value>
+  </data>
+  <data name="DateToday" xml:space="preserve">
+    <value>今天的日期</value>
+  </data>
+  <data name="AddVariable" xml:space="preserve">
+    <value>添加变量</value>
+  </data>
+  <data name="DateYesterday" xml:space="preserve">
+    <value>昨天的日期</value>
+  </data>
+  <data name="DateTomorrow" xml:space="preserve">
+    <value>明天的日期</value>
+  </data>
+  <data name="TimeNow" xml:space="preserve">
+    <value>当前时间</value>
+  </data>
+  <data name="AddSelectionCursor" xml:space="preserve">
+    <value>添加选择光标</value>
+  </data>
+  <data name="AddCursor" xml:space="preserve">
+    <value>添加光标</value>
+  </data>
+  <data name="AdvancedOptions" xml:space="preserve">
+    <value>Espanso 用户的高级选项</value>
+  </data>
+  <data name="VariableName" xml:space="preserve">
+    <value>变量名称</value>
+  </data>
+  <data name="VariableType" xml:space="preserve">
+    <value>变量类型</value>
+  </data>
+  <data name="Params" xml:space="preserve">
+    <value>参数</value>
+  </data>
+  <data name="Format" xml:space="preserve">
+    <value>格式</value>
+  </data>
+  <data name="Echo" xml:space="preserve">
+    <value>回显</value>
+  </data>
+  <data name="Offset" xml:space="preserve">
+    <value>偏移量</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="English" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Chinese" xml:space="preserve">
+    <value>中文</value>
+  </data>
+  <data name="PageNotFound" xml:space="preserve">
+    <value>抱歉，该地址没有内容。</value>
+  </data>
+  <data name="CaseSensitive" xml:space="preserve">
+    <value>区分大小写</value>
+  </data>
+  <data name="IgnoreCase" xml:space="preserve">
+    <value>忽略大小写</value>
+  </data>
+  <data name="CompareLength" xml:space="preserve">
+    <value>比较长度</value>
+  </data>
+  <data name="Strikethrough" xml:space="preserve">
+    <value>删除线</value>
+  </data>
+  <data name="AddTimestamp" xml:space="preserve">
+    <value>添加时间戳</value>
+  </data>
+  <data name="PickADate" xml:space="preserve">
+    <value>选择日期</value>
+  </data>
+  <data name="PickATime" xml:space="preserve">
+    <value>选择时间</value>
+  </data>
+  <data name="ProcessOnTextNumber" xml:space="preserve">
+    <value>处理文本编号</value>
+  </data>
+  <data name="IsTextEqual" xml:space="preserve">
+    <value>文本相等</value>
+  </data>
+  <data name="ContainsTheWordSpecified" xml:space="preserve">
+    <value>包含指定词语</value>
+  </data>
+  <data name="IsLengthEqual" xml:space="preserve">
+    <value>长度相等</value>
+  </data>
+  <data name="Results" xml:space="preserve">
+    <value>结果</value>
+  </data>
+  <data name="ProcessCount" xml:space="preserve">
+    <value>处理次数：</value>
+  </data>
+  <data name="LoadMore" xml:space="preserve">
+    <value>加载更多</value>
+  </data>
+  <data name="ToggledSensitivity" xml:space="preserve">
+    <value>已切换敏感度</value>
+  </data>
+  <data name="RestartAppForChanges" xml:space="preserve">
+    <value>请重启应用（强制退出）以使更改生效！</value>
+  </data>
+  <data name="ChooseFormat" xml:space="preserve">
+    <value>选择格式！</value>
+  </data>
+  <data name="SelectYmlIfEspansoConfig" xml:space="preserve">
+    <value>如果是 espanso 配置请选择 yml</value>
+  </data>
+  <data name="EmptyValues" xml:space="preserve">
+    <value>空值</value>
+  </data>
+  <data name="FillOutRequiredParameters" xml:space="preserve">
+    <value>请填写所有必需参数。</value>
+  </data>
+  <data name="CouldNotDeleteItem" xml:space="preserve">
+    <value>无法删除项目</value>
+  </data>
+  <data name="DeleteItemBugMessage" xml:space="preserve">
+    <value>这是一个已知问题，正在修复中。请点击保存按钮然后强制退出： </value>
+  </data>
+  <data name="NeedConsent" xml:space="preserve">
+    <value>需要授权！</value>
+  </data>
+  <data name="GiveConsentMessage" xml:space="preserve">
+    <value>请授权此应用使用无障碍服务 API</value>
+  </data>
+  <data name="IGiveConsent" xml:space="preserve">
+    <value>我同意！</value>
+  </data>
+  <data name="CopiedText" xml:space="preserve">
+    <value>文本已复制</value>
+  </data>
+  <data name="CopiedTextMessage" xml:space="preserve">
+    <value>文本已复制 :D</value>
+  </data>
+  <data name="Compare" xml:space="preserve">
+    <value>比较</value>
+  </data>
+  <data name="Contains" xml:space="preserve">
+    <value>包含</value>
+  </data>
+  <data name="Replace" xml:space="preserve">
+    <value>替换</value>
+  </data>
+  <data name="ToUpper" xml:space="preserve">
+    <value>转为大写</value>
+  </data>
+  <data name="ToLower" xml:space="preserve">
+    <value>转为小写</value>
+  </data>
+  <data name="Basic" xml:space="preserve">
+    <value>基础</value>
+  </data>
+  <data name="DiscordMarkdown" xml:space="preserve">
+    <value>Discord (& Markdown)</value>
+  </data>
+  <data name="Bold" xml:space="preserve">
+    <value>粗体</value>
+  </data>
+  <data name="Italic" xml:space="preserve">
+    <value>斜体</value>
+  </data>
+  <data name="Underline" xml:space="preserve">
+    <value>下划线</value>
+  </data>
+  <data name="Spoilers" xml:space="preserve">
+    <value>剧透</value>
+  </data>
+  <data name="CodeBlock" xml:space="preserve">
+    <value>代码块</value>
+  </data>
+  <data name="Quote" xml:space="preserve">
+    <value>引用</value>
+  </data>
+  <data name="ContainsWhat" xml:space="preserve">
+    <value>包含什么？</value>
+  </data>
+  <data name="ReplaceWith" xml:space="preserve">
+    <value>替换为？</value>
+  </data>
+  <data name="Processing" xml:space="preserve">
+    <value>处理中</value>
+  </data>
+  <data name="CopyText1" xml:space="preserve">
+    <value>复制文本1</value>
+  </data>
+  <data name="CopyText2" xml:space="preserve">
+    <value>复制文本2</value>
+  </data>
+  <data name="CanTextExpand" xml:space="preserve">
+    <value>能否文本扩展</value>
+  </data>
+  <data name="Tools" xml:space="preserve">
+    <value>工具</value>
+  </data>
+  <data name="Text1" xml:space="preserve">
+    <value>文本1</value>
+  </data>
+  <data name="Text2" xml:space="preserve">
+    <value>文本2</value>
+  </data>
+  <data name="Length" xml:space="preserve">
+    <value>长度</value>
+  </data>
+  <data name="Process" xml:space="preserve">
+    <value>处理</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="RestartAppToEnsureSync" xml:space="preserve">
+    <value>请重启应用以确保同步： </value>
+  </data>
+  <data name="Deleted" xml:space="preserve">
+    <value>已删除</value>
+  </data>
+  <data name="DeletedItem" xml:space="preserve">
+    <value>项目已删除！</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>警告！</value>
+  </data>
+  <data name="ImportWarningMessage" xml:space="preserve">
+    <value>这将尝试添加您指定的 .json 文件中的所有关键词。现有的关键词值可能会被覆盖。请确保您已导出当前配置以避免数据丢失！</value>
+  </data>
+  <data name="Proceed" xml:space="preserve">
+    <value>继续</value>
+  </data>
+  <data name="Nevermind" xml:space="preserve">
+    <value>算了</value>
+  </data>
+  <data name="ImportSuccessful" xml:space="preserve">
+    <value>导入成功！</value>
+  </data>
+  <data name="ImportSuccessfulMessage" xml:space="preserve">
+    <value>成功导入关键词！跳过了 {0} 个不支持的变量类型。请记得保存您的工作！</value>
+  </data>
+  <data name="ExportSuccessful" xml:space="preserve">
+    <value>导出成功！</value>
+  </data>
+  <data name="ExportSuccessfulMessage" xml:space="preserve">
+    <value>成功导出所有关键词！</value>
+  </data>
+  <data name="PickAConfigJsonFile" xml:space="preserve">
+    <value>选择配置文件(json)</value>
+  </data>
+  <data name="PickAConfigYmlFile" xml:space="preserve">
+    <value>选择配置文件(yml)</value>
+  </data>
+  <data name="SelectYmlIfEspansoConfigFull" xml:space="preserve">
+    <value>如果是 espanso 配置请选择 yml。注意：Espanso 日期时间格式不完全支持。请按照应用商店描述中的格式调整时间。此外，解析 Yml 文件非常容易出错，可能需要尝试几次才能正常工作。尝试移除一些匹配项。</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="MigratedSuccessfully" xml:space="preserve">
+    <value>迁移成功！</value>
+  </data>
+  <data name="MigratedSuccessfullyMessage" xml:space="preserve">
+    <value>缓存中的所有数据已成功移动到应用数据目录！</value>
+  </data>
+  <data name="DateExtensionParameterFormatsError" xml:space="preserve">
+    <value>请确保日期扩展参数格式存在！</value>
+  </data>
+</root>

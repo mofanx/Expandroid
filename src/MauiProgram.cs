@@ -28,6 +28,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ICheckIfActivated, CheckIfActivated>();
 #endif
         builder.Services.AddSingleton<IDialogService, DialogService>();
+        builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
         builder.Services.AddSingleton(FileSaver.Default);
         builder.Services.AddSingleton(FilePicker.Default);
         return builder.Build();

@@ -63,7 +63,7 @@ public class ConfigImportReceiver : BroadcastReceiver
                                         }
                                         catch (Exception)
                                         {
-                                            throw new Exception("Please make sure date extension parameter formats are present!");
+                                            throw new Exception("Date extension parameter formats error");
                                         }
                                     }
                                 }
