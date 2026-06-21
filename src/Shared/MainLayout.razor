@@ -18,7 +18,7 @@
 @code {
     private MudTheme MudAppTheme = new()
     {
-        PaletteLight = new PaletteLight()
+        Palette = new Palette()
         {
             Primary = "#6366f1",
             Secondary = "#8b5cf6",
@@ -30,7 +30,7 @@
             AppbarText = "#ffffff",
             TextPrimary = "#1e293b",
         },
-        PaletteDark = new PaletteDark()
+        PaletteDark = new Palette()
         {
             Primary = "#818cf8",
             Secondary = "#a78bfa",
@@ -42,22 +42,17 @@
             AppbarText = "#f1f5f9",
             TextPrimary = "#f1f5f9",
         },
-        LayoutProperties = new LayoutProperties()
-        {
-            DefaultMargin = "16px",
-            DefaultPadding = "16px",
-        },
         Typography = new Typography()
         {
-            Default = new DefaultTypography()
+            Default = new Default()
             {
                 FontFamily = new[] { "Roboto", "Helvetica Neue", "Helvetica", "Arial", "sans-serif" },
             },
-            H4 = new H4Typography()
+            H4 = new H4()
             {
                 FontWeight = "600",
             },
-            H6 = new H6Typography()
+            H6 = new H6()
             {
                 FontWeight = "600",
             },

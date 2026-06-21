@@ -5,7 +5,7 @@
         Expandroid
     </MudText>
 
-    <MudToggleGroup Value="_themeValue" ValueChanged="OnThemeChanged" Color="Color.Surface" Size="Size.Small" Class="mr-2">
+    <MudToggleGroup Value="_themeValue" ValueChanged="@((string? v) => OnThemeChanged(v))" Color="Color.Surface" Size="Size.Small" Class="mr-2">
         <MudToggleItem Value="@("light")" Icon="@Icons.Material.Filled.WbSunny" />
         <MudToggleItem Value="@("dark")" Icon="@Icons.Material.Filled.NightsStay" />
         <MudToggleItem Value="@("auto")" Icon="@Icons.Material.Filled.BrightnessAuto" />

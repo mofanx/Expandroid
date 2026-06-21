@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Resources;
+using Expandroid.Resources;
 
 namespace Expandroid.Services;
 

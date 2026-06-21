@@ -32,7 +32,7 @@ public class ThemeService : IThemeService
         {
             AppTheme.Dark => true,
             AppTheme.Light => false,
-            AppTheme.Auto => Application.Current?.RequestedTheme == Microsoft.Maui.Controls.AppTheme.Dark,
+            AppTheme.Auto => Application.Current?.RequestedTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark,
             _ => true
         };
     }
