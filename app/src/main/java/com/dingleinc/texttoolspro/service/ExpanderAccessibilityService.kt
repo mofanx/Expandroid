@@ -171,7 +171,8 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
         val job = serviceScope.launch(Dispatchers.IO) {
             try {
                 while (true) {
-                    val root = rootInActiveWindow ?: run {
+                    val root = rootInActiveWindow
+                    if (root == null) {
                         kotlinx.coroutines.delay(1000)
                         continue
                     }

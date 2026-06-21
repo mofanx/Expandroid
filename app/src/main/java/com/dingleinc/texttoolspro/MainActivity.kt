@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val viewModel: MainViewModel = viewModel()
-            val themeMode by viewModel.themeMode.collectAsState()
+            val themeMode by viewModel.themeModeFlow.collectAsState()
             ExpandroidTheme(themeMode = themeMode) {
                 MainScreen(viewModel = viewModel)
             }

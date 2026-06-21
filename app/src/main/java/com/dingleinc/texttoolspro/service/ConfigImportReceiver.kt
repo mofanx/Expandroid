@@ -50,11 +50,11 @@ class ConfigImportReceiver : BroadcastReceiver() {
                     }
                 }
 
-                if (localDict.globalVars != null) {
-                    val str = SerializationHelper.toJson(localDict.globalVars)
+                localDict.globalVars?.let { gvars ->
+                    val str = SerializationHelper.toJson(gvars)
                     File(AppSettings.globalVarsPath).writeText(str)
                     ServiceCommandBus.trySend(
-                        ServiceCommandBus.Command.UpdateGlobals(localDict.globalVars!!)
+                        ServiceCommandBus.Command.UpdateGlobals(gvars)
                     )
                 }
 
