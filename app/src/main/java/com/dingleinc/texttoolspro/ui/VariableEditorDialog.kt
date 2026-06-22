@@ -94,6 +94,13 @@ fun VariableEditorDialog(
                     )
                     "choice" -> ChoiceFields(params, values, newValue)
                     "form" -> FormFields(params)
+                    "shell" -> ShellFields(params)
+                    "script" -> ScriptFields(params)
+                    "javascript" -> JavaScriptFields(params)
+                    "http" -> HttpFields(params)
+                    "match" -> MatchFields(params)
+                    "intent" -> IntentFields(params)
+                    "content" -> ContentFields(params)
                 }
             }
         },
@@ -421,4 +428,218 @@ private fun renderFormLine(line: String, fields: List<String>): String {
         rendered = rendered.replace("[[$field]]", "[$field]")
     }
     return rendered
+}
+
+@Composable
+private fun ShellFields(params: MutableState<Params>) {
+    var cmd by remember { mutableStateOf(params.value.string("cmd") ?: "") }
+    var shell by remember { mutableStateOf(params.value.string("shell") ?: "bash") }
+    var trim by remember { mutableStateOf((params.value.data["trim"] as? Boolean) ?: true) }
+    var debug by remember { mutableStateOf((params.value.data["debug"] as? Boolean) ?: false) }
+
+    OutlinedTextField(
+        value = cmd,
+        onValueChange = { cmd = it; params.value["cmd"] = it },
+        label = { Text("Command") },
+        modifier = Modifier.fillMaxWidth(),
+        minLines = 1,
+        maxLines = 4
+    )
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = shell,
+        onValueChange = { shell = it; params.value["shell"] = it },
+        label = { Text("Shell (bash/sh/zsh)") },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true
+    )
+    Spacer(Modifier.height(8.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilledTonalButton(onClick = { trim = !trim; params.value["trim"] = trim }) {
+            Text(if (trim) "Trim: ON" else "Trim: OFF")
+        }
+        FilledTonalButton(onClick = { debug = !debug; params.value["debug"] = debug }) {
+            Text(if (debug) "Debug: ON" else "Debug: OFF")
+        }
+    }
+}
+
+@Composable
+private fun ScriptFields(params: MutableState<Params>) {
+    var args by remember { mutableStateOf(
+        (params.value.data["args"] as? List<*>)?.joinToString("\n") { it.toString() } ?: ""
+    ) }
+    var trim by remember { mutableStateOf((params.value.data["trim"] as? Boolean) ?: true) }
+    var debug by remember { mutableStateOf((params.value.data["debug"] as? Boolean) ?: false) }
+    var ignoreError by remember { mutableStateOf((params.value.data["ignore_error"] as? Boolean) ?: false) }
+
+    OutlinedTextField(
+        value = args,
+        onValueChange = {
+            args = it
+            params.value["args"] = it.split("\n").filter { l -> l.isNotBlank() }
+        },
+        label = { Text("Arguments (one per line)") },
+        modifier = Modifier.fillMaxWidth(),
+        minLines = 2,
+        maxLines = 6
+    )
+    Spacer(Modifier.height(4.dp))
+    Text(
+        "Use %HOME%, %CONFIG%, %PACKAGES% placeholders",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.secondary
+    )
+    Spacer(Modifier.height(8.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilledTonalButton(onClick = { trim = !trim; params.value["trim"] = trim }) {
+            Text(if (trim) "Trim: ON" else "Trim: OFF")
+        }
+        FilledTonalButton(onClick = { debug = !debug; params.value["debug"] = debug }) {
+            Text(if (debug) "Debug: ON" else "Debug: OFF")
+        }
+        FilledTonalButton(onClick = { ignoreError = !ignoreError; params.value["ignore_error"] = ignoreError }) {
+            Text(if (ignoreError) "Ignore Error: ON" else "Ignore Error: OFF")
+        }
+    }
+}
+
+@Composable
+private fun JavaScriptFields(params: MutableState<Params>) {
+    var code by remember { mutableStateOf(params.value.string("code") ?: "") }
+    OutlinedTextField(
+        value = code,
+        onValueChange = { code = it; params.value["code"] = it },
+        label = { Text("JavaScript Code") },
+        modifier = Modifier.fillMaxWidth(),
+        minLines = 4,
+        maxLines = 12
+    )
+    Spacer(Modifier.height(4.dp))
+    Text(
+        "Use 'return' to output a value. Variables are injected as JS globals.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.secondary
+    )
+}
+
+@Composable
+private fun HttpFields(params: MutableState<Params>) {
+    var url by remember { mutableStateOf(params.value.string("url") ?: "") }
+    var method by remember { mutableStateOf(params.value.string("method") ?: "GET") }
+    var jsonPath by remember { mutableStateOf(params.value.string("json_path") ?: "") }
+    var body by remember { mutableStateOf(params.value.string("body") ?: "") }
+    var contentType by remember { mutableStateOf(params.value.string("content_type") ?: "application/json") }
+    var timeout by remember { mutableStateOf(params.value.long("timeout").toString()) }
+
+    OutlinedTextField(
+        value = url, onValueChange = { url = it; params.value["url"] = it },
+        label = { Text("URL") }, modifier = Modifier.fillMaxWidth(), singleLine = true
+    )
+    Spacer(Modifier.height(8.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf("GET", "POST", "PUT", "DELETE").forEach { m ->
+            FilledTonalButton(onClick = { method = m; params.value["method"] = m }) {
+                Text(if (method == m) "[$m]" else m)
+            }
+        }
+    }
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = jsonPath, onValueChange = { jsonPath = it; params.value["json_path"] = it },
+        label = { Text("JSON Path (e.g. $.data.name, optional)") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true
+    )
+    if (method != "GET" && method != "DELETE") {
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = body, onValueChange = { body = it; params.value["body"] = it },
+            label = { Text("Request Body") },
+            modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 6
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = contentType, onValueChange = { contentType = it; params.value["content_type"] = it },
+            label = { Text("Content Type") },
+            modifier = Modifier.fillMaxWidth(), singleLine = true
+        )
+    }
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = timeout, onValueChange = {
+            timeout = it
+            it.toLongOrNull()?.let { v -> params.value["timeout"] = v }
+        },
+        label = { Text("Timeout (ms, default 5000)") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true
+    )
+}
+
+@Composable
+private fun MatchFields(params: MutableState<Params>) {
+    var trigger by remember { mutableStateOf(params.value.string("trigger") ?: "") }
+    OutlinedTextField(
+        value = trigger, onValueChange = { trigger = it; params.value["trigger"] = it },
+        label = { Text("Match Trigger (e.g. :greeting)") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true
+    )
+    Spacer(Modifier.height(4.dp))
+    Text(
+        "References another match by its trigger.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.secondary
+    )
+}
+
+@Composable
+private fun IntentFields(params: MutableState<Params>) {
+    var action by remember { mutableStateOf(params.value.string("action") ?: "") }
+    var resultKey by remember { mutableStateOf(params.value.string("result_key") ?: "") }
+    var timeout by remember { mutableStateOf(params.value.long("timeout").toString()) }
+
+    OutlinedTextField(
+        value = action, onValueChange = { action = it; params.value["action"] = it },
+        label = { Text("Intent Action") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true
+    )
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = resultKey, onValueChange = { resultKey = it; params.value["result_key"] = it },
+        label = { Text("Result Key (extra key to read result from)") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true
+    )
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = timeout, onValueChange = {
+            timeout = it
+            it.toLongOrNull()?.let { v -> params.value["timeout"] = v }
+        },
+        label = { Text("Timeout (ms, default 5000)") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true
+    )
+}
+
+@Composable
+private fun ContentFields(params: MutableState<Params>) {
+    var uri by remember { mutableStateOf(params.value.string("uri") ?: "") }
+    var column by remember { mutableStateOf(params.value.string("column") ?: "") }
+    var selection by remember { mutableStateOf(params.value.string("selection") ?: "") }
+
+    OutlinedTextField(
+        value = uri, onValueChange = { uri = it; params.value["uri"] = it },
+        label = { Text("Content URI") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true
+    )
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = column, onValueChange = { column = it; params.value["column"] = it },
+        label = { Text("Column Name") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true
+    )
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = selection, onValueChange = { selection = it; params.value["selection"] = it },
+        label = { Text("Selection (optional WHERE clause)") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true
+    )
 }

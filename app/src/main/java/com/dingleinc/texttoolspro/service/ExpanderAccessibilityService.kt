@@ -9,6 +9,8 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Bundle
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -31,6 +33,21 @@ import com.dingleinc.texttoolspro.data.Match
 import com.dingleinc.texttoolspro.data.ServiceCommandBus
 import com.dingleinc.texttoolspro.data.Var
 import com.dingleinc.texttoolspro.data.SerializationHelper
+import com.dingleinc.texttoolspro.extension.ContentExtension
+import com.dingleinc.texttoolspro.extension.DependencyResolver
+import com.dingleinc.texttoolspro.extension.ExtensionOutput
+import com.dingleinc.texttoolspro.extension.ExtensionRegistry
+import com.dingleinc.texttoolspro.extension.ExtensionResult
+import com.dingleinc.texttoolspro.extension.HttpExtension
+import com.dingleinc.texttoolspro.extension.InjectVariables
+import com.dingleinc.texttoolspro.extension.IntentExtension
+import com.dingleinc.texttoolspro.extension.JavaScriptExtension
+import com.dingleinc.texttoolspro.extension.MatchExtension
+import com.dingleinc.texttoolspro.extension.TemplateRenderer
+import com.dingleinc.texttoolspro.extension.shell.ScriptExtension
+import com.dingleinc.texttoolspro.extension.shell.ShellBackendDetector
+import com.dingleinc.texttoolspro.extension.shell.ShellExecutor
+import com.dingleinc.texttoolspro.extension.shell.ShellExtension
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,7 +65,7 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 
-class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListener {
+class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListener, TemplateRenderer {
 
     companion object {
         private const val TAG = "A11Y"
@@ -74,6 +91,12 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
     private var formKey = ""
     private var skipNextFormEvent = false
     private var skipCount = 0
+
+    private val extensionRegistry = ExtensionRegistry()
+    @Volatile private var isExpansionInProgress = false
+    private var pendingRenderContext: RenderContext? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var shellExecutor: ShellExecutor? = null
 
     private val packageWatchers = ConcurrentHashMap<String, Job>()
     private val lastKnownText = ConcurrentHashMap<String, String>()
@@ -103,6 +126,9 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                                 Log.e(TAG, "Invalid regex: ${item.regex}")
                             }
                         }
+                        extensionRegistry.register(
+                            MatchExtension(dict, globals ?: emptyList(), this)
+                        )
                     }
                     is ServiceCommandBus.Command.Quit -> {
                         disableSelf()
@@ -110,21 +136,51 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                     is ServiceCommandBus.Command.Reset -> {
                         loadDictFromFiles()
                         rebuildRegexDict()
+                        extensionRegistry.register(
+                            MatchExtension(dict, globals ?: emptyList(), this)
+                        )
                     }
                     is ServiceCommandBus.Command.Remove -> {
                         dict.remove(command.match.trigger)
                         if (!command.match.regex.isNullOrEmpty()) {
                             regexDict.entries.removeIf { it.value === command.match }
                         }
+                        extensionRegistry.register(
+                            MatchExtension(dict, globals ?: emptyList(), this)
+                        )
                     }
                     is ServiceCommandBus.Command.UpdateGlobals -> {
                         globals = command.globals
+                        extensionRegistry.register(
+                            MatchExtension(dict, globals ?: emptyList(), this)
+                        )
                     }
                 }
             }
         }
 
         loadDictFromFiles()
+        registerExtensions()
+    }
+
+    private fun registerExtensions() {
+        val configPath = AppSettings.dictPath.substringBeforeLast("/")
+        val homePath = filesDir.absolutePath
+        val packagesPath = filesDir.absolutePath
+
+        shellExecutor = ShellBackendDetector.detectBestBackend(this)
+
+        extensionRegistry.register(HttpExtension())
+        extensionRegistry.register(JavaScriptExtension())
+        extensionRegistry.register(ShellExtension { shellExecutor })
+        extensionRegistry.register(
+            ScriptExtension({ shellExecutor }, configPath, homePath, packagesPath)
+        )
+        extensionRegistry.register(IntentExtension(this))
+        extensionRegistry.register(ContentExtension(this))
+        extensionRegistry.register(
+            MatchExtension(dict, globals ?: emptyList(), this)
+        )
     }
 
     private fun loadDictFromFiles() {
@@ -165,6 +221,7 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         try {
             if (event == null) return
+            if (isExpansionInProgress) return
             val packageName = event.packageName?.toString() ?: return
 
             val node = event.source
@@ -295,7 +352,6 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
             } else {
                 val match = dict[text]
                 if (match != null) {
-                    var replace = match.replace ?: ""
                     val triggerIndex = expansionStr.indexOf(text)
 
                     // Word boundary check: word = leftWord && rightWord
@@ -310,20 +366,22 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                         if (checkRight && !afterOk) return
                     }
 
-                    // Propagate case
-                    if (match.propagateCase) {
-                        replace = applyPropagateCase(text, replace, match.uppercaseStyle)
-                    }
-
                     if (!match.form.isNullOrEmpty()) {
-                        showForm(match, text, event)
+                        startRender(match, text, event, expansionStr, triggerIndex, storeOriginal, original)
                         return
                     } else {
-                        // Check if any var is a choice type — needs interactive UI
-                        val hasChoiceVar = match.vars?.any { it.type == "choice" } == true
-                        if (hasChoiceVar) {
-                            showChoiceForMatch(match, text, event, expansionStr, triggerIndex, storeOriginal, original)
+                        val hasChoiceOrFormVar = match.vars?.any { v ->
+                            v.type in listOf("choice", "form", "shell", "script", "http", "javascript", "match", "intent", "content")
+                        } == true || globals?.any { v ->
+                            v.type in listOf("choice", "form", "shell", "script", "http", "javascript", "match", "intent", "content")
+                        } == true
+                        if (hasChoiceOrFormVar) {
+                            startRender(match, text, event, expansionStr, triggerIndex, storeOriginal, original)
                             return
+                        }
+                        var replace = match.replace ?: ""
+                        if (match.propagateCase) {
+                            replace = applyPropagateCase(text, replace, match.uppercaseStyle)
                         }
                         globals?.forEach { item ->
                             replace = parseItem(item, replace)
@@ -359,12 +417,16 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                             }
 
                             if (!regexMatch.form.isNullOrEmpty()) {
-                                showForm(regexMatch, matchedText, event)
+                                startRender(regexMatch, matchedText, event, expansionStr, triggerIndex, storeOriginal, original)
                                 return
                             } else {
-                                val hasChoiceVar = regexMatch.vars?.any { it.type == "choice" } == true
-                                if (hasChoiceVar) {
-                                    showChoiceForMatch(regexMatch, matchedText, event, expansionStr, triggerIndex, storeOriginal, original)
+                                val hasChoiceOrFormVar = regexMatch.vars?.any { v ->
+                                    v.type in listOf("choice", "form", "shell", "script", "http", "javascript", "match", "intent", "content")
+                                } == true || globals?.any { v ->
+                                    v.type in listOf("choice", "form", "shell", "script", "http", "javascript", "match", "intent", "content")
+                                } == true
+                                if (hasChoiceOrFormVar) {
+                                    startRender(regexMatch, matchedText, event, expansionStr, triggerIndex, storeOriginal, original)
                                     return
                                 }
                                 globals?.forEach { item ->
@@ -586,6 +648,673 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
 
     private fun wrapName(name: String): String = "{{$name}}"
 
+    data class RenderContext(
+        val match: Match,
+        val triggerText: String,
+        val event: AccessibilityEvent,
+        val expansionStr: String,
+        val triggerIndex: Int,
+        val storeOriginal: Boolean,
+        val original: String,
+        var workingReplace: String,
+        val evalOrder: List<Var>,
+        var currentIndex: Int,
+        val scope: MutableMap<String, ExtensionOutput>,
+        val isFormMatch: Boolean = false
+    )
+
+    private fun startRender(
+        match: Match,
+        triggerText: String,
+        event: AccessibilityEvent,
+        expansionStr: String,
+        triggerIndex: Int,
+        storeOriginal: Boolean,
+        original: String
+    ) {
+        val isFormMatch = !match.form.isNullOrEmpty()
+        var workingReplace = if (isFormMatch) match.form!! else match.replace ?: ""
+        if (match.propagateCase) {
+            workingReplace = applyPropagateCase(triggerText, workingReplace, match.uppercaseStyle)
+        }
+
+        val localVars = match.vars ?: emptyList()
+        val globalVarsList = globals ?: emptyList()
+        val evalOrder = DependencyResolver.resolveEvaluationOrder(
+            workingReplace, localVars, globalVarsList
+        ).getOrElse {
+            Log.w(TAG, "Dependency resolution failed: ${it.message}, falling back to original order")
+            globalVarsList + localVars
+        }
+
+        val hasAsyncVar = evalOrder.any { v ->
+            v.type in listOf("shell", "script", "http", "javascript", "match", "choice", "form", "intent", "content")
+        } || isFormMatch
+
+        if (!hasAsyncVar) {
+            evalOrder.forEach { v -> workingReplace = parseItemSync(v, workingReplace) }
+            val end = expansionStr.substring(triggerIndex).replace(triggerText, workingReplace)
+            val newStr = expansionStr.substring(0, triggerIndex) + end
+            doExpansion(event, newStr)
+            if (storeOriginal) {
+                previousOriginal = original
+                previousExpansion = newStr
+            } else {
+                previousOriginal = ""
+                previousExpansion = ""
+            }
+            return
+        }
+
+        isExpansionInProgress = true
+        pendingRenderContext = RenderContext(
+            match, triggerText, AccessibilityEvent.obtain(event),
+            expansionStr, triggerIndex, storeOriginal, original,
+            workingReplace, evalOrder, 0, mutableMapOf(),
+            isFormMatch
+        )
+        executeNextVariable()
+    }
+
+    private fun executeNextVariable() {
+        val ctx = pendingRenderContext ?: return
+        if (ctx.currentIndex >= ctx.evalOrder.size) {
+            if (ctx.isFormMatch) {
+                showFormMatchUI(ctx)
+                return
+            }
+            isExpansionInProgress = false
+            val end = ctx.expansionStr.substring(ctx.triggerIndex).replace(ctx.triggerText, ctx.workingReplace)
+            val newStr = ctx.expansionStr.substring(0, ctx.triggerIndex) + end
+            doExpansion(ctx.event, newStr)
+            if (ctx.storeOriginal) {
+                previousOriginal = ctx.original
+                previousExpansion = newStr
+            } else {
+                previousOriginal = ""
+                previousExpansion = ""
+            }
+            pendingRenderContext = null
+            return
+        }
+
+        val variable = ctx.evalOrder[ctx.currentIndex]
+
+        val effectiveParams = if (variable.injectVars) {
+            InjectVariables.injectVariablesIntoParams(variable.params, ctx.scope.toMap())
+        } else {
+            variable.params
+        }
+
+        when (variable.type) {
+            "choice" -> {
+                showChoiceInPipeline(ctx, variable)
+                return
+            }
+            "form" -> {
+                showFormInPipeline(ctx, variable)
+                return
+            }
+        }
+
+        val extension = extensionRegistry.get(variable.type ?: "")
+        if (extension == null) {
+            val syncResult = parseItemSync(variable, ctx.workingReplace)
+            ctx.workingReplace = syncResult
+            ctx.scope[variable.name ?: ""] = ExtensionOutput.Single(syncResult)
+            ctx.currentIndex++
+            executeNextVariable()
+            return
+        }
+
+        extension.calculate(effectiveParams, ctx.scope.toMap()) { result ->
+            mainHandler.post {
+                when (result) {
+                    is ExtensionResult.Success -> {
+                        val output = result.output
+                        ctx.scope[variable.name ?: ""] = output
+                        when (output) {
+                            is ExtensionOutput.Single -> {
+                                ctx.workingReplace = ctx.workingReplace.replace(
+                                    wrapName(variable.name ?: ""), output.value
+                                )
+                            }
+                            is ExtensionOutput.Multiple -> {
+                                output.values.forEach { (field, value) ->
+                                    ctx.workingReplace = ctx.workingReplace.replace(
+                                        "{{${variable.name}.${field}}}", value
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    is ExtensionResult.Aborted -> {
+                        isExpansionInProgress = false
+                        pendingRenderContext = null
+                        return@post
+                    }
+                    is ExtensionResult.Error -> {
+                        ctx.workingReplace = ctx.workingReplace.replace(
+                            wrapName(variable.name ?: ""), "[${result.message}]"
+                        )
+                    }
+                }
+                ctx.currentIndex++
+                executeNextVariable()
+            }
+        }
+    }
+
+    private fun parseItemSync(item: Var, replace: String): String {
+        try {
+            if (item.type != null) {
+                return when (item.type) {
+                    "echo" -> replace.replace(wrapName(item.name ?: ""), item.params.string("echo") ?: "")
+                    "random" -> {
+                        val choices = item.params.stringList("choices") ?: return replace
+                        if (choices.isNotEmpty()) {
+                            val random = SecureRandom()
+                            replace.replace(wrapName(item.name ?: ""), choices[random.nextInt(choices.size)])
+                        } else replace
+                    }
+                    "clipboard" -> {
+                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = clipboard.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
+                        replace.replace(wrapName(item.name ?: ""), clip)
+                    }
+                    "date" -> {
+                        val param = item.params
+                        val now = LocalDateTime.now()
+                        val dateTime = now.plus(param.long("offset"), ChronoUnit.SECONDS)
+                        val formatter = DateTimeFormatter.ofPattern(param.string("format") ?: "")
+                        replace.replace(wrapName(item.name ?: ""), dateTime.format(formatter))
+                    }
+                    else -> replace
+                }
+            }
+            return replace
+        } catch (e: Exception) {
+            return replace
+        }
+    }
+
+    override fun render(
+        template: Match,
+        parentScope: Map<String, ExtensionOutput>,
+        visitedTriggers: Set<String>,
+        callback: (ExtensionResult) -> Unit
+    ) {
+        val trigger = template.trigger ?: ""
+        if (trigger in visitedTriggers) {
+            callback(ExtensionResult.Error("Circular match reference: $trigger"))
+            return
+        }
+
+        var workingReplace = template.replace ?: ""
+        if (template.propagateCase) {
+            workingReplace = applyPropagateCase(trigger, workingReplace, template.uppercaseStyle)
+        }
+
+        val localVars = template.vars ?: emptyList()
+        val globalVarsList = globals ?: emptyList()
+        val evalOrder = DependencyResolver.resolveEvaluationOrder(
+            workingReplace, localVars, globalVarsList
+        ).getOrElse {
+            globalVarsList + localVars
+        }
+
+        val scope = mutableMapOf<String, ExtensionOutput>()
+        scope.putAll(parentScope)
+
+        renderVariableList(template, workingReplace, evalOrder, scope, visitedTriggers + trigger, 0, callback)
+    }
+
+    private fun renderVariableList(
+        template: Match,
+        workingReplace: String,
+        evalOrder: List<Var>,
+        scope: MutableMap<String, ExtensionOutput>,
+        visitedTriggers: Set<String>,
+        index: Int,
+        callback: (ExtensionResult) -> Unit
+    ) {
+        if (index >= evalOrder.size) {
+            callback(ExtensionResult.Success(ExtensionOutput.Single(workingReplace)))
+            return
+        }
+
+        val variable = evalOrder[index]
+        var currentReplace = workingReplace
+
+        val effectiveParams = if (variable.injectVars) {
+            InjectVariables.injectVariablesIntoParams(variable.params, scope.toMap())
+        } else {
+            variable.params
+        }
+
+        when (variable.type) {
+            "choice" -> {
+                showChoiceInRenderList(template, variable, currentReplace, evalOrder, scope, visitedTriggers, index, callback)
+                return
+            }
+            "form" -> {
+                showFormInRenderList(template, variable, currentReplace, evalOrder, scope, visitedTriggers, index, callback)
+                return
+            }
+        }
+
+        val extension = extensionRegistry.get(variable.type ?: "")
+        if (extension == null) {
+            val syncResult = parseItemSync(variable, currentReplace)
+            currentReplace = syncResult
+            scope[variable.name ?: ""] = ExtensionOutput.Single(syncResult)
+            renderVariableList(template, currentReplace, evalOrder, scope, visitedTriggers, index + 1, callback)
+            return
+        }
+
+        extension.calculate(effectiveParams, scope.toMap()) { result ->
+            mainHandler.post {
+                when (result) {
+                    is ExtensionResult.Success -> {
+                        val output = result.output
+                        scope[variable.name ?: ""] = output
+                        when (output) {
+                            is ExtensionOutput.Single -> {
+                                currentReplace = currentReplace.replace(wrapName(variable.name ?: ""), output.value)
+                            }
+                            is ExtensionOutput.Multiple -> {
+                                output.values.forEach { (field, value) ->
+                                    currentReplace = currentReplace.replace(
+                                        "{{${variable.name}.${field}}}", value
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    is ExtensionResult.Aborted -> {
+                        callback(ExtensionResult.Aborted)
+                        return@post
+                    }
+                    is ExtensionResult.Error -> {
+                        currentReplace = currentReplace.replace(wrapName(variable.name ?: ""), "[${result.message}]")
+                    }
+                }
+                renderVariableList(template, currentReplace, evalOrder, scope, visitedTriggers, index + 1, callback)
+            }
+        }
+    }
+
+    private fun showFormMatchUI(ctx: RenderContext) {
+        val context = this
+        val formLines = ctx.workingReplace.split(*LINE_SEPARATORS).filter { it.isNotEmpty() }
+        val replaceDict = mutableMapOf<String, String>()
+
+        formLines.forEach { line ->
+            val row = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+            }
+
+            if (line.contains("[[")) {
+                val words = line.split(*FORM_SEPARATORS).filter { it.isNotEmpty() }
+                words.forEach { word ->
+                    if (word.startsWith("[[")) {
+                        val endIndex = word.indexOf(']')
+                        val placeholderStr = word.substring(2, endIndex)
+                        val formOption = ctx.match.formFields?.get(placeholderStr)
+
+                        when (formOption?.type) {
+                            "choice" -> {
+                                val spinner = Spinner(context)
+                                val adapter = ArrayAdapter(
+                                    context,
+                                    android.R.layout.simple_spinner_dropdown_item,
+                                    formOption.values ?: emptyList()
+                                )
+                                spinner.adapter = adapter
+                                spinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                                    override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                                        replaceDict[placeholderStr] = formOption.values!![position]
+                                    }
+                                    override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+                                }
+                                row.post { row.addView(spinner) }
+                            }
+                            "list" -> {
+                                val listView = ListView(context)
+                                val adapter = ArrayAdapter(
+                                    context,
+                                    android.R.layout.simple_list_item_1,
+                                    formOption.values ?: emptyList()
+                                )
+                                listView.adapter = adapter
+                                listView.setOnItemClickListener { _, _, position, _ ->
+                                    replaceDict[placeholderStr] = formOption.values!![position]
+                                }
+                                row.post { row.addView(listView) }
+                            }
+                            else -> {
+                                row.post {
+                                    val et = EditText(context)
+                                    et.setHint(placeholderStr)
+                                    if (formOption?.multiline == true) {
+                                        et.minLines = 3
+                                    }
+                                    et.addTextChangedListener(object : android.text.TextWatcher {
+                                        override fun afterTextChanged(s: android.text.Editable?) {
+                                            replaceDict[placeholderStr] = s.toString()
+                                        }
+                                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                                    })
+                                    row.addView(et)
+                                }
+                            }
+                        }
+                    } else {
+                        addTextView(row, word)
+                    }
+                }
+            } else {
+                addTextView(row, line)
+            }
+            rowContainer?.post { rowContainer?.addView(row) }
+        }
+
+        val submitButton = Button(context)
+        submitButton.text = "Submit"
+        submitButton.setOnClickListener {
+            var formText = ctx.workingReplace
+            replaceDict.forEach { (key, value) ->
+                formText = formText.replace("[[${key}]]", value)
+            }
+            windowManager?.removeView(floatView)
+            rowContainer?.removeAllViewsInLayout()
+
+            isExpansionInProgress = false
+            val end = ctx.expansionStr.substring(ctx.triggerIndex).replace(ctx.triggerText, formText)
+            val newStr = ctx.expansionStr.substring(0, ctx.triggerIndex) + end
+            doExpansion(ctx.event, newStr)
+            if (ctx.storeOriginal) {
+                previousOriginal = ctx.original
+                previousExpansion = newStr
+            } else {
+                previousOriginal = ""
+                previousExpansion = ""
+            }
+            pendingRenderContext = null
+        }
+        rowContainer?.post { rowContainer?.addView(submitButton) }
+        windowManager?.addView(floatView, layoutParams)
+    }
+
+    private fun showChoiceInPipeline(ctx: RenderContext, choiceVar: Var) {
+        val values = choiceVar.params.stringList("values")
+            ?: choiceVar.params.stringList("choices")
+        if (values.isNullOrEmpty()) {
+            ctx.currentIndex++
+            executeNextVariable()
+            return
+        }
+
+        val context = this
+        val choiceContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 16, 16, 16)
+        }
+
+        val title = TextView(context).apply {
+            text = "Select: ${choiceVar.name ?: "choice"}"
+            setPadding(0, 0, 0, 8)
+        }
+        choiceContainer.addView(title)
+
+        val listView = ListView(context)
+        val adapter = ArrayAdapter(
+            context,
+            android.R.layout.simple_list_item_1,
+            values
+        )
+        listView.adapter = adapter
+        listView.setOnItemClickListener { _, _, position, _ ->
+            val selected = values[position]
+            ctx.scope[choiceVar.name ?: ""] = ExtensionOutput.Single(selected)
+            ctx.workingReplace = ctx.workingReplace.replace(wrapName(choiceVar.name ?: ""), selected)
+
+            windowManager?.removeView(floatView)
+            rowContainer?.removeAllViewsInLayout()
+
+            ctx.currentIndex++
+            executeNextVariable()
+        }
+        choiceContainer.addView(listView)
+
+        val cancelButton = Button(context)
+        cancelButton.text = "Cancel"
+        cancelButton.setOnClickListener {
+            windowManager?.removeView(floatView)
+            rowContainer?.removeAllViewsInLayout()
+            isExpansionInProgress = false
+            pendingRenderContext = null
+        }
+        choiceContainer.addView(cancelButton)
+
+        rowContainer?.post {
+            rowContainer?.addView(choiceContainer)
+        }
+        windowManager?.addView(floatView, layoutParams)
+    }
+
+    private fun showFormInPipeline(ctx: RenderContext, formVar: Var) {
+        val formLayout = formVar.params.string("layout")
+        if (formLayout == null) {
+            ctx.currentIndex++
+            executeNextVariable()
+            return
+        }
+
+        val context = this
+        val replaceDict = mutableMapOf<String, String>()
+
+        renderFormFields(formLayout, formVar.params, replaceDict) { formText ->
+            windowManager?.removeView(floatView)
+            rowContainer?.removeAllViewsInLayout()
+
+            ctx.scope[formVar.name ?: ""] = ExtensionOutput.Single(formText)
+            ctx.workingReplace = ctx.workingReplace.replace(wrapName(formVar.name ?: ""), formText)
+
+            ctx.currentIndex++
+            executeNextVariable()
+        }
+    }
+
+    private fun showChoiceInRenderList(
+        template: Match,
+        choiceVar: Var,
+        currentReplace: String,
+        evalOrder: List<Var>,
+        scope: MutableMap<String, ExtensionOutput>,
+        visitedTriggers: Set<String>,
+        index: Int,
+        callback: (ExtensionResult) -> Unit
+    ) {
+        val values = choiceVar.params.stringList("values")
+            ?: choiceVar.params.stringList("choices")
+        if (values.isNullOrEmpty()) {
+            renderVariableList(template, currentReplace, evalOrder, scope, visitedTriggers, index + 1, callback)
+            return
+        }
+
+        val context = this
+        val choiceContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 16, 16, 16)
+        }
+
+        val title = TextView(context).apply {
+            text = "Select: ${choiceVar.name ?: "choice"}"
+            setPadding(0, 0, 0, 8)
+        }
+        choiceContainer.addView(title)
+
+        val listView = ListView(context)
+        val adapter = ArrayAdapter(
+            context,
+            android.R.layout.simple_list_item_1,
+            values
+        )
+        listView.adapter = adapter
+        listView.setOnItemClickListener { _, _, position, _ ->
+            val selected = values[position]
+            scope[choiceVar.name ?: ""] = ExtensionOutput.Single(selected)
+            val updated = currentReplace.replace(wrapName(choiceVar.name ?: ""), selected)
+
+            windowManager?.removeView(floatView)
+            rowContainer?.removeAllViewsInLayout()
+
+            renderVariableList(template, updated, evalOrder, scope, visitedTriggers, index + 1, callback)
+        }
+        choiceContainer.addView(listView)
+
+        val cancelButton = Button(context)
+        cancelButton.text = "Cancel"
+        cancelButton.setOnClickListener {
+            windowManager?.removeView(floatView)
+            rowContainer?.removeAllViewsInLayout()
+            callback(ExtensionResult.Aborted)
+        }
+        choiceContainer.addView(cancelButton)
+
+        rowContainer?.post {
+            rowContainer?.addView(choiceContainer)
+        }
+        windowManager?.addView(floatView, layoutParams)
+    }
+
+    private fun showFormInRenderList(
+        template: Match,
+        formVar: Var,
+        currentReplace: String,
+        evalOrder: List<Var>,
+        scope: MutableMap<String, ExtensionOutput>,
+        visitedTriggers: Set<String>,
+        index: Int,
+        callback: (ExtensionResult) -> Unit
+    ) {
+        val formLayout = formVar.params.string("layout")
+        if (formLayout == null) {
+            renderVariableList(template, currentReplace, evalOrder, scope, visitedTriggers, index + 1, callback)
+            return
+        }
+
+        val replaceDict = mutableMapOf<String, String>()
+
+        renderFormFields(formLayout, formVar.params, replaceDict) { formText ->
+            windowManager?.removeView(floatView)
+            rowContainer?.removeAllViewsInLayout()
+
+            scope[formVar.name ?: ""] = ExtensionOutput.Single(formText)
+            val updated = currentReplace.replace(wrapName(formVar.name ?: ""), formText)
+
+            renderVariableList(template, updated, evalOrder, scope, visitedTriggers, index + 1, callback)
+        }
+    }
+
+    private fun renderFormFields(
+        formLayout: String,
+        fieldParams: Params,
+        replaceDict: MutableMap<String, String>,
+        onSubmit: (String) -> Unit
+    ) {
+        val context = this
+        val formLines = formLayout.split(*LINE_SEPARATORS).filter { it.isNotEmpty() }
+
+        formLines.forEach { line ->
+            val row = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+            }
+
+            if (line.contains("[[")) {
+                val words = line.split(*FORM_SEPARATORS).filter { it.isNotEmpty() }
+                words.forEach { word ->
+                    if (word.startsWith("[[")) {
+                        val endIndex = word.indexOf(']')
+                        val placeholderStr = word.substring(2, endIndex)
+
+                        val fieldType = fieldParams.string("${placeholderStr}_type") ?: "text"
+                        val fieldValues = fieldParams.stringList("${placeholderStr}_values")
+                        val fieldMultiline = (fieldParams.data["${placeholderStr}_multiline"] as? Boolean) ?: false
+
+                        when (fieldType) {
+                            "choice" -> {
+                                val spinner = Spinner(context)
+                                val adapter = ArrayAdapter(
+                                    context,
+                                    android.R.layout.simple_spinner_dropdown_item,
+                                    fieldValues ?: emptyList()
+                                )
+                                spinner.adapter = adapter
+                                spinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                                    override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                                        replaceDict[placeholderStr] = (fieldValues ?: emptyList())[position]
+                                    }
+                                    override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+                                }
+                                row.post { row.addView(spinner) }
+                            }
+                            "list" -> {
+                                val listView = ListView(context)
+                                val adapter = ArrayAdapter(
+                                    context,
+                                    android.R.layout.simple_list_item_1,
+                                    fieldValues ?: emptyList()
+                                )
+                                listView.adapter = adapter
+                                listView.setOnItemClickListener { _, _, position, _ ->
+                                    replaceDict[placeholderStr] = (fieldValues ?: emptyList())[position]
+                                }
+                                row.post { row.addView(listView) }
+                            }
+                            else -> {
+                                row.post {
+                                    val et = EditText(context)
+                                    et.setHint(placeholderStr)
+                                    if (fieldMultiline) {
+                                        et.minLines = 3
+                                    }
+                                    et.addTextChangedListener(object : android.text.TextWatcher {
+                                        override fun afterTextChanged(s: android.text.Editable?) {
+                                            replaceDict[placeholderStr] = s.toString()
+                                        }
+                                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                                    })
+                                    row.addView(et)
+                                }
+                            }
+                        }
+                    } else {
+                        addTextView(row, word)
+                    }
+                }
+            } else {
+                addTextView(row, line)
+            }
+            rowContainer?.post { rowContainer?.addView(row) }
+        }
+
+        val submitButton = Button(context)
+        submitButton.text = "Submit"
+        submitButton.setOnClickListener {
+            var formText = formLayout
+            replaceDict.forEach { (key, value) ->
+                formText = formText.replace("[[${key}]]", value)
+            }
+            onSubmit(formText)
+        }
+        rowContainer?.post { rowContainer?.addView(submitButton) }
+        windowManager?.addView(floatView, layoutParams)
+    }
+
     private fun showChoiceForMatch(
         match: Match,
         triggerText: String,
@@ -604,11 +1333,11 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
 
         // Process non-choice vars first
         globals?.forEach { item ->
-            workingReplace = parseItem(item, workingReplace)
+            workingReplace = parseItemSync(item, workingReplace)
         }
         match.vars?.forEach { item ->
             if (item.type != "choice") {
-                workingReplace = parseItem(item, workingReplace)
+                workingReplace = parseItemSync(item, workingReplace)
             }
         }
 

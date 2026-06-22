@@ -59,6 +59,7 @@ android {
 
     buildFeatures {
         compose = true
+        aidl = true
     }
 
     packaging {
@@ -84,5 +85,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.jackson.kotlin)
     implementation(libs.jackson.yaml)
+    implementation(libs.okhttp)
+    implementation(libs.quickjs)
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
     debugImplementation(libs.androidx.ui.tooling)
 }

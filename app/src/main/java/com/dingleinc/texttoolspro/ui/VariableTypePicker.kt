@@ -9,11 +9,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DynamicForm
 import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.Http
 import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -56,7 +62,14 @@ fun VariableTypePicker(
                 "clipboard" to ("Clipboard" to "Insert clipboard content"),
                 "random" to ("Random" to "Random choice from list"),
                 "choice" to ("Choice" to "Interactive list selection"),
-                "form" to ("Form" to "Multi-field form input")
+                "form" to ("Form" to "Multi-field form input"),
+                "shell" to ("Shell" to "Execute shell command"),
+                "script" to ("Script" to "Execute script with args"),
+                "javascript" to ("JavaScript" to "Run JavaScript code"),
+                "http" to ("HTTP" to "Fetch data from URL"),
+                "match" to ("Match" to "Reference another match"),
+                "intent" to ("Intent" to "Broadcast intent plugin"),
+                "content" to ("Content" to "Query content provider")
             )
 
             types.forEach { (type, info) ->
@@ -106,5 +119,12 @@ private fun iconForType(type: String): androidx.compose.ui.graphics.vector.Image
     "random" -> Icons.Default.Shuffle
     "choice" -> Icons.Default.ListAlt
     "form" -> Icons.Default.DynamicForm
+    "shell" -> Icons.Default.Terminal
+    "script" -> Icons.Default.PlayArrow
+    "javascript" -> Icons.Default.Code
+    "http" -> Icons.Default.Http
+    "match" -> Icons.Default.Extension
+    "intent" -> Icons.Default.Cloud
+    "content" -> Icons.Default.ContentPaste
     else -> Icons.Default.FormatQuote
 }
