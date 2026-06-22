@@ -36,13 +36,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.dialog.Dialog
-import androidx.compose.ui.dialog.DialogProperties
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.dingleinc.texttoolspro.data.Match
@@ -75,7 +76,7 @@ fun MatchEditorDialog(
     ) }
     var propagateCase by remember { mutableStateOf(match.propagateCase) }
     var uppercaseStyle by remember { mutableStateOf(match.uppercaseStyle ?: "") }
-    var vars by remember { mutableStateOf(match.vars?.toMutableList() ?: mutableListOf()) }
+    val vars = remember { mutableStateListOf<Var>().apply { match.vars?.let { addAll(it) } } }
     var showDeleteVarConfirm by remember { mutableStateOf<Var?>(null) }
     var showConflictDialog by remember { mutableStateOf<String?>(null) }
 
@@ -118,7 +119,7 @@ fun MatchEditorDialog(
                                     triggers = if (triggers.size > 1) triggers.toMutableList() else null,
                                     replace = replace,
                                     regex = regex.ifBlank { null },
-                                    vars = vars.ifEmpty { null },
+                                    vars = vars.toList().ifEmpty { null },
                                     word = wordMode == 1,
                                     leftWord = wordMode == 2 || wordMode == 1,
                                     rightWord = wordMode == 3 || wordMode == 1,
@@ -153,7 +154,7 @@ fun MatchEditorDialog(
                     ) {
                         triggers.forEach { trigger ->
                             AssistChip(
-                                onClick = { triggers = triggers.filter { it != trigger } },
+                                onClick = { triggers = triggers.filterNot { it == trigger }.toMutableList() },
                                 label = { Text(trigger) },
                                 trailingIcon = {
                                     Icon(
@@ -175,7 +176,7 @@ fun MatchEditorDialog(
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
                         keyboardActions = KeyboardActions(onDone = {
                             if (triggerInput.isNotBlank()) {
-                                triggers = triggers + triggerInput.trim()
+                                triggers = (triggers + triggerInput.trim()).toMutableList()
                                 triggerInput = ""
                             }
                         })
@@ -316,7 +317,7 @@ fun MatchEditorDialog(
             text = { Text("Delete variable '${v.name}'?") },
             confirmButton = {
                 TextButton(onClick = {
-                    vars = vars.filter { it != v }.toMutableList()
+                    vars.remove(v)
                     onRemoveVariable(v)
                     showDeleteVarConfirm = null
                 }) { Text("Delete") }
@@ -340,7 +341,7 @@ fun MatchEditorDialog(
                         triggers = if (triggers.size > 1) triggers.toMutableList() else null,
                         replace = replace,
                         regex = regex.ifBlank { null },
-                        vars = vars.ifEmpty { null },
+                        vars = vars.toList().ifEmpty { null },
                         word = wordMode == 1,
                         leftWord = wordMode == 2 || wordMode == 1,
                         rightWord = wordMode == 3 || wordMode == 1,

@@ -82,7 +82,7 @@ fun VariableEditorDialog(
                         onNewItemChange = { newValue = it },
                         onAdd = {
                             if (newValue.isNotBlank()) {
-                                values = values + newValue.trim()
+                                values = (values + newValue.trim()).toMutableList()
                                 newValue = ""
                                 params.value["choices"] = values.toMutableList()
                             }
@@ -99,7 +99,7 @@ fun VariableEditorDialog(
                         onNewItemChange = { newValue = it },
                         onAdd = {
                             if (newValue.isNotBlank()) {
-                                values = values + newValue.trim()
+                                values = (values + newValue.trim()).toMutableList()
                                 newValue = ""
                                 params.value["values"] = values.toMutableList()
                             }
