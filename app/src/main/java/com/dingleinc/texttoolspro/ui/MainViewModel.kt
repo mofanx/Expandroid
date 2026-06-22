@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.dingleinc.texttoolspro.data.AppSettings
 import com.dingleinc.texttoolspro.data.DictWrapper
 import com.dingleinc.texttoolspro.data.Match
+import com.dingleinc.texttoolspro.data.Params
 import com.dingleinc.texttoolspro.data.SerializationHelper
 import com.dingleinc.texttoolspro.data.ServiceCommandBus
 import com.dingleinc.texttoolspro.data.Var
@@ -42,7 +43,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentMatch = MutableStateFlow(Match(trigger = "t:omw", replace = "On my way", vars = mutableListOf()))
     val currentMatch = _currentMatch.asStateFlow()
 
-    private val _currentVar = MutableStateFlow(Var(params = com.dingleinc.texttoolspro.data.Params()))
+    private val _currentVar = MutableStateFlow(Var(params = Params()))
     val currentVar = _currentVar.asStateFlow()
 
     private val _editingKey = MutableStateFlow<String?>(null)
@@ -213,19 +214,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val match = _currentMatch.value
         when (index) {
             0 -> {
-                match.vars?.add(Var(name = "datenow", type = "date", params = com.dingleinc.texttoolspro.data.Params(format = "dd/MM/yyyy")))
+                val p = Params(); p["format"] = "dd/MM/yyyy"
+                match.vars?.add(Var(name = "datenow", type = "date", params = p))
                 match.replace = (match.replace ?: "") + " {{datenow}}"
             }
             1 -> {
-                match.vars?.add(Var(name = "yesterday", type = "date", params = com.dingleinc.texttoolspro.data.Params(format = "dd/MM/yyyy", offset = -86400)))
+                val p = Params(); p["format"] = "dd/MM/yyyy"; p["offset"] = -86400L
+                match.vars?.add(Var(name = "yesterday", type = "date", params = p))
                 match.replace = (match.replace ?: "") + " {{yesterday}}"
             }
             2 -> {
-                match.vars?.add(Var(name = "tommorow", type = "date", params = com.dingleinc.texttoolspro.data.Params(format = "dd/MM/yyyy", offset = 86400)))
+                val p = Params(); p["format"] = "dd/MM/yyyy"; p["offset"] = 86400L
+                match.vars?.add(Var(name = "tommorow", type = "date", params = p))
                 match.replace = (match.replace ?: "") + " {{tommorow}}"
             }
             3 -> {
-                match.vars?.add(Var(name = "time", type = "date", params = com.dingleinc.texttoolspro.data.Params(format = "HH:mm")))
+                val p = Params(); p["format"] = "HH:mm"
+                match.vars?.add(Var(name = "time", type = "date", params = p))
                 match.replace = (match.replace ?: "") + " {{time}}"
             }
             4 -> {
@@ -237,8 +242,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun addCurrentVar() {
         val copy = Var(_currentVar.value)
-        if (!copy.params.format.isNullOrEmpty()) {
-            copy.params.format = Utils.getTheRealFormat(copy.params.format!!)
+        val fmt = copy.params.string("format")
+        if (!fmt.isNullOrEmpty()) {
+            copy.params["format"] = Utils.getTheRealFormat(fmt)
         }
         _currentMatch.value.vars?.add(copy)
         _currentMatch.value = Match(_currentMatch.value)
@@ -292,14 +298,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // Convert date formats and filter unsupported vars
                 localDict.matches?.forEach { match ->
                     match.vars?.forEach { v ->
-                        if (v.type == "date" && !v.params.format.isNullOrEmpty()) {
-                            v.params.format = Utils.getTheRealFormat(v.params.format!!)
+                        if (v.type == "date") {
+                            val fmt = v.params.string("format")
+                            if (!fmt.isNullOrEmpty()) {
+                                v.params["format"] = Utils.getTheRealFormat(fmt)
+                            }
                         }
                     }
                 }
                 localDict.globalVars?.forEach { v ->
-                    if (v.type == "date" && !v.params.format.isNullOrEmpty()) {
-                        v.params.format = Utils.getTheRealFormat(v.params.format!!)
+                    if (v.type == "date") {
+                        val fmt = v.params.string("format")
+                        if (!fmt.isNullOrEmpty()) {
+                            v.params["format"] = Utils.getTheRealFormat(fmt)
+                        }
                     }
                 }
 
@@ -346,8 +358,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val exportMatch = Match(match)
                     // Reverse date format conversion
                     exportMatch.vars?.forEach { v ->
-                        if (v.type == "date" && !v.params.format.isNullOrEmpty()) {
-                            v.params.format = Utils.getOriginalFormat(v.params.format!!)
+                        if (v.type == "date") {
+                            val fmt = v.params.string("format")
+                            if (!fmt.isNullOrEmpty()) {
+                                v.params["format"] = Utils.getOriginalFormat(fmt)
+                            }
                         }
                     }
                     // Remove internal regex key prefix
@@ -359,8 +374,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 val exportGlobals = _globalVars.value.map { v ->
                     val copy = Var(v)
-                    if (copy.type == "date" && !copy.params.format.isNullOrEmpty()) {
-                        copy.params.format = Utils.getOriginalFormat(copy.params.format!!)
+                    if (copy.type == "date") {
+                        val fmt = copy.params.string("format")
+                        if (!fmt.isNullOrEmpty()) {
+                            copy.params["format"] = Utils.getOriginalFormat(fmt)
+                        }
                     }
                     copy
                 }.toMutableList()

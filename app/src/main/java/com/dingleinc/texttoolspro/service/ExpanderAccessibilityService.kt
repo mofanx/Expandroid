@@ -551,9 +551,9 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
         try {
             if (item.type != null) {
                 return when (item.type) {
-                    "echo" -> replace.replace(wrapName(item.name ?: ""), item.params.echo ?: "")
+                    "echo" -> replace.replace(wrapName(item.name ?: ""), item.params.string("echo") ?: "")
                     "random" -> {
-                        val choices = item.params.choices ?: return replace
+                        val choices = item.params.stringList("choices") ?: return replace
                         if (choices.isNotEmpty()) {
                             val random = SecureRandom()
                             replace.replace(wrapName(item.name ?: ""), choices[random.nextInt(choices.size)])
@@ -567,8 +567,8 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                     "date" -> {
                         val param = item.params
                         val now = LocalDateTime.now()
-                        val dateTime = now.plus(param.offset, ChronoUnit.SECONDS)
-                        val formatter = DateTimeFormatter.ofPattern(param.format ?: "")
+                        val dateTime = now.plus(param.long("offset"), ChronoUnit.SECONDS)
+                        val formatter = DateTimeFormatter.ofPattern(param.string("format") ?: "")
                         replace.replace(wrapName(item.name ?: ""), dateTime.format(formatter))
                     }
                     "choice" -> {
@@ -614,7 +614,7 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
 
         // Find the first choice var
         val choiceVar = match.vars?.find { it.type == "choice" } ?: return
-        val values = choiceVar.params.values ?: choiceVar.params.choices ?: return
+        val values = choiceVar.params.stringList("values") ?: choiceVar.params.stringList("choices") ?: return
         if (values.isEmpty()) return
 
         val choiceContainer = LinearLayout(context).apply {
@@ -642,7 +642,7 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
             // Process remaining choice vars (if multiple, only first is interactive, rest use first value)
             match.vars?.forEach { item ->
                 if (item.type == "choice" && item != choiceVar) {
-                    val vals = item.params.values ?: item.params.choices
+                    val vals = item.params.stringList("values") ?: item.params.stringList("choices")
                     if (!vals.isNullOrEmpty()) {
                         finalReplace = finalReplace.replace(wrapName(item.name ?: ""), vals[0])
                     }

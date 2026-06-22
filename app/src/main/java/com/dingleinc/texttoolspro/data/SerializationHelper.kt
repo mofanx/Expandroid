@@ -4,14 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import kotlinx.serialization.json.Json
 import java.io.InputStream
 
 object SerializationHelper {
-    val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = false
-    }
 
     val yamlMapper = ObjectMapper(YAMLFactory()).apply {
         propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE

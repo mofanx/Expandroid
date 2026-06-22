@@ -41,7 +41,10 @@ class ConfigImportReceiver : BroadcastReceiver() {
                                 return@forEach
                             } else if (x.type == "date") {
                                 try {
-                                    x.params.format = Utils.getTheRealFormat(x.params.format ?: "")
+                                    val fmt = x.params.string("format")
+                                    if (!fmt.isNullOrEmpty()) {
+                                        x.params["format"] = Utils.getTheRealFormat(fmt)
+                                    }
                                 } catch (e: Exception) {
                                     throw Exception("Date extension parameter formats error")
                                 }

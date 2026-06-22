@@ -1,47 +1,44 @@
 package com.dingleinc.texttoolspro.data
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonToken
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import kotlinx.serialization.Serializable
+import com.fasterxml.jackson.annotation.JsonAnyGetter
+import com.fasterxml.jackson.annotation.JsonAnySetter
 
-@Serializable
 data class Params(
-    var echo: String? = null,
-    var format: String? = null,
-    var offset: Long = 0,
-    var cmd: String? = null,
-    var layout: String? = null,
-    var choices: MutableList<String>? = null,
-    @JsonDeserialize(using = ValuesDeserializer::class)
-    var values: MutableList<String>? = null
+    @get:JsonAnyGetter
+    @JsonAnySetter
+    var data: MutableMap<String, Any> = mutableMapOf()
 ) {
-    constructor(og: Params) : this(
-        og.echo, og.format, og.offset, og.cmd, og.layout,
-        og.choices?.toMutableList(),
-        og.values?.toMutableList()
-    )
+    constructor(og: Params) : this(og.data.toMutableMap())
+
+    operator fun get(key: String): Any? = data[key]
+    operator fun set(key: String, value: Any?) { data[key] = value }
+
+    fun string(key: String): String? = (data[key] as? String)
+    fun long(key: String): Long = (data[key] as? Long) ?: (data[key] as? Int)?.toLong() ?: 0L
+    fun stringList(key: String): MutableList<String>? {
+        val v = data[key] ?: return null
+        if (v is MutableList<*>) return v.filterIsInstance<String>().toMutableList()
+        if (v is List<*>) return v.filterIsInstance<String>().toMutableList()
+        return null
+    }
 }
 
-@Serializable
 data class Var(
     var name: String? = null,
     var type: String? = null,
-    var params: Params = Params()
+    var params: Params = Params(),
+    var injectVars: Boolean = true,
+    var dependsOn: MutableList<String>? = null
 ) {
-    constructor(og: Var) : this(og.name, og.type, Params(og.params))
+    constructor(og: Var) : this(og.name, og.type, Params(og.params), og.injectVars, og.dependsOn?.toMutableList())
 }
 
-@Serializable
 data class FormOption(
     var multiline: Boolean = false,
     var type: String? = null,
     var values: MutableList<String>? = null
 )
 
-@Serializable
 data class Match(
     var trigger: String? = null,
     var replace: String? = null,
@@ -54,7 +51,9 @@ data class Match(
     var rightWord: Boolean = false,
     var propagateCase: Boolean = false,
     var uppercaseStyle: String? = null,
-    var regex: String? = null
+    var regex: String? = null,
+    var label: String? = null,
+    var searchTerms: MutableList<String>? = null
 ) {
     constructor(og: Match) : this(
         og.trigger, og.replace,
@@ -67,33 +66,13 @@ data class Match(
         og.rightWord,
         og.propagateCase,
         og.uppercaseStyle,
-        og.regex
+        og.regex,
+        og.label,
+        og.searchTerms?.toMutableList()
     )
 }
 
-@Serializable
 data class DictWrapper(
-    @kotlinx.serialization.SerialName("global_vars")
     var globalVars: MutableList<Var>? = null,
     var matches: MutableList<Match>? = null
 )
-
-class ValuesDeserializer : JsonDeserializer<MutableList<String>>() {
-    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): MutableList<String>? {
-        return when (p.currentToken) {
-            JsonToken.VALUE_NULL -> null
-            JsonToken.VALUE_STRING -> {
-                val s = p.valueAsString
-                if (s.isNullOrBlank()) mutableListOf()
-                else s.split("\n").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
-            }
-            JsonToken.START_ARRAY -> {
-                val text = p.readValueAsTree<com.fasterxml.jackson.databind.node.ArrayNode>()
-                val list = mutableListOf<String>()
-                text.forEach { node -> list.add(node.asText()) }
-                list
-            }
-            else -> mutableListOf()
-        }
-    }
-}
