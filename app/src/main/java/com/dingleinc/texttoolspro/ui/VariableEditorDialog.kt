@@ -362,4 +362,63 @@ private fun FormFields(params: MutableState<Params>) {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.secondary
     )
+
+    val extractedFields = remember(layout) { extractFormFields(layout) }
+
+    if (extractedFields.isNotEmpty()) {
+        Spacer(Modifier.height(12.dp))
+        Text("Detected Fields (${extractedFields.size})", style = MaterialTheme.typography.bodyMedium)
+        Spacer(Modifier.height(4.dp))
+
+        extractedFields.forEach { fieldName ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(fieldName, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "text input",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Text("Preview:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                layout.split("\n").forEach { line ->
+                    val rendered = renderFormLine(line, extractedFields)
+                    Text(rendered, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+}
+
+private fun extractFormFields(layout: String): List<String> {
+    val regex = Regex("\\[\\[(\\w+)\\]\\]")
+    return regex.findAll(layout).map { it.groupValues[1] }.distinct().toList()
+}
+
+private fun renderFormLine(line: String, fields: List<String>): String {
+    var rendered = line
+    fields.forEach { field ->
+        rendered = rendered.replace("[[$field]]", "[$field]")
+    }
+    return rendered
 }
