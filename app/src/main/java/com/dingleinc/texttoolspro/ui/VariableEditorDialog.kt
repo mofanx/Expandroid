@@ -92,23 +92,7 @@ fun VariableEditorDialog(
                             params.value["choices"] = values.toMutableList()
                         }
                     )
-                    "choice" -> ListFields(
-                        title = "Values",
-                        items = values,
-                        newItem = newValue,
-                        onNewItemChange = { newValue = it },
-                        onAdd = {
-                            if (newValue.isNotBlank()) {
-                                values = (values + newValue.trim()).toMutableList()
-                                newValue = ""
-                                params.value["values"] = values.toMutableList()
-                            }
-                        },
-                        onRemove = { idx ->
-                            values = values.filterIndexed { i, _ -> i != idx }.toMutableList()
-                            params.value["values"] = values.toMutableList()
-                        }
-                    )
+                    "choice" -> ChoiceFields(params, values, newValue)
                     "form" -> FormFields(params)
                 }
             }
@@ -286,6 +270,73 @@ private fun ListFields(
         IconButton(onClick = onAdd) {
             Icon(Icons.Default.Add, contentDescription = "Add")
         }
+    }
+}
+
+@Composable
+private fun ChoiceFields(
+    params: MutableState<Params>,
+    initialValues: MutableList<String>,
+    initialNewItem: String
+) {
+    var advancedMode by remember { mutableStateOf(false) }
+    var values by remember { mutableStateOf(initialValues) }
+    var newValue by remember { mutableStateOf(initialNewItem) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("Values", style = MaterialTheme.typography.bodyMedium)
+        TextButton(onClick = { advancedMode = !advancedMode }) {
+            Text(if (advancedMode) "Simple" else "Advanced")
+        }
+    }
+
+    if (!advancedMode) {
+        ListFields(
+            title = "",
+            items = values,
+            newItem = newValue,
+            onNewItemChange = { newValue = it },
+            onAdd = {
+                if (newValue.isNotBlank()) {
+                    values = (values + newValue.trim()).toMutableList()
+                    newValue = ""
+                    params.value["values"] = values.toMutableList()
+                }
+            },
+            onRemove = { idx ->
+                values = values.filterIndexed { i, _ -> i != idx }.toMutableList()
+                params.value["values"] = values.toMutableList()
+            }
+        )
+    } else {
+        Text("Enter id|label pairs (one per line):", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+        var advancedText by remember {
+            mutableStateOf(
+                values.joinToString("\n") { it }
+            )
+        }
+        OutlinedTextField(
+            value = advancedText,
+            onValueChange = {
+                advancedText = it
+                val pairs = it.split("\n").filter { l -> l.isNotBlank() }.map { l -> l.trim() }
+                values = pairs.toMutableList()
+                params.value["values"] = pairs.toMutableList()
+            },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 3,
+            maxLines = 8
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Each line: id|label (e.g. yes|Yes, I agree)",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.secondary
+        )
     }
 }
 

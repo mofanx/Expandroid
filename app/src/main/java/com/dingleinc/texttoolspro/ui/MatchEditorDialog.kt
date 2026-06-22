@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -88,7 +90,18 @@ fun MatchEditorDialog(
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(if (isEditing) "Edit: ${triggers.firstOrNull() ?: ""}" else "New Match")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                if (isEditing) Icons.Default.Edit else Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.padding(end = 8.dp),
+                                tint = if (isEditing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+                            )
+                            Text(
+                                if (isEditing) "Edit: ${triggers.firstOrNull() ?: ""}" else "New Match",
+                                color = if (isEditing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+                            )
+                        }
                     },
                     navigationIcon = {
                         IconButton(onClick = onDismiss) {
@@ -205,6 +218,35 @@ fun MatchEditorDialog(
                         minLines = 3,
                         maxLines = 6
                     )
+
+                    if (vars.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text("Insert variable:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            vars.forEach { v ->
+                                AssistChip(
+                                    onClick = { replace = "$replace {{${v.name ?: ""}}}" },
+                                    label = { Text("{{${v.name ?: ""}}}") }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Text("Preview:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Text(
+                            text = previewReplace(replace, vars),
+                            modifier = Modifier.padding(12.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -223,7 +265,7 @@ fun MatchEditorDialog(
                     }
                 }
 
-                vars.forEach { v ->
+                vars.forEachIndexed { idx, v ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -244,6 +286,18 @@ fun MatchEditorDialog(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.secondary
                                 )
+                            }
+                            IconButton(
+                                onClick = { if (idx > 0) { val tmp = vars[idx]; vars[idx] = vars[idx - 1]; vars[idx - 1] = tmp } },
+                                enabled = idx > 0
+                            ) {
+                                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move up")
+                            }
+                            IconButton(
+                                onClick = { if (idx < vars.size - 1) { val tmp = vars[idx]; vars[idx] = vars[idx + 1]; vars[idx + 1] = tmp } },
+                                enabled = idx < vars.size - 1
+                            ) {
+                                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move down")
                             }
                             IconButton(onClick = { onEditVariable(v) }) {
                                 Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
@@ -356,4 +410,22 @@ fun MatchEditorDialog(
             }
         )
     }
+}
+
+private fun previewReplace(replace: String, vars: List<Var>): String {
+    var result = replace
+    vars.forEach { v ->
+        val placeholder = "{{${v.name ?: ""}}}"
+        val previewValue = when (v.type) {
+            "echo" -> v.params.string("echo") ?: "[echo]"
+            "date" -> v.params.string("format")?.let { "[date: $it]" } ?: "[date]"
+            "clipboard" -> "[clipboard]"
+            "random" -> "[random]"
+            "choice" -> "[choice]"
+            "form" -> "[form]"
+            else -> "[${v.type ?: "var"}]"
+        }
+        result = result.replace(placeholder, previewValue)
+    }
+    return result.ifBlank { "(empty)" }
 }
