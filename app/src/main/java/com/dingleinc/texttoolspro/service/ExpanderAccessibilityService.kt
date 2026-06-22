@@ -31,6 +31,7 @@ import com.dingleinc.texttoolspro.R
 import com.dingleinc.texttoolspro.data.AppSettings
 import com.dingleinc.texttoolspro.data.Match
 import com.dingleinc.texttoolspro.data.ServiceCommandBus
+import com.dingleinc.texttoolspro.data.Params
 import com.dingleinc.texttoolspro.data.Var
 import com.dingleinc.texttoolspro.data.SerializationHelper
 import com.dingleinc.texttoolspro.extension.ContentExtension
@@ -127,7 +128,7 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                             }
                         }
                         extensionRegistry.register(
-                            MatchExtension(dict, globals ?: emptyList(), this)
+                            MatchExtension(dict, globals ?: emptyList(), this@ExpanderAccessibilityService)
                         )
                     }
                     is ServiceCommandBus.Command.Quit -> {
@@ -137,7 +138,7 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                         loadDictFromFiles()
                         rebuildRegexDict()
                         extensionRegistry.register(
-                            MatchExtension(dict, globals ?: emptyList(), this)
+                            MatchExtension(dict, globals ?: emptyList(), this@ExpanderAccessibilityService)
                         )
                     }
                     is ServiceCommandBus.Command.Remove -> {
@@ -146,13 +147,13 @@ class ExpanderAccessibilityService : AccessibilityService(), View.OnTouchListene
                             regexDict.entries.removeIf { it.value === command.match }
                         }
                         extensionRegistry.register(
-                            MatchExtension(dict, globals ?: emptyList(), this)
+                            MatchExtension(dict, globals ?: emptyList(), this@ExpanderAccessibilityService)
                         )
                     }
                     is ServiceCommandBus.Command.UpdateGlobals -> {
                         globals = command.globals
                         extensionRegistry.register(
-                            MatchExtension(dict, globals ?: emptyList(), this)
+                            MatchExtension(dict, globals ?: emptyList(), this@ExpanderAccessibilityService)
                         )
                     }
                 }

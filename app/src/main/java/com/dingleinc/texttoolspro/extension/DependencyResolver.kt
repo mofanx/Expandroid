@@ -59,7 +59,7 @@ object DependencyResolver {
             val node = nodeMap[name]
                 ?: return Result.failure(Exception("Missing dependency: $name"))
             for (dep in node.dependencies) {
-                resolveDeps(dep).onFailure { return it }
+                resolveDeps(dep).onFailure { return Result.failure(it) }
             }
             seen.remove(name)
             resolved.add(name)

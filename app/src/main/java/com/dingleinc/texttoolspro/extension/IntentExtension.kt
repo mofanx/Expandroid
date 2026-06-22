@@ -7,7 +7,7 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.os.PendingIntent
+import android.app.PendingIntent
 import com.dingleinc.texttoolspro.data.Params
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
