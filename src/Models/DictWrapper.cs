@@ -10,7 +10,7 @@ namespace Expandroid.Models
         public List<Var> Global_vars { get; set; }
         [JsonPropertyName("matches")]
         public List<Match> Matches { get; set; }
-        [YamlMember("imports")]
+        [YamlMember(Alias = "imports")]
         public List<string> Imports { get; set; }
     }
     public class FormOption
@@ -41,7 +41,7 @@ namespace Expandroid.Models
             Regex = og.Regex;
         }
         public string Trigger { get; set; }
-        [YamlMember("triggers")]
+        [YamlMember(Alias = "triggers")]
         public List<string> Triggers { get; set; }
         public string Replace { get; set; }
         public List<Var> Vars { get; set; }
@@ -49,15 +49,15 @@ namespace Expandroid.Models
         public string Form { get; set; }
         public Dictionary<string, FormOption> Form_Fields { get; set; }
         public bool Word { get; set; } = false;
-        [YamlMember("left_word")]
+        [YamlMember(Alias = "left_word")]
         public bool LeftWord { get; set; } = false;
-        [YamlMember("right_word")]
+        [YamlMember(Alias = "right_word")]
         public bool RightWord { get; set; } = false;
-        [YamlMember("propagate_case")]
+        [YamlMember(Alias = "propagate_case")]
         public bool PropagateCase { get; set; } = false;
-        [YamlMember("uppercase_style")]
+        [YamlMember(Alias = "uppercase_style")]
         public string UppercaseStyle { get; set; }
-        [YamlMember("regex")]
+        [YamlMember(Alias = "regex")]
         public string Regex { get; set; }
     }
     public class Var
@@ -91,7 +91,7 @@ namespace Expandroid.Models
         public string Cmd { get; set; }
         public string Layout { get; set; }
         public List<string> Choices { get; set; }
-        [YamlMember("values")]
+        [YamlMember(Alias = "values")]
         public List<string> Values { get; set; }
     }
 }

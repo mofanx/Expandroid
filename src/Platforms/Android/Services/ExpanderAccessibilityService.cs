@@ -23,8 +23,8 @@ using System.Linq;
 [MetaData("android.accessibilityservice", Resource = "@xml/accessibility_service")]
 public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.View.IOnTouchListener
 {
-    private Dictionary<string, Match> dict;
-    private Dictionary<Regex, Match> regexDict;
+    private Dictionary<string, Expandroid.Models.Match> dict;
+    private Dictionary<Regex, Expandroid.Models.Match> regexDict;
     private List<Var> globals;
     private readonly Bundle CursorArgs = new();
     private readonly Bundle TextArgs = new();
@@ -104,7 +104,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             if (File.Exists(AppSettings.DictPath))
             {
                 using var stream = File.OpenRead(AppSettings.DictPath);
-                dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(stream);
+                dict = JsonSerializer.Deserialize<Dictionary<string, Expandroid.Models.Match>>(stream);
                 foreach (var item in dict.Values)
                 {
                     if (!string.IsNullOrEmpty(item.Regex))
