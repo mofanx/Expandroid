@@ -8,22 +8,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -73,12 +72,20 @@ fun MainScreen(viewModel: MainViewModel) {
 
     val canTextExpand by viewModel.canTextExpand.collectAsState()
     val dict by viewModel.dict.collectAsState()
+    val editingKey by viewModel.editingKey.collectAsState()
     val currentMatch by viewModel.currentMatch.collectAsState()
-    val currentVar by viewModel.currentVar.collectAsState()
     val showWelcome by viewModel.showWelcome.collectAsState()
     val lazyLoadIndex by viewModel.lazyLoadIndex.collectAsState()
     val snackbarMessage by viewModel.snackbarMessage.collectAsState()
     val recreateActivity by viewModel.recreateActivity.collectAsState()
+
+    var showMatchEditor by remember { mutableStateOf(false) }
+    var showVariableTypePicker by remember { mutableStateOf(false) }
+    var editingVariable by remember { mutableStateOf<Var?>(null) }
+    var editingVariableIndex by remember { mutableStateOf(-1) }
+    var newVarType by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf("") }
+    var deleteConfirmKey by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.refreshAccessibilityStatus()
@@ -109,6 +116,18 @@ fun MainScreen(viewModel: MainViewModel) {
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            if (canTextExpand) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        viewModel.startNewMatch()
+                        showMatchEditor = true
+                    },
+                    icon = { Icon(Icons.Default.Add, contentDescription = "Add") },
+                    text = { Text("Add") }
+                )
+            }
         }
     ) { paddingValues ->
         Column(
@@ -145,15 +164,152 @@ fun MainScreen(viewModel: MainViewModel) {
                     Text(stringResource(R.string.consent_and_open_settings))
                 }
             } else {
-                TextExpanderContent(
-                    viewModel = viewModel,
-                    dict = dict,
-                    currentMatch = currentMatch,
-                    currentVar = currentVar,
-                    lazyLoadIndex = lazyLoadIndex
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(onClick = { viewModel.saveDict() }) {
+                        Icon(Icons.Default.Save, contentDescription = null)
+                        Spacer(Modifier.padding(4.dp))
+                        Text(stringResource(R.string.make_sure_to_save))
+                    }
+                }
+
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Search keywords...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    singleLine = true
                 )
+
+                val filteredDict = if (searchQuery.isBlank()) {
+                    dict
+                } else {
+                    dict.filter { (key, match) ->
+                        key.contains(searchQuery, ignoreCase = true) ||
+                        (match.replace?.contains(searchQuery, ignoreCase = true) == true)
+                    }
+                }
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    val displayCount = minOf(filteredDict.size, lazyLoadIndex)
+                    items(filteredDict.entries.take(displayCount)) { entry ->
+                        MatchCard(
+                            trigger = entry.key,
+                            replace = entry.value.replace ?: entry.value.regex ?: "",
+                            onEdit = {
+                                viewModel.editMatchByKey(entry.key)
+                                showMatchEditor = true
+                            },
+                            onDelete = { deleteConfirmKey = entry.key }
+                        )
+                    }
+                    if (filteredDict.size > lazyLoadIndex) {
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                TextButton(onClick = { viewModel.loadMore() }) {
+                                    Text(stringResource(R.string.load_more))
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+
+    if (showMatchEditor) {
+        val isEditing = editingKey != null
+        MatchEditorDialog(
+            match = currentMatch,
+            isEditing = isEditing,
+            existingKeys = dict.keys,
+            onSave = { match ->
+                viewModel.saveMatchFromDialog(match, isEditing, editingKey)
+                showMatchEditor = false
+            },
+            onDismiss = { showMatchEditor = false },
+            onAddVariable = { showVariableTypePicker = true },
+            onEditVariable = { v ->
+                editingVariable = v
+                editingVariableIndex = currentMatch.vars?.indexOf(v) ?: -1
+                newVarType = v.type ?: ""
+            },
+            onRemoveVariable = { v ->
+                viewModel.removeVar(v)
+            }
+        )
+    }
+
+    if (showVariableTypePicker) {
+        VariableTypePicker(
+            onDismiss = { showVariableTypePicker = false },
+            onSelect = { type ->
+                showVariableTypePicker = false
+                newVarType = type
+                editingVariable = null
+                editingVariableIndex = -1
+            }
+        )
+    }
+
+    if (newVarType.isNotBlank() && editingVariable == null) {
+        VariableEditorDialog(
+            varType = newVarType,
+            existingVar = null,
+            onSave = { v ->
+                viewModel.saveVariable(v)
+                newVarType = ""
+            },
+            onDismiss = { newVarType = "" }
+        )
+    }
+
+    if (editingVariable != null) {
+        VariableEditorDialog(
+            varType = editingVariable!!.type ?: newVarType,
+            existingVar = editingVariable,
+            onSave = { v ->
+                if (editingVariableIndex >= 0) {
+                    viewModel.updateVariable(editingVariableIndex, v)
+                }
+                editingVariable = null
+                editingVariableIndex = -1
+            },
+            onDismiss = {
+                editingVariable = null
+                editingVariableIndex = -1
+            }
+        )
+    }
+
+    deleteConfirmKey?.let { key ->
+        AlertDialog(
+            onDismissRequest = { deleteConfirmKey = null },
+            title = { Text("Delete Match") },
+            text = { Text("Delete '$key'?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.removeMatchByKey(key)
+                    deleteConfirmKey = null
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteConfirmKey = null }) { Text("Cancel") }
+            }
+        )
     }
 
     if (showSettings) {
@@ -167,121 +323,6 @@ fun MainScreen(viewModel: MainViewModel) {
                 exportLauncher.launch("expandroid_export.yml")
             }
         )
-    }
-}
-
-@Composable
-private fun TextExpanderContent(
-    viewModel: MainViewModel,
-    dict: Map<String, Match>,
-    currentMatch: Match,
-    currentVar: Var,
-    lazyLoadIndex: Int
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        OutlinedButton(onClick = { viewModel.saveDict() }) {
-            Icon(Icons.Default.Save, contentDescription = null)
-            Spacer(Modifier.width(4.dp))
-            Text(stringResource(R.string.make_sure_to_save))
-        }
-    }
-
-    Spacer(Modifier.height(16.dp))
-    Text(stringResource(R.string.keywords), style = MaterialTheme.typography.titleMedium)
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        OutlinedTextField(
-            value = currentMatch.trigger ?: "",
-            onValueChange = { viewModel.updateCurrentMatch(currentMatch.copy(trigger = it)) },
-            label = { Text(stringResource(R.string.key)) },
-            modifier = Modifier.weight(1f)
-        )
-        OutlinedTextField(
-            value = currentMatch.replace ?: "",
-            onValueChange = { viewModel.updateCurrentMatch(currentMatch.copy(replace = it)) },
-            label = { Text(stringResource(R.string.value)) },
-            modifier = Modifier.weight(1f)
-        )
-        Button(onClick = { viewModel.addMatch() }) {
-            Text(stringResource(R.string.add))
-        }
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        Column(modifier = Modifier.padding(8.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(stringResource(R.string.variables))
-                Text("${currentMatch.vars?.size ?: 0}")
-            }
-            currentMatch.vars?.forEach { item ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(item.name ?: "")
-                    IconButton(onClick = { viewModel.removeVar(item) }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                    }
-                }
-            }
-        }
-    }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Checkbox(
-            checked = currentMatch.word,
-            onCheckedChange = { viewModel.updateCurrentMatch(currentMatch.copy(word = it)) }
-        )
-        Text(stringResource(R.string.word))
-    }
-
-    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        val displayCount = minOf(dict.size, lazyLoadIndex)
-        items(dict.entries.take(displayCount)) { entry ->
-            MatchCard(
-                trigger = entry.key,
-                replace = entry.value.replace ?: "",
-                onEdit = { viewModel.editItem(entry.value) },
-                onDelete = { viewModel.removeMatch(entry.value) }
-            )
-        }
-        if (dict.size > lazyLoadIndex) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    TextButton(onClick = { viewModel.loadMore() }) {
-                        Text(stringResource(R.string.load_more))
-                    }
-                }
-            }
-        }
     }
 }
 

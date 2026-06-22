@@ -175,11 +175,82 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun saveMatchFromDialog(match: Match, isEditing: Boolean, originalKey: String?) {
+        viewModelScope.launch {
+            try {
+                val newDict = _dict.value.toMutableMap()
+                val copy = Match(match)
+                copy.replace = copy.replace?.replace("\\n", System.lineSeparator())
+
+                if (isEditing && originalKey != null && newDict.containsKey(originalKey)) {
+                    val oldItem = newDict[originalKey]!!
+                    newDict.remove(originalKey)
+                    ServiceCommandBus.trySend(ServiceCommandBus.Command.Remove(oldItem))
+                }
+
+                if (!copy.regex.isNullOrEmpty()) {
+                    val key = "__regex__${copy.regex}"
+                    newDict[key] = copy
+                    ServiceCommandBus.trySend(ServiceCommandBus.Command.Add(copy))
+                } else if (!copy.triggers.isNullOrEmpty()) {
+                    copy.triggers!!.forEach { t ->
+                        val cloned = Match(copy)
+                        cloned.trigger = t
+                        cloned.triggers = null
+                        newDict[t] = cloned
+                        ServiceCommandBus.trySend(ServiceCommandBus.Command.Add(cloned))
+                    }
+                } else if (!copy.trigger.isNullOrEmpty()) {
+                    newDict[copy.trigger!!] = copy
+                    ServiceCommandBus.trySend(ServiceCommandBus.Command.Add(copy))
+                }
+
+                _dict.value = newDict
+                _editingKey.value = null
+                _snackbarMessage.value = if (isEditing) "Updated" else "Added"
+            } catch (e: Exception) {
+                _snackbarMessage.value = e.message
+            }
+        }
+    }
+
+    fun startNewMatch() {
+        _editingKey.value = null
+        _currentMatch.value = Match(trigger = "", replace = "", vars = mutableListOf())
+    }
+
+    fun editMatchByKey(key: String) {
+        val match = _dict.value[key] ?: return
+        _editingKey.value = key
+        _currentMatch.value = Match(match)
+    }
+
     fun removeMatch(item: Match) {
         viewModelScope.launch {
             try {
                 val newDict = _dict.value.toMutableMap()
-                if (newDict.remove(item.trigger) != null) {
+                val key = if (!item.regex.isNullOrEmpty()) {
+                    "__regex__${item.regex}"
+                } else {
+                    item.trigger
+                }
+                if (key != null && newDict.remove(key) != null) {
+                    _dict.value = newDict
+                    ServiceCommandBus.trySend(ServiceCommandBus.Command.Remove(item))
+                    _snackbarMessage.value = "Deleted item"
+                }
+            } catch (e: Exception) {
+                _snackbarMessage.value = e.message
+            }
+        }
+    }
+
+    fun removeMatchByKey(key: String) {
+        viewModelScope.launch {
+            try {
+                val newDict = _dict.value.toMutableMap()
+                val item = newDict.remove(key)
+                if (item != null) {
                     _dict.value = newDict
                     ServiceCommandBus.trySend(ServiceCommandBus.Command.Remove(item))
                     _snackbarMessage.value = "Deleted item"
@@ -253,6 +324,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun removeVar(item: Var) {
         _currentMatch.value.vars?.remove(item)
         _currentMatch.value = Match(_currentMatch.value)
+    }
+
+    fun saveVariable(v: Var) {
+        val copy = Var(v)
+        val fmt = copy.params.string("format")
+        if (!fmt.isNullOrEmpty()) {
+            copy.params["format"] = Utils.getTheRealFormat(fmt)
+        }
+        val match = Match(_currentMatch.value)
+        if (match.vars == null) match.vars = mutableListOf()
+        match.vars!!.add(copy)
+        _currentMatch.value = match
+    }
+
+    fun updateVariable(index: Int, v: Var) {
+        val copy = Var(v)
+        val fmt = copy.params.string("format")
+        if (!fmt.isNullOrEmpty()) {
+            copy.params["format"] = Utils.getTheRealFormat(fmt)
+        }
+        val match = Match(_currentMatch.value)
+        if (match.vars != null && index < match.vars!!.size) {
+            match.vars!![index] = copy
+        }
+        _currentMatch.value = match
     }
 
     fun updateCurrentMatch(match: Match) {
