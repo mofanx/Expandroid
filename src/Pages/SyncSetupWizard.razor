@@ -1,0 +1,152 @@
+@page "/syncsetup"
+@using Expandroid.Services
+@using Expandroid.Models
+@using CommunityToolkit.Maui.Storage
+@inject SyncManager SyncManager
+@inject YamlWorkspace YamlWorkspace
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">Sync Setup Wizard</MudText>
+
+<MudStepper Color="Color.Primary" class="mb-4">
+    @if (_step == 1)
+    {
+        <MudText Typo="Typo.h6" class="mb-3">Do you already use desktop espanso?</MudText>
+        <MudStack Row="true" Spacing="3">
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="() => _step = 2">Yes</MudButton>
+            <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="SkipWizard">No, start fresh</MudButton>
+        </MudStack>
+    }
+    else if (_step == 2)
+    {
+        <MudText Typo="Typo.h6" class="mb-3">Choose a sync method</MudText>
+        <MudList Clickable="true" class="mb-3">
+            <MudListItem OnClick="() => SelectMethod(SyncMethod.CloudFolder)">
+                <MudText Typo="Typo.subtitle1">Cloud Folder (Recommended)</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Surface">Use Google Drive, Dropbox, OneDrive, etc. Easiest setup.</MudText>
+            </MudListItem>
+            <MudListItem OnClick="() => SelectMethod(SyncMethod.Syncthing)">
+                <MudText Typo="Typo.subtitle1">Syncthing</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Surface">P2P sync, no cloud needed. Real-time.</MudText>
+            </MudListItem>
+            <MudListItem OnClick="() => SelectMethod(SyncMethod.WebDAV)">
+                <MudText Typo="Typo.subtitle1">WebDAV (Advanced)</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Surface">For self-hosted NAS / Nextcloud / Nutstore.</MudText>
+            </MudListItem>
+            <MudListItem OnClick="() => SelectMethod(SyncMethod.Git)">
+                <MudText Typo="Typo.subtitle1">Git Repository</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Surface">For developers. Version history.</MudText>
+            </MudListItem>
+            <MudListItem OnClick="() => SelectMethod(SyncMethod.Manual)">
+                <MudText Typo="Typo.subtitle1">Manual</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Surface">Import/export files manually.</MudText>
+            </MudListItem>
+        </MudList>
+        <MudButton Variant="Variant.Text" OnClick="() => _step = 1">Back</MudButton>
+    }
+    else if (_step == 3)
+    {
+        <MudText Typo="Typo.h6" class="mb-3">Configure @_config.Method</MudText>
+
+        @if (_config.Method == SyncMethod.CloudFolder)
+        {
+            <MudText class="mb-3">Select the espanso match folder that is synced by your cloud app (Google Drive, Dropbox, etc.)</MudText>
+            <MudTextField Label="Folder Path" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="Full path to the synced folder on your device" />
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="PickFolderAsync" class="mb-3">Browse...</MudButton>
+        }
+        else if (_config.Method == SyncMethod.Syncthing)
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-3">
+                1. Install Syncthing app from Play Store/F-Droid<br />
+                2. On desktop: install Syncthing, share espanso match folder (ID: espanso-match)<br />
+                3. Accept the folder on Android Syncthing app<br />
+                4. Select the Syncthing-synced folder below
+            </MudAlert>
+            <MudTextField Label="Syncthing Folder Path" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" />
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="PickFolderAsync" class="mb-3">Browse...</MudButton>
+        }
+        else if (_config.Method == SyncMethod.WebDAV)
+        {
+            <MudTextField Label="WebDAV URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="e.g. https://nas.example.com/dav/espanso-match/" />
+            <MudTextField Label="Username" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" />
+            <MudTextField Label="Password" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+        }
+        else if (_config.Method == SyncMethod.Git)
+        {
+            <MudTextField Label="Git Repository URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="e.g. https://github.com/user/espanso-config.git" />
+            <MudTextField Label="Personal Access Token" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+        }
+
+        <MudStack Row="true" Spacing="3">
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="FinishSetup">Finish</MudButton>
+            <MudButton Variant="Variant.Text" OnClick="() => _step = 2">Back</MudButton>
+        </MudStack>
+    }
+</MudStepper>
+
+@code {
+    private int _step = 1;
+    private SyncConfig _config = new();
+
+    private void SelectMethod(SyncMethod method)
+    {
+        _config.Method = method;
+        _step = 3;
+    }
+
+    private async Task PickFolderAsync()
+    {
+        try
+        {
+            var result = await FolderPicker.Default.PickAsync(CancellationToken.None);
+            if (result.Folder is not null)
+            {
+                var folderPath = result.Folder.Path;
+                _config.SyncUri = folderPath;
+
+#if ANDROID
+                if (folderPath.StartsWith("content://"))
+                {
+                    try
+                    {
+                        var safManager = new SafManager(Android.App.Application.Context);
+                        safManager.TakePersistableUriPermission(folderPath);
+                    }
+                    catch { }
+                }
+#endif
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void FinishSetup()
+    {
+        if (string.IsNullOrEmpty(_config.SyncUri) && _config.Method != SyncMethod.Manual)
+        {
+            Snackbar.Add("Please configure the sync path", Severity.Warning);
+            return;
+        }
+
+        SyncManager.UpdateConfig(_config);
+
+        if (_config.Method != SyncMethod.None && _config.Method != SyncMethod.Manual)
+        {
+#if ANDROID
+            SyncWorker.SchedulePeriodicSync(_config.BackgroundPollIntervalMin);
+#endif
+        }
+
+        Snackbar.Add("Sync configured successfully!", Severity.Success);
+        NavigationManager.NavigateTo("/syncsettings");
+    }
+
+    private void SkipWizard()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

@@ -68,6 +68,8 @@
     <PackageReference Include="CommunityToolkit.Maui" Version="7.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.6" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.6" />
+    <PackageReference Include="Xamarin.AndroidX.Work.Runtime" Version="2.9.0.2" />
+    <PackageReference Include="Xamarin.AndroidX.DocumentFile" Version="1.0.1.23" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\AppResources.resx" />

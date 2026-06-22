@@ -26,12 +26,19 @@ public static class MauiProgram
 #endif
 #if ANDROID
         builder.Services.AddSingleton<ICheckIfActivated, CheckIfActivated>();
+        builder.Services.AddSingleton<SafManager>(sp =>
+            new SafManager(Android.App.Application.Context));
+        builder.Services.AddSingleton<YamlWorkspace>(sp =>
+            new YamlWorkspace(sp.GetRequiredService<SafManager>()));
+#else
+        builder.Services.AddSingleton<YamlWorkspace>();
 #endif
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
         builder.Services.AddSingleton<IThemeService, ThemeService>();
         builder.Services.AddSingleton(FileSaver.Default);
         builder.Services.AddSingleton(FilePicker.Default);
+        builder.Services.AddSingleton<SyncManager>();
         return builder.Build();
     }
 }

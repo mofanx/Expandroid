@@ -8,7 +8,45 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-dotnet:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Install .NET MAUI Workload
+      run: dotnet workload install maui-android
+
+    - name: Restore Dependencies
+      run: dotnet restore src/Expandroid.csproj
+
+    - name: Build Debug
+      run: dotnet build src/Expandroid.csproj -c Debug -f net9.0-android35.0 --no-restore
+
+    - name: Build Release
+      run: dotnet build src/Expandroid.csproj -c Release -f net9.0-android35.0 --no-restore
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: dotnet-debug-build
+        path: |
+          src/bin/Release/net9.0-android35.0/*.apk
+          src/bin/Debug/net9.0-android35.0/*.apk
+
+  build-android:
     runs-on: ubuntu-latest
 
     steps:

@@ -54,8 +54,18 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
         {
             var cmd = m.Value.Item1;
             var item = m.Value.Item2;
-            if (cmd == "Add")
+            if (cmd == "Add" || cmd == "Update")
             {
+                if (cmd == "Update")
+                {
+                    dict.Remove(item.Trigger, out var _);
+                    if (!string.IsNullOrEmpty(item.Regex))
+                    {
+                        var toRemove = regexDict.Where(kvp => kvp.Value.Regex == item.Regex).Select(kvp => kvp.Key).ToList();
+                        foreach (var key in toRemove)
+                            regexDict.Remove(key);
+                    }
+                }
                 if (!string.IsNullOrEmpty(item.Form) || !(string.IsNullOrEmpty(item.Trigger) || string.IsNullOrEmpty(item.Replace)))
                 {
                     dict[item.Trigger] = item;

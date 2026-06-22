@@ -1,0 +1,172 @@
+@page "/syncsettings"
+@using Expandroid.Services
+@using Expandroid.Models
+@using System.IO
+@using System.Text.Json
+@inject SyncManager SyncManager
+@inject YamlWorkspace YamlWorkspace
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">Sync Settings</MudText>
+
+<MudCard Class="mb-4">
+    <MudCardContent>
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.h6">Current Status</MudText>
+            <MudStack Row="true" Align="Align.Center" Spacing="3">
+                <MudChip Color="@(SyncManager.CurrentStatus == SyncStatus.Idle ? Color.Success :
+                                   SyncManager.CurrentStatus == SyncStatus.Syncing ? Color.Info :
+                                   SyncManager.CurrentStatus == SyncStatus.Error ? Color.Error :
+                                   Color.Warning)">
+                    @SyncManager.CurrentStatus.ToString()
+                </MudChip>
+                <MudText>
+                    Last sync: @(SyncManager.LastSyncTime?.ToLocalTime().ToString("g") ?? "Never")
+                </MudText>
+                <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="SyncNow">
+                    Sync Now
+                </MudButton>
+            </MudStack>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
+
+<MudCard Class="mb-4">
+    <MudCardContent>
+        <MudText Typo="Typo.h6" class="mb-3">Sync Method</MudText>
+        <MudSelect T="SyncMethod" @bind-Value="_config.Method" Label="Method" Variant="Variant.Outlined" class="mb-3">
+            <MudSelectItem Value="@(SyncMethod.None)">None</MudSelectItem>
+            <MudSelectItem Value="@(SyncMethod.CloudFolder)">Cloud Folder (SAF)</MudSelectItem>
+            <MudSelectItem Value="@(SyncMethod.Syncthing)">Syncthing</MudSelectItem>
+            <MudSelectItem Value="@(SyncMethod.WebDAV)">WebDAV</MudSelectItem>
+            <MudSelectItem Value="@(SyncMethod.Git)">Git</MudSelectItem>
+            <MudSelectItem Value="@(SyncMethod.Manual)">Manual</MudSelectItem>
+        </MudSelect>
+
+        @if (_config.Method == SyncMethod.CloudFolder || _config.Method == SyncMethod.Syncthing)
+        {
+            <MudTextField Label="Sync Folder Path" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" />
+            <MudButton Color="Color.Primary" Variant="Variant.Text" OnClick="PickFolder">Browse...</MudButton>
+        }
+        else if (_config.Method == SyncMethod.WebDAV)
+        {
+            <MudTextField Label="WebDAV URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" />
+            <MudTextField Label="Username" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" />
+            <MudTextField Label="Password" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+        }
+
+        <MudText Typo="Typo.h6" class="mb-2 mt-4">Conflict Strategy</MudText>
+        <MudRadioGroup T="ConflictStrategy" @bind-Value="_config.ConflictStrategy">
+            <MudRadio Value="@(ConflictStrategy.LastWriteWins)" Label="Last Write Wins (default)" />
+            <MudRadio Value="@(ConflictStrategy.KeepBoth)" Label="Keep Both Copies" />
+        </MudRadioGroup>
+
+        <MudText Typo="Typo.h6" class="mb-2 mt-4">Sync Interval</MudText>
+        <MudSlider T="int" @bind-Value="_config.ForegroundPollIntervalSec" Min="30" Max="300" Step="30" Color="Color.Primary" />
+        <MudText>Foreground poll: @_config.ForegroundPollIntervalSec seconds</MudText>
+
+        <MudCheckBox @bind-Value="_config.WifiOnly" Label="WiFi only" class="mt-3" />
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveConfig">Save</MudButton>
+        <MudButton Color="Color.Secondary" Variant="Variant.Text" OnClick="GoBack">Back</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@if (_lastResult != null)
+{
+    <MudAlert Severity="@(_lastResult.Success ? Severity.Success : Severity.Error)" Class="mb-4">
+        @if (_lastResult.Success)
+        {
+            <text>Synced @_lastResult.FilesSynced files. @if (_lastResult.Conflicts > 0) { <text>@_lastResult.Conflicts conflicts detected.</text> }</text>
+        }
+        else
+        {
+            <text>@_lastResult.ErrorMessage</text>
+        }
+    </MudAlert>
+}
+
+@code {
+    private SyncConfig _config;
+    private SyncResult _lastResult;
+
+    protected override void OnInitialized()
+    {
+        _config = SyncManager.GetConfig();
+    }
+
+    private async Task SyncNow()
+    {
+        if (string.IsNullOrEmpty(AppSettings.DictPath) || !File.Exists(AppSettings.DictPath))
+        {
+            Snackbar.Add("No local data to sync", Severity.Warning);
+            return;
+        }
+
+        var dictJson = File.ReadAllText(AppSettings.DictPath);
+        var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Match>>(dictJson);
+
+        List<Var> globalVars = null;
+        if (File.Exists(AppSettings.GlobalVarsPath))
+        {
+            var gvJson = File.ReadAllText(AppSettings.GlobalVarsPath);
+            globalVars = System.Text.Json.JsonSerializer.Deserialize<List<Var>>(gvJson);
+        }
+
+        _lastResult = await SyncManager.SyncAsync(dict, globalVars);
+
+        if (_lastResult.Success && _lastResult.HasRemoteChanges)
+        {
+            var mergedJson = System.Text.Json.JsonSerializer.Serialize(dict);
+            await File.WriteAllTextAsync(AppSettings.DictPath, mergedJson);
+            if (globalVars != null)
+            {
+                var gvStr = System.Text.Json.JsonSerializer.Serialize(globalVars);
+                await File.WriteAllTextAsync(AppSettings.GlobalVarsPath, gvStr);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private void SaveConfig()
+    {
+        SyncManager.UpdateConfig(_config);
+        Snackbar.Add("Settings saved", Severity.Success);
+    }
+
+    private async Task PickFolder()
+    {
+        try
+        {
+            var result = await CommunityToolkit.Maui.Storage.FolderPicker.Default.PickAsync(System.Threading.CancellationToken.None);
+            if (result.Folder is not null)
+            {
+                _config.SyncUri = result.Folder.Path;
+#if ANDROID
+                if (_config.SyncUri.StartsWith("content://"))
+                {
+                    try
+                    {
+                        var safManager = new SafManager(Android.App.Application.Context);
+                        safManager.TakePersistableUriPermission(_config.SyncUri);
+                    }
+                    catch { }
+                }
+#endif
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

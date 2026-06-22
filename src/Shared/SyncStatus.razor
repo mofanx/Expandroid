@@ -1,0 +1,47 @@
+@using Expandroid.Services
+@inject SyncManager SyncManager
+@inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+
+@if (SyncManager.GetConfig().Method != SyncMethod.None)
+{
+    <MudAlert Severity="@GetSeverity()" Class="mb-3" Style="cursor: pointer;" OnClick="GoToSyncSettings">
+        <MudStack Row="true" Align="Align.Center" Spacing="2">
+            <MudText>
+                @GetStatusText()
+            </MudText>
+            <MudChip Size="Size.Small" Color="Color.Primary">Tap to manage</MudChip>
+        </MudStack>
+    </MudAlert>
+}
+
+@code {
+    private Severity GetSeverity()
+    {
+        return SyncManager.CurrentStatus switch
+        {
+            SyncStatus.Idle => Severity.Success,
+            SyncStatus.Syncing => Severity.Info,
+            SyncStatus.Error => Severity.Error,
+            SyncStatus.Conflict => Severity.Warning,
+            _ => Severity.Info
+        };
+    }
+
+    private string GetStatusText()
+    {
+        var last = SyncManager.LastSyncTime;
+        var lastStr = last?.ToLocalTime().ToString("g") ?? "never";
+        return SyncManager.CurrentStatus switch
+        {
+            SyncStatus.Syncing => "Syncing...",
+            SyncStatus.Error => "Sync error - tap to retry",
+            SyncStatus.Conflict => $"Sync conflict detected (last sync: {lastStr})",
+            _ => $"Sync OK (last: {lastStr})"
+        };
+    }
+
+    private void GoToSyncSettings()
+    {
+        NavigationManager.NavigateTo("/syncsettings");
+    }
+}
