@@ -91,7 +91,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
                 if (File.Exists(AppSettings.DictPath))
                 {
                     var json = File.ReadAllText(AppSettings.DictPath);
-                    var loaded = JsonSerializer.Deserialize<Dictionary<string, Match>>(json);
+                    var loaded = JsonSerializer.Deserialize<Dictionary<string, Expandroid.Models.Match>>(json);
                     foreach (var kv in loaded)
                     {
                         if (!string.IsNullOrEmpty(kv.Value.Regex))

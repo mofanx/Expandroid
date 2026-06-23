@@ -42,7 +42,7 @@
         {
             <MudStack Row="true" Justify="Justify.Center" Spacing="2" Class="mb-4">
                 <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large">
-                    <MudButton @onclick="SaveDictAsync" StartIcon="@Icons.Material.Filled.Save" Disabled="@_saving">
+                    <MudButton @onclick="() => SaveDictAsync()" StartIcon="@Icons.Material.Filled.Save" Disabled="@_saving">
                         @if (_saving) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
                         else { @localizationService.GetString("MakeSureToSave") }
                     </MudButton>
@@ -777,7 +777,6 @@
                         config.OnClick = snackbar =>
                         {
                             NavigationManager.NavigateTo("/conflicts");
-                            return Task.CompletedTask;
                         };
                     });
                 }
