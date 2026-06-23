@@ -262,11 +262,11 @@
         SyncManager.SyncCompleted += OnSyncCompleted;
         WeakReferenceMessenger.Default.Register<ConfigChangedMessage>(this, (r, m) =>
         {
-            InvokeAsync(async () =>
+            InvokeAsync(() =>
             {
 #if ANDROID
                 StopObservers();
-                await StartSafObserver();
+                StartSafObserver();
 #endif
             });
         });
@@ -844,7 +844,7 @@
             if (await dialogService.DisplayConfirmAsync(localizationService.GetString("NeedConsent"), localizationService.GetString("GiveConsentMessage"), localizationService.GetString("IGiveConsent"), localizationService.GetString("Nevermind")))
             {
                 acService.OpenSettings();
-                ForceQuit();
+                await ForceQuit();
             }
         }
         catch (Exception e)
