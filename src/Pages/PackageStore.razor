@@ -1,0 +1,184 @@
+@page "/packages"
+@using Expandroid.Models
+@using Expandroid.Services
+@inject HubClient HubClient
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">
+    Package Store
+</MudText>
+
+<MudTextField @bind-Value="_searchQuery"
+              Label="Search packages"
+              Variant="Variant.Outlined"
+              Adornment="Adornment.Start"
+              AdornmentIcon="@MudBlazor.Icons.Material.Filled.Search"
+              class="mb-4"
+              Immediate="true" />
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" class="d-flex justify-center" />
+}
+else if (_packages.Count == 0)
+{
+    <MudText Align="Align.Center" Color="Color.Surface" class="mt-4">
+        No packages found. Try refreshing.
+    </MudText>
+}
+else
+{
+    <MudGrid Spacing="3">
+        @foreach (var pkg in _filteredPackages)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="mb-3">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">@pkg.Title</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Surface" class="mb-2">by @pkg.Author</MudText>
+                        <MudText Typo="Typo.body2" class="mb-2" Style="min-height: 40px;">
+                            @(pkg.Description?.Length > 100 ? pkg.Description.Substring(0, 100) + "..." : pkg.Description)
+                        </MudText>
+                        @if (!string.IsNullOrEmpty(pkg.Tags))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Surface">
+                                @pkg.Tags
+                            </MudText>
+                        }
+                    </MudCardContent>
+                    <MudCardActions>
+                        @if (_installedNames.Contains(pkg.Name))
+                        {
+                            <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => UninstallPackage(pkg)">
+                                Uninstall
+                            </MudButton>
+                        }
+                        else
+                        {
+                            <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                                       OnClick="() => InstallPackage(pkg)"
+                                       Disabled="@_installing">
+                                Install
+                            </MudButton>
+                        }
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+<MudStack Row="true" Spacing="2" class="mt-4" AlignItems="AlignItems.Center">
+    <MudButton Variant="Variant.Outlined" OnClick="RefreshIndex" Disabled="@_loading">
+        Refresh Index
+    </MudButton>
+</MudStack>
+
+@code {
+    private List<HubPackageInfo> _packages = new();
+    private List<HubPackageInfo> _filteredPackages = new();
+    private HashSet<string> _installedNames = new();
+    private string _searchQuery = "";
+    private bool _loading = true;
+    private bool _installing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        try
+        {
+            var index = await HubClient.GetPackageIndexAsync();
+            _packages = index.Packages;
+            _installedNames = HubClient.GetInstalledPackages().Select(p => p.Name).ToHashSet();
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load packages: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        if (string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            _filteredPackages = _packages;
+        }
+        else
+        {
+            var query = _searchQuery.ToLowerInvariant();
+            _filteredPackages = _packages.Where(p =>
+                (p.Name?.ToLowerInvariant().Contains(query) == true) ||
+                (p.Title?.ToLowerInvariant().Contains(query) == true) ||
+                (p.Description?.ToLowerInvariant().Contains(query) == true) ||
+                (p.Tags?.ToLowerInvariant().Contains(query) == true)
+            ).ToList();
+        }
+    }
+
+    private async Task RefreshIndex()
+    {
+        _loading = true;
+        try
+        {
+            var index = await HubClient.GetPackageIndexAsync(forceRefresh: true);
+            _packages = index.Packages;
+            ApplyFilter();
+            Snackbar.Add($"Loaded {_packages.Count} packages", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Refresh failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task InstallPackage(HubPackageInfo pkg)
+    {
+        _installing = true;
+        try
+        {
+            Snackbar.Add($"Installing {pkg.Name}...", Severity.Info);
+            var installed = await HubClient.InstallPackageAsync(pkg);
+            if (installed != null)
+            {
+                _installedNames.Add(pkg.Name);
+                Snackbar.Add($"Installed {pkg.Name}: {installed.MatchFiles.Count} files", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Install failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _installing = false;
+        }
+    }
+
+    private void UninstallPackage(HubPackageInfo pkg)
+    {
+        try
+        {
+            HubClient.UninstallPackage(pkg.Name);
+            _installedNames.Remove(pkg.Name);
+            Snackbar.Add($"Uninstalled {pkg.Name}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Uninstall failed: {ex.Message}", Severity.Error);
+        }
+    }
+}

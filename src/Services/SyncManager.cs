@@ -88,6 +88,7 @@ namespace Expandroid.Services
         private SyncState _state;
         private readonly string _stateFilePath;
         private readonly string _syncStateFileName = ".expandroid-sync.json";
+        private WebDavClient _webDavClient;
 
         public SyncStatus CurrentStatus { get; private set; } = SyncStatus.Idle;
         public DateTime? LastSyncTime => _state?.LastSyncTime;
@@ -99,7 +100,24 @@ namespace Expandroid.Services
             _stateFilePath = Path.Combine(FileSystem.Current.AppDataDirectory, "sync_state.json");
             _state = LoadState();
             _config = LoadConfig();
+            EnsureWebDavClient();
         }
+
+        private void EnsureWebDavClient()
+        {
+            if (_config.Method == SyncMethod.WebDAV && !string.IsNullOrEmpty(_config.SyncUri))
+            {
+                _webDavClient?.Dispose();
+                _webDavClient = new WebDavClient(_config.SyncUri, _config.Username, _config.Password);
+            }
+            else
+            {
+                _webDavClient?.Dispose();
+                _webDavClient = null;
+            }
+        }
+
+        public bool IsWebDav() => _config.Method == SyncMethod.WebDAV;
 
         public SyncConfig GetConfig() => _config;
 
@@ -107,11 +125,22 @@ namespace Expandroid.Services
         {
             _config = config;
             SaveConfig(config);
+            EnsureWebDavClient();
         }
 
         public bool IsSafUri()
         {
             return _config.SyncUri?.StartsWith("content://") == true;
+        }
+
+        public async Task<bool> TestConnectionAsync()
+        {
+            if (_config.Method == SyncMethod.WebDAV)
+            {
+                EnsureWebDavClient();
+                return _webDavClient != null && await _webDavClient.TestConnectionAsync();
+            }
+            return false;
         }
 
         #region Push
@@ -128,6 +157,12 @@ namespace Expandroid.Services
             try
             {
                 CurrentStatus = SyncStatus.Syncing;
+
+                if (IsWebDav())
+                {
+                    return await PushWebDavAsync(dict, globalVars, ct);
+                }
+
                 var syncFolder = ResolveSyncFolder();
                 if (syncFolder == null)
                 {
@@ -172,6 +207,12 @@ namespace Expandroid.Services
             try
             {
                 CurrentStatus = SyncStatus.Syncing;
+
+                if (IsWebDav())
+                {
+                    return await PullWebDavAsync(ct);
+                }
+
                 var syncFolder = ResolveSyncFolder();
                 if (syncFolder == null)
                 {
@@ -317,6 +358,11 @@ namespace Expandroid.Services
 
         public bool CheckChanges()
         {
+            if (IsWebDav())
+            {
+                return CheckWebDavChanges();
+            }
+
             var syncFolder = ResolveSyncFolder();
             if (syncFolder == null)
                 return false;
@@ -329,6 +375,28 @@ namespace Expandroid.Services
                     return true;
             }
             return false;
+        }
+
+        private bool CheckWebDavChanges()
+        {
+            try
+            {
+                EnsureWebDavClient();
+                if (_webDavClient == null) return false;
+                var remoteFiles = _webDavClient.ListDirectoryAsync().GetAwaiter().GetResult();
+                foreach (var f in remoteFiles)
+                {
+                    if (f.IsDirectory || f.DisplayName.StartsWith(".") || f.DisplayName.StartsWith("_"))
+                        continue;
+                    if (!f.DisplayName.EndsWith(".yml") && !f.DisplayName.EndsWith(".yaml"))
+                        continue;
+                    var hash = f.ETag ?? f.LastModified.ToString("o");
+                    if (!_state.Files.TryGetValue(f.DisplayName, out var localEntry) || localEntry.Hash != hash)
+                        return true;
+                }
+                return false;
+            }
+            catch { return false; }
         }
 
         #endregion
@@ -377,6 +445,243 @@ namespace Expandroid.Services
 
         #endregion
 
+        #region WebDAV
+
+        private async Task<SyncResult> PushWebDavAsync(Dictionary<string, Match> dict, List<Var> globalVars, CancellationToken ct)
+        {
+            var result = new SyncResult();
+            try
+            {
+                EnsureWebDavClient();
+                if (_webDavClient == null)
+                {
+                    result.ErrorMessage = "WebDAV client not initialized";
+                    CurrentStatus = SyncStatus.Error;
+                    return result;
+                }
+
+                var group = new MatchGroup
+                {
+                    Matches = dict.Values.ToList(),
+                    GlobalVars = globalVars ?? new List<Var>()
+                };
+                var yaml = _yamlWorkspace.SerializeMatchGroup(group);
+                await _webDavClient.PutFileAsync("expandroid.yml", yaml, ct);
+
+                var stateJson = JsonSerializer.Serialize(_state, new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                });
+                await _webDavClient.PutFileAsync(_syncStateFileName, stateJson, ct);
+
+                await UpdateWebDavStateAsync(ct);
+
+                result.Success = true;
+                result.Status = SyncStatus.Idle;
+                CurrentStatus = SyncStatus.Idle;
+                SyncCompleted?.Invoke(CurrentStatus, result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.ErrorMessage = ex.Message;
+                result.Status = SyncStatus.Error;
+                CurrentStatus = SyncStatus.Error;
+                SyncCompleted?.Invoke(CurrentStatus, result);
+                return result;
+            }
+        }
+
+        private async Task<SyncResult> PullWebDavAsync(CancellationToken ct)
+        {
+            var result = new SyncResult();
+            try
+            {
+                EnsureWebDavClient();
+                if (_webDavClient == null)
+                {
+                    result.ErrorMessage = "WebDAV client not initialized";
+                    CurrentStatus = SyncStatus.Error;
+                    return result;
+                }
+
+                var remoteFiles = await _webDavClient.ListDirectoryAsync("", ct);
+                var yamlFiles = remoteFiles
+                    .Where(f => !f.IsDirectory &&
+                                (f.DisplayName.EndsWith(".yml") || f.DisplayName.EndsWith(".yaml")) &&
+                                !f.DisplayName.StartsWith("_") &&
+                                !f.DisplayName.StartsWith("."))
+                    .ToList();
+
+                if (yamlFiles.Count == 0)
+                {
+                    result.Success = true;
+                    result.Status = SyncStatus.Idle;
+                    CurrentStatus = SyncStatus.Idle;
+                    SyncCompleted?.Invoke(CurrentStatus, result);
+                    return result;
+                }
+
+                int filesSynced = 0;
+                var conflicts = new List<string>();
+                var hasRemoteChanges = false;
+
+                var localDictPath = AppSettings.DictPath;
+                var localDictExists = File.Exists(localDictPath);
+                var localDictLastModified = localDictExists
+                    ? new System.IO.FileInfo(localDictPath).LastWriteTimeUtc
+                    : DateTime.MinValue;
+
+                var pulledDict = new Dictionary<string, Match>();
+                var pulledVars = new List<Var>();
+                var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var remoteFileLookup = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var f in remoteFiles)
+                {
+                    if (!f.IsDirectory && (f.DisplayName.EndsWith(".yml") || f.DisplayName.EndsWith(".yaml")))
+                        remoteFileLookup[f.DisplayName] = f.Href;
+                }
+
+                foreach (var remoteFile in yamlFiles)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var relativePath = remoteFile.DisplayName;
+                    var hasLocalState = _state.Files.TryGetValue(relativePath, out var localEntry);
+                    var remoteHash = remoteFile.ETag ?? remoteFile.LastModified.ToString("o");
+                    var remoteChanged = !hasLocalState || localEntry.Hash != remoteHash;
+
+                    if (remoteChanged)
+                    {
+                        hasRemoteChanges = true;
+                        filesSynced++;
+
+                        if (hasLocalState && localDictExists)
+                        {
+                            var localModifiedSinceSync = localEntry.LastModified < localDictLastModified;
+                            if (localModifiedSinceSync)
+                            {
+                                if (_config.ConflictStrategy == ConflictStrategy.KeepBoth)
+                                {
+                                    conflicts.Add(relativePath);
+                                }
+                                else
+                                {
+                                    if (remoteFile.LastModified > localEntry.LastModified)
+                                        conflicts.Add(relativePath);
+                                }
+                            }
+                        }
+
+                        await PullWebDavWithImportsRecursive(relativePath, remoteFileLookup, pulledDict, pulledVars, visited, 0, ct);
+                    }
+                }
+
+                if (hasRemoteChanges)
+                {
+                    result.PulledDict = pulledDict;
+                    result.PulledGlobalVars = pulledVars;
+                    result.HasRemoteChanges = true;
+                }
+
+                await UpdateWebDavStateAsync(ct);
+
+                result.Success = true;
+                result.FilesSynced = filesSynced;
+                result.Conflicts = conflicts.Count;
+                result.ConflictFiles = conflicts;
+                result.Status = conflicts.Count > 0 ? SyncStatus.Conflict : SyncStatus.Idle;
+                CurrentStatus = result.Status;
+                SyncCompleted?.Invoke(CurrentStatus, result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.ErrorMessage = ex.Message;
+                result.Status = SyncStatus.Error;
+                CurrentStatus = SyncStatus.Error;
+                SyncCompleted?.Invoke(CurrentStatus, result);
+                return result;
+            }
+        }
+
+        private async Task PullWebDavWithImportsRecursive(
+            string remotePath,
+            Dictionary<string, string> remoteFileLookup,
+            Dictionary<string, Match> dict,
+            List<Var> vars,
+            HashSet<string> visited,
+            int depth,
+            CancellationToken ct)
+        {
+            if (depth > 10 || visited.Contains(remotePath)) return;
+            visited.Add(remotePath);
+
+            var content = await _webDavClient.GetFileAsync(remotePath, ct);
+            if (string.IsNullOrEmpty(content)) return;
+
+            var group = _yamlWorkspace.ParseYaml(content, remotePath);
+            _yamlWorkspace.MergeGroupIntoDict(dict, vars, group);
+
+            if (group.Imports != null && group.Imports.Count > 0)
+            {
+                var baseDir = remotePath.Contains("/")
+                    ? remotePath.Substring(0, remotePath.LastIndexOf('/') + 1)
+                    : "";
+
+                foreach (var importPath in group.Imports)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    if (string.IsNullOrEmpty(importPath)) continue;
+
+                    var importName = importPath.Contains("/")
+                        ? importPath.Substring(importPath.LastIndexOf('/') + 1)
+                        : importPath;
+
+                    if (remoteFileLookup.TryGetValue(importName, out var resolvedHref))
+                    {
+                        var resolvedPath = resolvedHref;
+                        if (resolvedPath.StartsWith(_config.SyncUri, StringComparison.OrdinalIgnoreCase))
+                            resolvedPath = resolvedPath.Substring(_config.SyncUri.Length).TrimStart('/');
+                        await PullWebDavWithImportsRecursive(resolvedPath, remoteFileLookup, dict, vars, visited, depth + 1, ct);
+                    }
+                    else
+                    {
+                        var resolvedRelative = importPath.StartsWith("/")
+                            ? importPath.TrimStart('/')
+                            : baseDir + importPath;
+                        if (await _webDavClient.GetFileInfoAsync(resolvedRelative, ct) is { } info && !info.IsDirectory)
+                        {
+                            await PullWebDavWithImportsRecursive(resolvedRelative, remoteFileLookup, dict, vars, visited, depth + 1, ct);
+                        }
+                    }
+                }
+            }
+        }
+
+        private async Task UpdateWebDavStateAsync(CancellationToken ct)
+        {
+            var remoteFiles = await _webDavClient.ListDirectoryAsync("", ct);
+            _state.Files.Clear();
+            foreach (var f in remoteFiles)
+            {
+                if (f.IsDirectory || f.DisplayName.StartsWith(".") || f.DisplayName.StartsWith("_"))
+                    continue;
+                if (!f.DisplayName.EndsWith(".yml") && !f.DisplayName.EndsWith(".yaml"))
+                    continue;
+                _state.Files[f.DisplayName] = new FileSyncEntry
+                {
+                    Hash = f.ETag ?? f.LastModified.ToString("o"),
+                    Size = f.Size,
+                    LastModified = f.LastModified
+                };
+            }
+            _state.LastSyncTime = DateTime.UtcNow;
+            SaveState();
+        }
+
+        #endregion
+
         #region Path Resolution
 
         private string ResolveSyncFolder()
@@ -385,6 +690,9 @@ namespace Expandroid.Services
                 return null;
 
             if (IsSafUri())
+                return _config.SyncUri;
+
+            if (_config.Method == SyncMethod.WebDAV)
                 return _config.SyncUri;
 
             if (_config.Method == SyncMethod.CloudFolder ||

@@ -54,6 +54,10 @@
             <MudTextField Label="WebDAV URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" />
             <MudTextField Label="Username" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" />
             <MudTextField Label="Password" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+            <MudButton Color="Color.Info" Variant="Variant.Outlined" OnClick="TestWebDavConnection" Disabled="@_testing" class="mb-3">
+                @if (_testing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
+                Test Connection
+            </MudButton>
         }
 
         <MudText Typo="Typo.h6" class="mb-2 mt-4">Conflict Strategy</MudText>
@@ -71,6 +75,7 @@
     <MudCardActions>
         <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveConfig">Save</MudButton>
         <MudButton Color="Color.Secondary" Variant="Variant.Text" OnClick="GoBack">Back</MudButton>
+        <MudButton Color="Color.Tertiary" Variant="Variant.Text" OnClick="GoToPackages">Package Store</MudButton>
     </MudCardActions>
 </MudCard>
 
@@ -91,10 +96,38 @@
 @code {
     private SyncConfig _config;
     private SyncResult _lastResult;
+    private bool _testing = false;
 
     protected override void OnInitialized()
     {
         _config = SyncManager.GetConfig();
+    }
+
+    private async Task TestWebDavConnection()
+    {
+        if (string.IsNullOrEmpty(_config.SyncUri))
+        {
+            Snackbar.Add("Please enter WebDAV URL", Severity.Warning);
+            return;
+        }
+        _testing = true;
+        try
+        {
+            using var client = new WebDavClient(_config.SyncUri, _config.Username, _config.Password);
+            var ok = await client.TestConnectionAsync();
+            if (ok)
+                Snackbar.Add("Connection successful!", Severity.Success);
+            else
+                Snackbar.Add("Connection failed. Check URL and credentials.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Connection error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _testing = false;
+        }
     }
 
     private async Task SyncNow()
@@ -168,5 +201,10 @@
     private void GoBack()
     {
         NavigationManager.NavigateTo("/");
+    }
+
+    private void GoToPackages()
+    {
+        NavigationManager.NavigateTo("/packages");
     }
 }

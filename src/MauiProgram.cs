@@ -39,6 +39,7 @@ public static class MauiProgram
         builder.Services.AddSingleton(FileSaver.Default);
         builder.Services.AddSingleton(FilePicker.Default);
         builder.Services.AddSingleton<SyncManager>();
+        builder.Services.AddSingleton<HubClient>();
         return builder.Build();
     }
 }

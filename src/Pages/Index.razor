@@ -161,6 +161,7 @@
     private bool showWelcome = !Preferences.Get("welcomed", false);
 #if ANDROID
     private SafObserver _safObserver;
+    private WebDavPollingService _webDavPollingService;
 #endif
     private string editingKey = null;
 
@@ -767,13 +768,20 @@
             var config = SyncManager.GetConfig();
             if (config.Method == SyncMethod.None || string.IsNullOrEmpty(config.SyncUri))
                 return;
-            if (!config.SyncUri.StartsWith("content://"))
-                return;
 
-            var safManager = new SafManager(Android.App.Application.Context);
-            _safObserver = new SafObserver(safManager, SyncManager, config.SyncUri, config.ForegroundPollIntervalSec);
-            _safObserver.OnRemoteChanged += OnSafRemoteChanged;
-            _safObserver.Start();
+            if (config.SyncUri.StartsWith("content://"))
+            {
+                var safManager = new SafManager(Android.App.Application.Context);
+                _safObserver = new SafObserver(safManager, SyncManager, config.SyncUri, config.ForegroundPollIntervalSec);
+                _safObserver.OnRemoteChanged += OnSafRemoteChanged;
+                _safObserver.Start();
+            }
+            else if (config.Method == SyncMethod.WebDAV)
+            {
+                _webDavPollingService = new WebDavPollingService(SyncManager, config.ForegroundPollIntervalSec);
+                _webDavPollingService.OnRemoteChanged += OnSafRemoteChanged;
+                _webDavPollingService.Start();
+            }
         }
         catch (Exception ex)
         {
@@ -801,6 +809,8 @@
         _safObserver?.Stop();
         _safObserver?.Dispose();
         _safObserver = null;
+        _webDavPollingService?.Dispose();
+        _webDavPollingService = null;
 #endif
     }
 }

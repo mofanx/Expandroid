@@ -197,6 +197,12 @@ namespace Expandroid.Services
             await File.WriteAllTextAsync(filePath, yaml, ct);
         }
 
+        public string SerializeMatchGroup(MatchGroup group)
+        {
+            var dict = BuildSerializableDict(group);
+            return _serializer.Serialize(dict);
+        }
+
         public async Task WriteToFolderAsync(string folderPath, Dictionary<string, Match> dict, List<Var> globalVars = null, CancellationToken ct = default)
         {
             if (IsSafPath(folderPath))
@@ -616,7 +622,7 @@ namespace Expandroid.Services
             return result;
         }
 
-        private void MergeGroupIntoDict(Dictionary<string, Match> dict, List<Var> vars, MatchGroup group)
+        public void MergeGroupIntoDict(Dictionary<string, Match> dict, List<Var> vars, MatchGroup group)
         {
             if (group.GlobalVars != null)
                 vars.AddRange(group.GlobalVars);

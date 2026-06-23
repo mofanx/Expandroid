@@ -72,6 +72,10 @@
             <MudTextField Label="WebDAV URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="e.g. https://nas.example.com/dav/espanso-match/" />
             <MudTextField Label="Username" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" />
             <MudTextField Label="Password" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+            <MudButton Color="Color.Info" Variant="Variant.Outlined" OnClick="TestWebDavConnection" Disabled="@_testing" class="mb-3">
+                @if (_testing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
+                Test Connection
+            </MudButton>
         }
         else if (_config.Method == SyncMethod.Git)
         {
@@ -90,11 +94,39 @@
 @code {
     private int _step = 1;
     private SyncConfig _config = new();
+    private bool _testing = false;
 
     private void SelectMethod(SyncMethod method)
     {
         _config.Method = method;
         _step = 3;
+    }
+
+    private async Task TestWebDavConnection()
+    {
+        if (string.IsNullOrEmpty(_config.SyncUri))
+        {
+            Snackbar.Add("Please enter WebDAV URL", Severity.Warning);
+            return;
+        }
+        _testing = true;
+        try
+        {
+            using var client = new WebDavClient(_config.SyncUri, _config.Username, _config.Password);
+            var ok = await client.TestConnectionAsync();
+            if (ok)
+                Snackbar.Add("Connection successful!", Severity.Success);
+            else
+                Snackbar.Add("Connection failed. Check URL and credentials.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Connection error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _testing = false;
+        }
     }
 
     private async Task PickFolderAsync()
