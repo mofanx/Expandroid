@@ -15,7 +15,7 @@ public class LocalizationService : ILocalizationService
 
     public LocalizationService()
     {
-        _resourceManager = new ResourceManager("Expandroid.Resources.AppResources", typeof(Expandroid.Resources.AppResources).Assembly);
+        _resourceManager = new ResourceManager("Expandroid.Resources.AppResources", typeof(LocalizationService).Assembly);
         _currentCulture = CultureInfo.CurrentCulture;
         
         // 初始化可用语言列表

@@ -112,11 +112,11 @@ namespace Expandroid.Services
                 var childrenUri = DocumentsContract.BuildChildDocumentsUriUsingTree(
                     treeUri, DocumentsContract.GetTreeDocumentId(treeUri));
 
-                var columns = new[]
+                var columns = new string[]
                 {
                     DocumentsContract.Document.ColumnDocumentId,
                     DocumentsContract.Document.ColumnMimeType,
-                    DocumentsContract.Document.ColumnName,
+                    DocumentsContract.Document.ColumnDisplayName,
                     DocumentsContract.Document.ColumnSize,
                     DocumentsContract.Document.ColumnLastModified
                 };
@@ -174,11 +174,11 @@ namespace Expandroid.Services
                 var childrenUri = DocumentsContract.BuildChildDocumentsUriUsingTree(
                     treeUri, DocumentsContract.GetDocumentId(folderUri));
 
-                var columns = new[]
+                var columns = new string[]
                 {
                     DocumentsContract.Document.ColumnDocumentId,
                     DocumentsContract.Document.ColumnMimeType,
-                    DocumentsContract.Document.ColumnName,
+                    DocumentsContract.Document.ColumnDisplayName,
                     DocumentsContract.Document.ColumnSize,
                     DocumentsContract.Document.ColumnLastModified
                 };
@@ -279,7 +279,7 @@ namespace Expandroid.Services
             {
                 var uri = Android.Net.Uri.Parse(fileUriString);
                 using var cursor = _context.ContentResolver.Query(
-                    uri, new[] { DocumentsContract.Document.ColumnSize }, null, null, null);
+                    uri, new string[] { DocumentsContract.Document.ColumnSize }, null, null, null);
                 return cursor != null && cursor.MoveToFirst();
             }
             catch

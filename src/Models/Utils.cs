@@ -78,7 +78,7 @@ namespace Expandroid.Models
             var replacements = new Dictionary<string, string>();
 
             int tokenIndex = 0;
-            foreach (Match m in tokens)
+            foreach (System.Text.RegularExpressions.Match m in tokens)
             {
                 string key = m.Value;
                 string placeholder = $"\u0001{tokenIndex}\u0001";
@@ -140,7 +140,9 @@ namespace Expandroid.Models
                 {
                     var placeholder = $"\u0001{idx}\u0001";
                     idx++;
-                    result = result.Replace(dotNetFmt, placeholder, 1);
+                    int idx3 = result.IndexOf(dotNetFmt, StringComparison.Ordinal);
+                    if (idx3 >= 0)
+                        result = result.Remove(idx3, dotNetFmt.Length).Insert(idx3, placeholder);
                     placeholders.Add((placeholder, DotNetToChrono[dotNetFmt]));
                 }
             }
@@ -168,5 +170,7 @@ namespace Expandroid.Models
                 return date.Year - 1;
             return date.Year;
         }
+    }
+}
     }
 }
