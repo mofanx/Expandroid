@@ -808,4 +808,22 @@
   <data name="WholeWord" xml:space="preserve">
     <value>Whole word</value>
   </data>
+  <data name="DeleteMatch" xml:space="preserve">
+    <value>Delete Match</value>
+  </data>
+  <data name="ConfirmDeleteMatch" xml:space="preserve">
+    <value>Are you sure you want to delete "{0}"?</value>
+  </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>Light Theme</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>Dark Theme</value>
+  </data>
+  <data name="ThemeAuto" xml:space="preserve">
+    <value>Auto Theme</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
 </root>

@@ -12,7 +12,7 @@
                 <MudIcon Icon="@GetStatusIcon()" />
                 <MudText Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     @GetStatusText()
-                    <MudChip Size="Size.Small" Color="Color.Default" Class="ml-2">
+                    <MudChip Size="Size.Small" Color="Color.Default" Class="ml-2 d-none d-sm-flex">
                         @GetMethodName()
                     </MudChip>
                 </MudText>
@@ -25,7 +25,7 @@
             }
             else
             {
-                <MudChip Size="Size.Small" Color="Color.Primary">@LocalizationService.GetString("TapToManage")</MudChip>
+                <MudChip Size="Size.Small" Color="Color.Primary" Class="d-none d-sm-flex">@LocalizationService.GetString("TapToManage")</MudChip>
             }
         </MudStack>
     </MudAlert>

@@ -11,6 +11,9 @@
         <MudMenuItem Icon="@Icons.Material.Filled.Home" OnClick="GoHome">@LocalizationService.GetString("Home")</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.Sync" OnClick="GoSyncSettings">@LocalizationService.GetString("SyncSettings")</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.Extension" OnClick="GoPackages">@LocalizationService.GetString("PackageStore")</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.WbSunny" OnClick="() => SetTheme("light")">@LocalizationService.GetString("ThemeLight")</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.NightsStay" OnClick="() => SetTheme("dark")">@LocalizationService.GetString("ThemeDark")</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.BrightnessAuto" OnClick="() => SetTheme("auto")">@LocalizationService.GetString("ThemeAuto")</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.PowerSettingsNew" OnClick="QuitApp">@LocalizationService.GetString("QuitApp")</MudMenuItem>
     </MudMenu>
 
@@ -63,6 +66,8 @@
         };
         ThemeService.SetTheme(theme);
     }
+
+    private void SetTheme(string value) => OnThemeChanged(value);
 
     private void GoHome() => NavigationManager.NavigateTo("/");
     private void GoSyncSettings() => NavigationManager.NavigateTo("/syncsettings");

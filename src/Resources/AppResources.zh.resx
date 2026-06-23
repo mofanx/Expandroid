@@ -808,4 +808,22 @@
   <data name="WholeWord" xml:space="preserve">
     <value>整词匹配</value>
   </data>
+  <data name="DeleteMatch" xml:space="preserve">
+    <value>删除匹配</value>
+  </data>
+  <data name="ConfirmDeleteMatch" xml:space="preserve">
+    <value>确定要删除"{0}"吗？</value>
+  </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>浅色主题</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>深色主题</value>
+  </data>
+  <data name="ThemeAuto" xml:space="preserve">
+    <value>自动主题</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
 </root>

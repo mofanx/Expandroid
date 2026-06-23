@@ -1,6 +1,7 @@
 @using Expandroid.Services
 @using Expandroid.Models
 @inject ILocalizationService LocalizationService
+@inject Expandroid.Services.IDialogService DialogService
 
 <MudCard Elevation="2" Class="pa-4 mb-3">
     <MudStack Justify="@Justify.SpaceBetween" Row="true" Align="Align.Center">
@@ -10,7 +11,7 @@
         </MudStack>
         <MudStack Row="true" Spacing="1">
             <MudIconButton OnClick="OnEdit" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Variant="Variant.Text" Size="Size.Medium" />
-            <MudIconButton OnClick="OnDelete" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Medium" />
+            <MudIconButton OnClick="ConfirmDelete" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Medium" />
         </MudStack>
     </MudStack>
     @if (Item.Value.Vars?.Count > 0)
@@ -25,4 +26,17 @@
     [Parameter] public KeyValuePair<string, Match> Item { get; set; }
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback OnDelete { get; set; }
+
+    private async Task ConfirmDelete()
+    {
+        var confirm = await DialogService.DisplayConfirmAsync(
+            LocalizationService.GetString("DeleteMatch"),
+            string.Format(LocalizationService.GetString("ConfirmDeleteMatch"), Item.Key),
+            LocalizationService.GetString("Delete"),
+            LocalizationService.GetString("Cancel"));
+        if (confirm)
+        {
+            await OnDelete.InvokeAsync();
+        }
+    }
 }

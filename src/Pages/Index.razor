@@ -53,7 +53,7 @@ else
             else
             {
                 <MudStack Row="true" Justify="@Justify.SpaceBetween" Align="Align.Center" Class="mb-3">
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="ToggleEditor" Class="px-0">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ToggleEditor" Class="px-4">
                         <MudText Typo="Typo.h6">
                             @(editingKey is not null ? localizationService.GetString("EditMatch") : localizationService.GetString("AddNewMatch"))
                         </MudText>
@@ -143,12 +143,14 @@ else
                 <MudStack Row="true" Justify="@Justify.SpaceBetween" Align="Align.Center" Class="mb-2">
                     <MudText Typo="Typo.h6">@localizationService.GetString("YourMatches")</MudText>
                     <MudStack Row="true" Spacing="1" Align="Align.Center">
-                        <MudIconButton @onclick="ImportAsync" Icon="@Icons.Material.Filled.Upload" Color="Color.Default" Variant="Variant.Text" Size="Size.Medium" />
-                        <MudIconButton @onclick="ExportAsync" Icon="@Icons.Material.Filled.Download" Color="Color.Default" Variant="Variant.Text" Size="Size.Medium" />
                         <MudIconButton @onclick="SyncNowAsync" Icon="@Icons.Material.Filled.Sync" Color="Color.Default" Variant="Variant.Text" Size="Size.Medium" Disabled="@_syncing" />
                         <MudButton @onclick="() => SaveDictAsync()" Color="Color.Primary" Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Save" Disabled="@_saving">
                             @localizationService.GetString("Save")
                         </MudButton>
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Default" Variant="Variant.Text" Size="Size.Medium">
+                            <MudMenuItem Icon="@Icons.Material.Filled.Upload" OnClick="ImportAsync">@localizationService.GetString("Import")</MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Filled.Download" OnClick="ExportAsync">@localizationService.GetString("Export")</MudMenuItem>
+                        </MudMenu>
                     </MudStack>
                 </MudStack>
 
@@ -159,7 +161,7 @@ else
                                   Variant="Variant.Outlined" Dense="true"
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Class="mb-3" Immediate="true" />
+                                  Class="mb-3" Immediate="true" DebounceInterval="300" />
 
                     @if (_filteredDict.Any())
                     {
