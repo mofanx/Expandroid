@@ -111,7 +111,9 @@ namespace Expandroid.Models
                     replacements[placeholder] = key;
                 }
 
-                result = result.Replace(key, placeholder, 1);
+                int idx2 = result.IndexOf(key, StringComparison.Ordinal);
+                if (idx2 >= 0)
+                    result = result.Remove(idx2, key.Length).Insert(idx2, placeholder);
             }
 
             foreach (var (placeholder, value) in replacements)
