@@ -59,6 +59,19 @@
                 Test Connection
             </MudButton>
         }
+        else if (_config.Method == SyncMethod.Git)
+        {
+            <MudTextField Label="Git Repository URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="e.g. https://github.com/user/espanso-config.git" />
+            <MudTextField Label="Git Username" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" Hint="GitHub: your username or x-access-token" />
+            <MudTextField Label="Personal Access Token" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+            <MudAlert Severity="Severity.Info" Class="mb-3">
+                Requires Termux with git installed (pkg install git).
+                @if (!string.IsNullOrEmpty(_termuxStatus))
+                {
+                    <br /><strong>Termux: @_termuxStatus</strong>
+                }
+            </MudAlert>
+        }
 
         <MudText Typo="Typo.h6" class="mb-2 mt-4">Conflict Strategy</MudText>
         <MudRadioGroup T="ConflictStrategy" @bind-Value="_config.ConflictStrategy">
@@ -97,10 +110,15 @@
     private SyncConfig _config;
     private SyncResult _lastResult;
     private bool _testing = false;
+    private string _termuxStatus = "";
 
     protected override void OnInitialized()
     {
         _config = SyncManager.GetConfig();
+        if (_config.Method == SyncMethod.Git)
+        {
+            _termuxStatus = SyncManager.IsTermuxAvailable() ? "Detected" : "Not found";
+        }
     }
 
     private async Task TestWebDavConnection()
@@ -154,9 +172,10 @@
         {
             var mergedJson = System.Text.Json.JsonSerializer.Serialize(dict);
             await File.WriteAllTextAsync(AppSettings.DictPath, mergedJson);
-            if (globalVars != null)
+            var finalVars = _lastResult.MergedGlobalVars ?? globalVars;
+            if (finalVars != null)
             {
-                var gvStr = System.Text.Json.JsonSerializer.Serialize(globalVars);
+                var gvStr = System.Text.Json.JsonSerializer.Serialize(finalVars);
                 await File.WriteAllTextAsync(AppSettings.GlobalVarsPath, gvStr);
             }
         }

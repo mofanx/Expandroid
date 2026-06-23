@@ -66,6 +66,7 @@ namespace Expandroid.Services
         public SyncStatus Status { get; set; }
         public Dictionary<string, Match> PulledDict { get; set; }
         public List<Var> PulledGlobalVars { get; set; }
+        public List<Var> MergedGlobalVars { get; set; }
         public bool HasRemoteChanges { get; set; }
     }
 
@@ -84,23 +85,32 @@ namespace Expandroid.Services
     public class SyncManager
     {
         private readonly YamlWorkspace _yamlWorkspace;
+        private readonly SnapshotManager _snapshotManager;
+        private readonly ThreeWayMergeService _mergeService;
         private SyncConfig _config;
         private SyncState _state;
         private readonly string _stateFilePath;
         private readonly string _syncStateFileName = ".expandroid-sync.json";
         private WebDavClient _webDavClient;
+        private GitSyncService _gitSyncService;
+        private readonly CredentialManager _credentialManager;
 
         public SyncStatus CurrentStatus { get; private set; } = SyncStatus.Idle;
         public DateTime? LastSyncTime => _state?.LastSyncTime;
         public event Action<SyncStatus, SyncResult> SyncCompleted;
+        public List<string> LastMergeWarnings { get; private set; } = new();
 
-        public SyncManager(YamlWorkspace yamlWorkspace)
+        public SyncManager(YamlWorkspace yamlWorkspace, SnapshotManager snapshotManager, ThreeWayMergeService mergeService, CredentialManager credentialManager)
         {
             _yamlWorkspace = yamlWorkspace;
+            _snapshotManager = snapshotManager;
+            _mergeService = mergeService;
+            _credentialManager = credentialManager;
             _stateFilePath = Path.Combine(FileSystem.Current.AppDataDirectory, "sync_state.json");
             _state = LoadState();
             _config = LoadConfig();
             EnsureWebDavClient();
+            EnsureGitSyncService();
         }
 
         private void EnsureWebDavClient()
@@ -117,7 +127,22 @@ namespace Expandroid.Services
             }
         }
 
+        private void EnsureGitSyncService()
+        {
+            if (_config.Method == SyncMethod.Git && !string.IsNullOrEmpty(_config.SyncUri))
+            {
+                _gitSyncService ??= new GitSyncService(_credentialManager, _yamlWorkspace);
+                var pat = _credentialManager.GetPat(_config.SyncUri);
+                _gitSyncService.Configure(_config.SyncUri, _config.Username, pat ?? _config.Password);
+            }
+            else
+            {
+                _gitSyncService = null;
+            }
+        }
+
         public bool IsWebDav() => _config.Method == SyncMethod.WebDAV;
+        public bool IsGit() => _config.Method == SyncMethod.Git;
 
         public SyncConfig GetConfig() => _config;
 
@@ -126,6 +151,7 @@ namespace Expandroid.Services
             _config = config;
             SaveConfig(config);
             EnsureWebDavClient();
+            EnsureGitSyncService();
         }
 
         public bool IsSafUri()
@@ -139,6 +165,10 @@ namespace Expandroid.Services
             {
                 EnsureWebDavClient();
                 return _webDavClient != null && await _webDavClient.TestConnectionAsync();
+            }
+            if (_config.Method == SyncMethod.Git)
+            {
+                return IsTermuxAvailable();
             }
             return false;
         }
@@ -161,6 +191,11 @@ namespace Expandroid.Services
                 if (IsWebDav())
                 {
                     return await PushWebDavAsync(dict, globalVars, ct);
+                }
+
+                if (IsGit())
+                {
+                    return await PushGitAsync(dict, globalVars, ct);
                 }
 
                 var syncFolder = ResolveSyncFolder();
@@ -211,6 +246,11 @@ namespace Expandroid.Services
                 if (IsWebDav())
                 {
                     return await PullWebDavAsync(ct);
+                }
+
+                if (IsGit())
+                {
+                    return await PullGitAsync(ct);
                 }
 
                 var syncFolder = ResolveSyncFolder();
@@ -314,42 +354,74 @@ namespace Expandroid.Services
 
             if (pullResult.HasRemoteChanges && pullResult.PulledDict != null)
             {
-                var isLww = _config.ConflictStrategy == ConflictStrategy.LastWriteWins;
-
-                foreach (var kv in pullResult.PulledDict)
+                if (_snapshotManager.HasSnapshot())
                 {
-                    if (!dict.ContainsKey(kv.Key))
-                    {
+                    var mergeResult = _mergeService.Merge(dict, globalVars, pullResult.PulledDict, pullResult.PulledGlobalVars);
+                    dict.Clear();
+                    foreach (var kv in mergeResult.MergedDict)
                         dict[kv.Key] = kv.Value;
-                    }
-                    else if (isLww && !pullResult.ConflictFiles.Contains(kv.Key))
-                    {
-                        dict[kv.Key] = kv.Value;
-                    }
-                }
-
-                if (pullResult.PulledGlobalVars != null && pullResult.PulledGlobalVars.Count > 0)
-                {
                     globalVars ??= new List<Var>();
-                    var byName = globalVars.ToDictionary(v => v.Name);
-                    foreach (var v in pullResult.PulledGlobalVars)
+                    globalVars.Clear();
+                    globalVars.AddRange(mergeResult.MergedGlobalVars);
+                    pullResult.MergedGlobalVars = globalVars;
+                    LastMergeWarnings = mergeResult.Warnings;
+                    pullResult.ConflictFiles = mergeResult.Conflicts;
+                    pullResult.Conflicts = mergeResult.Conflicts.Count;
+                }
+                else
+                {
+                    var isLww = _config.ConflictStrategy == ConflictStrategy.LastWriteWins;
+
+                    foreach (var kv in pullResult.PulledDict)
                     {
-                        if (!byName.ContainsKey(v.Name))
+                        if (!dict.ContainsKey(kv.Key))
                         {
-                            globalVars.Add(v);
-                            byName[v.Name] = v;
+                            dict[kv.Key] = kv.Value;
                         }
-                        else if (isLww)
+                        else if (isLww && !pullResult.ConflictFiles.Contains(kv.Key))
                         {
-                            var idx = globalVars.FindIndex(g => g.Name == v.Name);
-                            if (idx >= 0)
-                                globalVars[idx] = v;
+                            dict[kv.Key] = kv.Value;
                         }
+                    }
+
+                    if (pullResult.PulledGlobalVars != null && pullResult.PulledGlobalVars.Count > 0)
+                    {
+                        globalVars ??= new List<Var>();
+                        var byName = globalVars.ToDictionary(v => v.Name);
+                        foreach (var v in pullResult.PulledGlobalVars)
+                        {
+                            if (!byName.ContainsKey(v.Name))
+                            {
+                                globalVars.Add(v);
+                                byName[v.Name] = v;
+                            }
+                            else if (isLww)
+                            {
+                                var idx = globalVars.FindIndex(g => g.Name == v.Name);
+                                if (idx >= 0)
+                                    globalVars[idx] = v;
+                            }
+                        }
+                        pullResult.MergedGlobalVars = globalVars;
                     }
                 }
             }
 
-            return await PushAsync(dict, globalVars, ct);
+            var pushResult = await PushAsync(dict, globalVars, ct);
+
+            if (pushResult.Success)
+            {
+                _snapshotManager.CreateSnapshot(dict, globalVars);
+            }
+
+            pushResult.MergedGlobalVars = pullResult.MergedGlobalVars;
+            pushResult.HasRemoteChanges = pullResult.HasRemoteChanges;
+            pushResult.PulledDict = pullResult.PulledDict;
+            pushResult.PulledGlobalVars = pullResult.PulledGlobalVars;
+            pushResult.Conflicts = pullResult.Conflicts;
+            pushResult.ConflictFiles = pullResult.ConflictFiles;
+
+            return pushResult;
         }
 
         #endregion
@@ -361,6 +433,11 @@ namespace Expandroid.Services
             if (IsWebDav())
             {
                 return CheckWebDavChanges();
+            }
+
+            if (IsGit())
+            {
+                return GitHasRemoteChangesAsync().GetAwaiter().GetResult();
             }
 
             var syncFolder = ResolveSyncFolder();
@@ -441,6 +518,116 @@ namespace Expandroid.Services
                 _state.Files.Remove(localKey);
             }
             SaveState();
+        }
+
+        #endregion
+
+        #region Git
+
+        private async Task<SyncResult> PushGitAsync(Dictionary<string, Match> dict, List<Var> globalVars, CancellationToken ct)
+        {
+            var result = new SyncResult();
+            try
+            {
+                EnsureGitSyncService();
+                if (_gitSyncService == null)
+                {
+                    result.ErrorMessage = "Git sync service not initialized";
+                    CurrentStatus = SyncStatus.Error;
+                    return result;
+                }
+
+                var ok = await _gitSyncService.PushAsync(dict, globalVars, ct);
+                if (!ok)
+                {
+                    result.ErrorMessage = "Git push failed";
+                    CurrentStatus = SyncStatus.Error;
+                    SyncCompleted?.Invoke(CurrentStatus, result);
+                    return result;
+                }
+
+                _state.LastSyncTime = DateTime.UtcNow;
+                SaveState();
+
+                result.Success = true;
+                result.Status = SyncStatus.Idle;
+                CurrentStatus = SyncStatus.Idle;
+                SyncCompleted?.Invoke(CurrentStatus, result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.ErrorMessage = ex.Message;
+                result.Status = SyncStatus.Error;
+                CurrentStatus = SyncStatus.Error;
+                SyncCompleted?.Invoke(CurrentStatus, result);
+                return result;
+            }
+        }
+
+        private async Task<SyncResult> PullGitAsync(CancellationToken ct)
+        {
+            var result = new SyncResult();
+            try
+            {
+                EnsureGitSyncService();
+                if (_gitSyncService == null)
+                {
+                    result.ErrorMessage = "Git sync service not initialized";
+                    CurrentStatus = SyncStatus.Error;
+                    return result;
+                }
+
+                var pullOk = await _gitSyncService.PullAsync(ct);
+                if (!pullOk)
+                {
+                    result.ErrorMessage = "Git pull failed";
+                    CurrentStatus = SyncStatus.Error;
+                    SyncCompleted?.Invoke(CurrentStatus, result);
+                    return result;
+                }
+
+                var (pulledDict, pulledVars) = await _gitSyncService.ReadRepoAsync(ct);
+
+                result.Success = true;
+                result.PulledDict = pulledDict;
+                result.PulledGlobalVars = pulledVars;
+                result.HasRemoteChanges = pulledDict.Count > 0;
+                result.Status = SyncStatus.Idle;
+                CurrentStatus = SyncStatus.Idle;
+                SyncCompleted?.Invoke(CurrentStatus, result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.ErrorMessage = ex.Message;
+                result.Status = SyncStatus.Error;
+                CurrentStatus = SyncStatus.Error;
+                SyncCompleted?.Invoke(CurrentStatus, result);
+                return result;
+            }
+        }
+
+        public async Task<bool> GitHasRemoteChangesAsync(CancellationToken ct = default)
+        {
+            EnsureGitSyncService();
+            if (_gitSyncService == null) return false;
+            return await _gitSyncService.HasRemoteChangesAsync(ct);
+        }
+
+        public bool IsTermuxAvailable()
+        {
+#if ANDROID
+            try
+            {
+                var pm = Android.App.Application.Context.PackageManager;
+                var info = pm.GetPackageInfo("com.termux", Android.Content.PM.PackageInfoFlags.Of(0));
+                return info != null;
+            }
+            catch { return false; }
+#else
+            return false;
+#endif
         }
 
         #endregion

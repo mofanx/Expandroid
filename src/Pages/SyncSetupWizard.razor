@@ -80,7 +80,11 @@
         else if (_config.Method == SyncMethod.Git)
         {
             <MudTextField Label="Git Repository URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="e.g. https://github.com/user/espanso-config.git" />
+            <MudTextField Label="Git Username" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" Hint="GitHub: your username or x-access-token" />
             <MudTextField Label="Personal Access Token" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+            <MudAlert Severity="Severity.Info" Class="mb-3">
+                Requires Termux with git installed (pkg install git) and com.termux.permission.RUN_COMMAND granted.
+            </MudAlert>
         }
 
         <MudStack Row="true" Spacing="3">

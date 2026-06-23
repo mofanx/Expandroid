@@ -7,7 +7,6 @@ using Microsoft.Maui.Storage;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -34,7 +33,10 @@ namespace Expandroid.Services
                     return Result.InvokeSuccess();
 
                 var yamlWorkspace = new YamlWorkspace(new SafManager(Android.App.Application.Context));
-                var syncManager = new SyncManager(yamlWorkspace);
+                var snapshotManager = new SnapshotManager();
+                var mergeService = new ThreeWayMergeService(snapshotManager);
+                var credentialManager = new CredentialManager();
+                var syncManager = new SyncManager(yamlWorkspace, snapshotManager, mergeService, credentialManager);
                 syncManager.UpdateConfig(config);
 
                 var dictPath = AppSettings.DictPath;
@@ -48,48 +50,31 @@ namespace Expandroid.Services
 
                 var result = syncManager.SyncAsync(dict, globalVars).GetAwaiter().GetResult();
 
-                if (result.Success && result.HasRemoteChanges && result.PulledDict != null)
+                if (result.Success && result.HasRemoteChanges)
                 {
-                    var isLww = config.ConflictStrategy == ConflictStrategy.LastWriteWins;
-                    foreach (var kv in result.PulledDict)
+                    foreach (var kv in dict)
                     {
-                        if (!dict.ContainsKey(kv.Key))
-                        {
-                            dict[kv.Key] = kv.Value;
-                        }
-                        else if (isLww && !result.ConflictFiles.Contains(kv.Key))
-                        {
-                            dict[kv.Key] = kv.Value;
-                        }
-
                         try
                         {
-                            WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Add", kv.Value)));
+                            WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Update", kv.Value)));
                         }
                         catch { }
                     }
-                    if (result.PulledGlobalVars != null && result.PulledGlobalVars.Count > 0)
+                    var finalVars = result.MergedGlobalVars ?? globalVars;
+                    if (finalVars != null)
                     {
-                        foreach (var v in result.PulledGlobalVars)
-                        {
-                            var idx = globalVars.FindIndex(g => g.Name == v.Name);
-                            if (idx < 0)
-                                globalVars.Add(v);
-                            else if (isLww)
-                                globalVars[idx] = v;
-                        }
                         try
                         {
-                            WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(globalVars));
+                            WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(finalVars));
                         }
                         catch { }
                     }
 
                     var mergedJson = JsonSerializer.Serialize(dict);
                     File.WriteAllText(dictPath, mergedJson);
-                    if (globalVars != null)
+                    if (finalVars != null)
                     {
-                        var gvJson = JsonSerializer.Serialize(globalVars);
+                        var gvJson = JsonSerializer.Serialize(finalVars);
                         File.WriteAllText(AppSettings.GlobalVarsPath, gvJson);
                     }
                 }

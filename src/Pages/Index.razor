@@ -162,6 +162,7 @@
 #if ANDROID
     private SafObserver _safObserver;
     private WebDavPollingService _webDavPollingService;
+    private System.Threading.Timer _gitPollingTimer;
 #endif
     private string editingKey = null;
 
@@ -647,36 +648,14 @@
             var result = await SyncManager.SyncAsync(dict, globalVars);
             if (result.Success)
             {
-                if (result.HasRemoteChanges && result.PulledDict != null)
+                if (result.HasRemoteChanges)
                 {
-                    var isLww = config.ConflictStrategy == ConflictStrategy.LastWriteWins;
-                    foreach (var kv in result.PulledDict)
+                    foreach (var kv in dict)
                     {
-                        if (!dict.ContainsKey(kv.Key))
-                        {
-                            dict[kv.Key] = kv.Value;
-                            SendMessage("Add", kv.Value);
-                        }
-                        else if (isLww && !result.ConflictFiles.Contains(kv.Key))
-                        {
-                            dict[kv.Key] = kv.Value;
-                            SendMessage("Update", kv.Value);
-                        }
+                        SendMessage("Update", kv.Value);
                     }
-                    if (result.PulledGlobalVars != null)
+                    if (globalVars != null)
                     {
-                        foreach (var v in result.PulledGlobalVars)
-                        {
-                            var idx = globalVars.FindIndex(g => g.Name == v.Name);
-                            if (idx < 0)
-                            {
-                                globalVars.Add(v);
-                            }
-                            else if (isLww)
-                            {
-                                globalVars[idx] = v;
-                            }
-                        }
                         var gvStr = JsonSerializer.Serialize(globalVars);
                         await File.WriteAllTextAsync(AppSettings.GlobalVarsPath, gvStr);
                         WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(globalVars));
@@ -684,6 +663,12 @@
                     await SaveDictAsync();
                     AdjustLazyLoad();
                     StateHasChanged();
+                }
+
+                if (SyncManager.LastMergeWarnings?.Count > 0)
+                {
+                    foreach (var w in SyncManager.LastMergeWarnings)
+                        Snackbar.Add(w, Severity.Warning);
                 }
 
                 if (result.Conflicts > 0)
@@ -782,6 +767,20 @@
                 _webDavPollingService.OnRemoteChanged += OnSafRemoteChanged;
                 _webDavPollingService.Start();
             }
+            else if (config.Method == SyncMethod.Git)
+            {
+                _gitPollingTimer = new System.Threading.Timer(
+                    async _ => await InvokeAsync(async () =>
+                    {
+                        try
+                        {
+                            if (await SyncManager.GitHasRemoteChangesAsync())
+                                await SyncNowAsync();
+                        }
+                        catch { }
+                    }),
+                    null, TimeSpan.Zero, TimeSpan.FromSeconds(config.ForegroundPollIntervalSec));
+            }
         }
         catch (Exception ex)
         {
@@ -811,6 +810,8 @@
         _safObserver = null;
         _webDavPollingService?.Dispose();
         _webDavPollingService = null;
+        _gitPollingTimer?.Dispose();
+        _gitPollingTimer = null;
 #endif
     }
 }

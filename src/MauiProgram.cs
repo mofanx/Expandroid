@@ -38,6 +38,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<IThemeService, ThemeService>();
         builder.Services.AddSingleton(FileSaver.Default);
         builder.Services.AddSingleton(FilePicker.Default);
+        builder.Services.AddSingleton<SnapshotManager>();
+        builder.Services.AddSingleton<ThreeWayMergeService>();
+        builder.Services.AddSingleton<CredentialManager>();
         builder.Services.AddSingleton<SyncManager>();
         builder.Services.AddSingleton<HubClient>();
         return builder.Build();
