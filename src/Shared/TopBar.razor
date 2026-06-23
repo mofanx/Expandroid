@@ -11,6 +11,7 @@
         <MudMenuItem Icon="@Icons.Material.Filled.Home" OnClick="GoHome">@LocalizationService.GetString("Home")</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.Sync" OnClick="GoSyncSettings">@LocalizationService.GetString("SyncSettings")</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.Extension" OnClick="GoPackages">@LocalizationService.GetString("PackageStore")</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.PowerSettingsNew" OnClick="QuitApp">@LocalizationService.GetString("QuitApp")</MudMenuItem>
     </MudMenu>
 
     <MudToggleGroup Value="_themeValue" ValueChanged="@((string? v) => OnThemeChanged(v))" Color="Color.Surface" Size="Size.Small" Class="mr-2">
@@ -64,6 +65,7 @@
     private void GoHome() => NavigationManager.NavigateTo("/");
     private void GoSyncSettings() => NavigationManager.NavigateTo("/syncsettings");
     private void GoPackages() => NavigationManager.NavigateTo("/packages");
+    private void QuitApp() => Application.Current.Quit();
 
     public void Dispose()
     {

@@ -4,6 +4,8 @@
 
 ::deep .app-content {
     padding-top: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 ::deep .lang-switcher .mud-input {

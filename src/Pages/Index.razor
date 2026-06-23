@@ -19,29 +19,44 @@
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
 @implements IDisposable
 
-@if (showWelcome)
+@if (_loading)
 {
-    <MudAlert Severity="Severity.Info" Class="mb-4" OnClose="DismissWelcome">
-        @localizationService.GetString("WelcomeMessage")
-    </MudAlert>
+    <div class="d-flex justify-center align-center" style="min-height: 60vh; flex-direction: column; gap: 16px;">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+        <MudText Typo="Typo.body1" Color="Color.Surface">@localizationService.GetString("Loading")</MudText>
+    </div>
 }
+else
+{
+    @if (showWelcome)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4" OnClose="DismissWelcome">
+            @localizationService.GetString("WelcomeMessage")
+        </MudAlert>
+    }
 
-<SyncStatus />
+    <SyncStatus />
 
-<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">
-    @localizationService.GetString("AppTitle")
-</MudText>
-<MudTabs class="mt-3" Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-2">
-    <MudTabPanel Text="@localizationService.GetString("TextExpanderTab")">
-        @if (!canTextExpand)
-        {
-            <MudText class="mb-3">@localizationService.GetString("AccessibilityPermissionMessage")</MudText>
-            <MudButton Color="Color.Primary" Variant="Variant.Outlined" @onclick="OpenSettings">@localizationService.GetString("ConsentAndOpenSettings")</MudButton>
-        }
-        else
-        {
-            <MudStack Row="true" Justify="Justify.Center" Spacing="2" Class="mb-4">
-                <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large">
+    <MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">
+        @localizationService.GetString("AppTitle")
+    </MudText>
+
+    <MudTabs class="mt-3" Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-2">
+        <MudTabPanel Text="@localizationService.GetString("TextExpanderTab")">
+            @if (!canTextExpand)
+            {
+                <MudPaper Class="pa-6 mb-4" Elevation="2">
+                    <MudStack AlignItems="Align.Center" Spacing="3">
+                        <MudIcon Icon="@Icons.Material.Filled.AccessibilityNew" Size="Size.Large" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1" Align="Align.Center">@localizationService.GetString("AccessibilityPermissionMessage")</MudText>
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large" StartIcon="@Icons.Material.Filled.Settings"
+                                   @onclick="OpenSettings">@localizationService.GetString("ConsentAndOpenSettings")</MudButton>
+                    </MudStack>
+                </MudPaper>
+            }
+            else
+            {
+                <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large" Class="mb-4 d-flex">
                     <MudButton @onclick="() => SaveDictAsync()" StartIcon="@Icons.Material.Filled.Save" Disabled="@_saving">
                         @if (_saving) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
                         else { @localizationService.GetString("MakeSureToSave") }
@@ -57,123 +72,129 @@
                         else { @localizationService.GetString("Sync") }
                     </MudButton>
                 </MudButtonGroup>
-            </MudStack>
-        }
-        <MudStack Row="true" Spacing="2" Class="mb-4">
-            <MudButton @onclick='() => NavigationManager.NavigateTo("/syncsettings")'
-                       Color="Color.Secondary" Variant="Variant.Text" Size="Size.Large"
-                       StartIcon="@Icons.Material.Filled.Settings">
-                @localizationService.GetString("SyncSettings")
-            </MudButton>
-            <MudButton @onclick='() => NavigationManager.NavigateTo("/packages")'
-                       Color="Color.Secondary" Variant="Variant.Text" Size="Size.Large"
-                       StartIcon="@Icons.Material.Filled.Extension">
-                @localizationService.GetString("PackageStore")
-            </MudButton>
-            <MudButton @onclick="ForceQuit" Color="Color.Error" Variant="Variant.Outlined" Size="Size.Large"
-                       StartIcon="@Icons.Material.Filled.PowerSettingsNew">
-                @localizationService.GetString("ForceQuitApp")
-            </MudButton>
-        </MudStack>
-        @if (canTextExpand)
-        {
-            <MudText class="mb-3">@localizationService.GetString("Keywords")</MudText>
-            <div class="d-flex">
-                <MudTextField Lines="2" class="mr-1" @bind-Value="currentMatch.Trigger" Label="@localizationService.GetString("Key")" Variant="Variant.Outlined"></MudTextField>
-                <MudTextField Lines="2" class="mr-1" @bind-Value="currentMatch.Replace" Label="@localizationService.GetString("Value")" Variant="Variant.Outlined"></MudTextField>
-                <MudButton @onclick="AddItemAsync" Color="Color.Primary" Variant="Variant.Text">@localizationService.GetString("Add")</MudButton>
-                @if (editingKey is not null)
-                {
-                    <MudButton @onclick="CancelEdit" Color="Color.Default" Variant="Variant.Text">@localizationService.GetString("CancelEdit")</MudButton>
-                }
-            </div>
-            <MudPaper class="mt-2 pa-2">
-                <MudStack Row="true" Justify="@Justify.SpaceBetween" Align="Align.Center" Class="mb-2">
-                    <MudText Typo="Typo.subtitle2">@localizationService.GetString("Variables")</MudText>
-                    <MudChip Color="Color.Secondary" Size="Size.Small">
-                        @currentMatch.Vars.Count
-                    </MudChip>
-                </MudStack>
-                @foreach (Var item in currentMatch.Vars)
-                {
-                    <MudStack Row="true" Justify="@Justify.SpaceBetween" Align="Align.Center" Class="mb-1" @key="item">
-                        <MudText>@item.Name</MudText>
-                        <MudIconButton @onclick="() => RemoveVar(item)" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Large" />
-                    </MudStack>
-                }
-            </MudPaper>
-            <MudPaper class="mt-2">
-
-                <div class="d-flex justify-center">
-                    <MudCheckBox @bind-Value="currentMatch.Word" Label="@localizationService.GetString("Word")" />
-                </div>
-            </MudPaper>
-            <MudExpansionPanels Elevation="0" class="mt-2">
-                <MudExpansionPanel Text="@localizationService.GetString("Templates")" MaxHeight="1000">
-                    <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
-                        <MudText>@localizationService.GetString("DateToday")</MudText>
-                        <MudButton @onclick="() => AddPreBuiltVar(0)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
-                    </MudStack>
-                    <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
-                        <MudText>@localizationService.GetString("DateYesterday")</MudText>
-                        <MudButton @onclick="() => AddPreBuiltVar(1)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
-                    </MudStack>
-                    <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
-                        <MudText>@localizationService.GetString("DateTomorrow")</MudText>
-                        <MudButton @onclick="() => AddPreBuiltVar(2)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
-                    </MudStack>
-                    <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
-                        <MudText>@localizationService.GetString("TimeNow")</MudText>
-                        <MudButton @onclick="() => AddPreBuiltVar(3)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
-                    </MudStack>
-                    <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
-                        <MudText>@localizationService.GetString("AddSelectionCursor")</MudText>
-                        <MudButton @onclick="() => AddPreBuiltVar(4)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddCursor")</MudButton>
-                    </MudStack>
-                </MudExpansionPanel>
-            </MudExpansionPanels>
-            <MudExpansionPanels Elevation="0" class="mt-2">
-                <MudExpansionPanel Text="@localizationService.GetString("AdvancedOptions")" MaxHeight="1000">
-                    <MudTextField @bind-Value="currentVar.Name" T="string" Label="@localizationService.GetString("VariableName")" />
-                    <MudTextField @bind-Value="currentVar.Type" T="string" Label="@localizationService.GetString("VariableType")" />
-                    <MudExpansionPanels Elevation="0">
-                        <MudExpansionPanel class="mt-1" Text="@localizationService.GetString("Params")" MaxHeight="1000">
-                            <MudTextField @bind-Value="currentVar.Params.Format" T="string" Label="@localizationService.GetString("Format")" />
-                            <MudTextField @bind-Value="currentVar.Params.Echo" T="string" Label="@localizationService.GetString("Echo")" />
-                            <MudTextField @bind-Value="currentVar.Params.Offset" T="long" Label="@localizationService.GetString("Offset")" />
-                        </MudExpansionPanel>
-                    </MudExpansionPanels>
-                    <div class="d-flex justify-center">
-                        <MudButton @onclick="AddCurrentVar" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
-                    </div>
-                </MudExpansionPanel>
-            </MudExpansionPanels>
-            <MudDivider class="mt-2" />
-            @if (dict is not null)
-            {
-                @foreach (var item in dict.Take(dict.Count < lazyLoadIndex ? dict.Count : lazyLoadIndex))
-                {
-                    <MatchCard Item="item" OnEdit="() => EditItem(item)" OnDelete="async () => await RemoveItemAsync(item.Value)" @key="item.Key" />
-                }
-                @if (dict.Count > lazyLoadIndex)
-                {
-                    <div class="d-flex justify-center mt-3">
-                        <MudButton @onclick="AdjustLazyLoad" Color="Color.Primary" Variant="Variant.Filled">
-                            @localizationService.GetString("LoadMore")
-                        </MudButton>
-                    </div>
-                }
-
             }
-        }
-    </MudTabPanel>
-    <MudTabPanel Text="@localizationService.GetString("Tools")">
-        <TextTools CanTextExpand="canTextExpand" />
-    </MudTabPanel>
-</MudTabs>
+
+            @if (canTextExpand)
+            {
+                <MudPaper Class="pa-4 mb-4" Elevation="1">
+                    <MudStack Spacing="3">
+                        <MudText Typo="Typo.h6">
+                            @(editingKey is not null ? localizationService.GetString("EditMatch") : localizationService.GetString("AddNewMatch"))
+                        </MudText>
+                        <MudGrid Spacing="2">
+                            <MudItem xs="6">
+                                <MudTextField @bind-Value="currentMatch.Trigger" Label="@localizationService.GetString("Key")" Variant="Variant.Outlined" Dense="true" />
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudTextField @bind-Value="currentMatch.Replace" Label="@localizationService.GetString("Value")" Variant="Variant.Outlined" Dense="true" />
+                            </MudItem>
+                        </MudGrid>
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton @onclick="AddItemAsync" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add">
+                                @localizationService.GetString("Add")
+                            </MudButton>
+                            @if (editingKey is not null)
+                            {
+                                <MudButton @onclick="CancelEdit" Color="Color.Default" Variant="Variant.Text">
+                                    @localizationService.GetString("CancelEdit")
+                                </MudButton>
+                            }
+                        </MudStack>
+
+                        <MudPaper Class="pa-3" Elevation="0" Outlined="true">
+                            <MudStack Row="true" Justify="@Justify.SpaceBetween" Align="Align.Center" Class="mb-2">
+                                <MudText Typo="Typo.subtitle2">@localizationService.GetString("Variables")</MudText>
+                                <MudChip Color="Color.Secondary" Size="Size.Small">
+                                    @currentMatch.Vars.Count
+                                </MudChip>
+                            </MudStack>
+                            @foreach (Var item in currentMatch.Vars)
+                            {
+                                <MudStack Row="true" Justify="@Justify.SpaceBetween" Align="Align.Center" Class="mb-1" @key="item">
+                                    <MudText>@item.Name</MudText>
+                                    <MudIconButton @onclick="() => RemoveVar(item)" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Small" />
+                                </MudStack>
+                            }
+                            <MudCheckBox @bind-Value="currentMatch.Word" Label="@localizationService.GetString("Word")" Class="mt-2" />
+                        </MudPaper>
+
+                        <MudExpansionPanels Elevation="0" Outlined="true">
+                            <MudExpansionPanel Text="@localizationService.GetString("Templates")" MaxHeight="1000">
+                                <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
+                                    <MudText>@localizationService.GetString("DateToday")</MudText>
+                                    <MudButton @onclick="() => AddPreBuiltVar(0)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
+                                </MudStack>
+                                <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
+                                    <MudText>@localizationService.GetString("DateYesterday")</MudText>
+                                    <MudButton @onclick="() => AddPreBuiltVar(1)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
+                                </MudStack>
+                                <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
+                                    <MudText>@localizationService.GetString("DateTomorrow")</MudText>
+                                    <MudButton @onclick="() => AddPreBuiltVar(2)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
+                                </MudStack>
+                                <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
+                                    <MudText>@localizationService.GetString("TimeNow")</MudText>
+                                    <MudButton @onclick="() => AddPreBuiltVar(3)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
+                                </MudStack>
+                                <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
+                                    <MudText>@localizationService.GetString("AddSelectionCursor")</MudText>
+                                    <MudButton @onclick="() => AddPreBuiltVar(4)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddCursor")</MudButton>
+                                </MudStack>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+
+                        <MudExpansionPanels Elevation="0" Outlined="true">
+                            <MudExpansionPanel Text="@localizationService.GetString("AdvancedOptions")" MaxHeight="1000">
+                                <MudTextField @bind-Value="currentVar.Name" T="string" Label="@localizationService.GetString("VariableName")" Dense="true" Class="mb-2" />
+                                <MudTextField @bind-Value="currentVar.Type" T="string" Label="@localizationService.GetString("VariableType")" Dense="true" Class="mb-2" />
+                                <MudExpansionPanels Elevation="0">
+                                    <MudExpansionPanel Text="@localizationService.GetString("Params")" MaxHeight="1000">
+                                        <MudTextField @bind-Value="currentVar.Params.Format" T="string" Label="@localizationService.GetString("Format")" Dense="true" Class="mb-2" />
+                                        <MudTextField @bind-Value="currentVar.Params.Echo" T="string" Label="@localizationService.GetString("Echo")" Dense="true" Class="mb-2" />
+                                        <MudTextField @bind-Value="currentVar.Params.Offset" T="long" Label="@localizationService.GetString("Offset")" Dense="true" />
+                                    </MudExpansionPanel>
+                                </MudExpansionPanels>
+                                <MudButton @onclick="AddCurrentVar" Color="Color.Primary" Variant="Variant.Outlined" FullWidth="true" Class="mt-2">
+                                    @localizationService.GetString("AddVariable")
+                                </MudButton>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </MudStack>
+                </MudPaper>
+
+                <MudText Typo="Typo.h6" class="mb-2">@localizationService.GetString("YourMatches")</MudText>
+                @if (dict is not null && dict.Count > 0)
+                {
+                    @foreach (var item in dict.Take(dict.Count < lazyLoadIndex ? dict.Count : lazyLoadIndex))
+                    {
+                        <MatchCard Item="item" OnEdit="() => EditItem(item)" OnDelete="async () => await RemoveItemAsync(item.Value)" @key="item.Key" />
+                    }
+                    @if (dict.Count > lazyLoadIndex)
+                    {
+                        <div class="d-flex justify-center mt-3">
+                            <MudButton @onclick="AdjustLazyLoad" Color="Color.Primary" Variant="Variant.Filled">
+                                @localizationService.GetString("LoadMore")
+                            </MudButton>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Surface" Align="Align.Center" Class="pa-4">
+                        @localizationService.GetString("NoMatchesYet")
+                    </MudText>
+                }
+            }
+        </MudTabPanel>
+        <MudTabPanel Text="@localizationService.GetString("Tools")">
+            <TextTools CanTextExpand="canTextExpand" />
+        </MudTabPanel>
+    </MudTabs>
+}
 
 @code {
     bool canTextExpand = false;
+    bool _loading = true;
     Match currentMatch = new() { Replace = "", Trigger = "", Vars = new() { } };
     private Dictionary<string, Match> dict;
     private List<Var> globalVars = new();
@@ -337,6 +358,7 @@
 #if ANDROID
         StartSafObserver();
 #endif
+        _loading = false;
     }
     private async Task ImportAsync()
     {
@@ -847,7 +869,6 @@
             if (await dialogService.DisplayConfirmAsync(localizationService.GetString("NeedConsent"), localizationService.GetString("GiveConsentMessage"), localizationService.GetString("IGiveConsent"), localizationService.GetString("Nevermind")))
             {
                 acService.OpenSettings();
-                await ForceQuit();
             }
         }
         catch (Exception e)

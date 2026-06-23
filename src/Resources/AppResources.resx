@@ -772,4 +772,22 @@
   <data name="FolderPickerCancelled" xml:space="preserve">
     <value>Folder selection cancelled</value>
   </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="AddNewMatch" xml:space="preserve">
+    <value>Add New Match</value>
+  </data>
+  <data name="EditMatch" xml:space="preserve">
+    <value>Edit Match</value>
+  </data>
+  <data name="YourMatches" xml:space="preserve">
+    <value>Your Matches</value>
+  </data>
+  <data name="NoMatchesYet" xml:space="preserve">
+    <value>No matches yet. Add one above to get started.</value>
+  </data>
+  <data name="QuitApp" xml:space="preserve">
+    <value>Quit App</value>
+  </data>
 </root>
