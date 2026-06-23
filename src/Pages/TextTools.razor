@@ -6,7 +6,7 @@
 <MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[1].Length" Label="@localizationService.GetString("Text2")" Variant="Variant.Outlined" @bind-Value="@textList[1]" Lines="3" Class="mb-3" />
 
 <MudExpansionPanels Elevation="0" Outlined="true" Class="mb-3" MultiSelection="false">
-    <MudExpansionPanel Text="@localizationService.GetString("Basic")" MaxHeight="1000" Expanded="@(_activeMode == 0)" ExpandedChanged="@((v) => { if (v) _activeMode = 0; })">
+    <MudExpansionPanel Text="@localizationService.GetString("Basic")" MaxHeight="1000" Expanded="@(_activeMode == 0)" ExpandedChanged="@(OnBasicExpandedChanged)">
         <MudStack Spacing="2">
             <MudCheckBox Label="@localizationService.GetString("Compare")" @bind-Value="@compare" Color="Color.Primary" />
             <MudCheckBox Label="@localizationService.GetString("IgnoreCase")" @bind-Value="@ignoreCase" Color="Color.Primary" />
@@ -26,7 +26,7 @@
             }
         </MudStack>
     </MudExpansionPanel>
-    <MudExpansionPanel Text="@localizationService.GetString("DiscordMarkdown")" MaxHeight="1000" Expanded="@(_activeMode == 1)" ExpandedChanged="@((v) => { if (v) _activeMode = 1; })">
+    <MudExpansionPanel Text="@localizationService.GetString("DiscordMarkdown")" MaxHeight="1000" Expanded="@(_activeMode == 1)" ExpandedChanged="@(OnDiscordExpandedChanged)">
         <MudStack Spacing="2">
             <MudCheckBox Label="@localizationService.GetString("Bold")" @bind-Value="@makeBold" Color="Color.Primary" />
             <MudCheckBox Label="@localizationService.GetString("Italic")" @bind-Value="@makeItalic" Color="Color.Primary" />
@@ -108,6 +108,17 @@
     private bool toLower = false;
     private ulong processCount = 0;
     private int _activeMode = 0;
+
+    private void OnBasicExpandedChanged(bool expanded)
+    {
+        if (expanded) _activeMode = 0;
+    }
+
+    private void OnDiscordExpandedChanged(bool expanded)
+    {
+        if (expanded) _activeMode = 1;
+    }
+
     private bool makeBold = true;
     private bool makeItalic = false;
     private bool makeStrike = false;
