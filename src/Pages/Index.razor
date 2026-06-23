@@ -774,9 +774,10 @@
                     {
                         config.Action = localizationService.GetString("Resolve");
                         config.ActionColor = Color.Warning;
-                        config.OnClick = snackbar =>
+                        config.Onclick = snackbar =>
                         {
                             NavigationManager.NavigateTo("/conflicts");
+                            return Task.CompletedTask;
                         };
                     });
                 }
