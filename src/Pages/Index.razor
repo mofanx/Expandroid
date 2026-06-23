@@ -42,8 +42,9 @@
         {
             <MudStack Row="true" Justify="Justify.Center" Spacing="2" Class="mb-4">
                 <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large">
-                    <MudButton @onclick="SaveDictAsync" StartIcon="@Icons.Material.Filled.Save">
-                        @localizationService.GetString("MakeSureToSave")
+                    <MudButton @onclick="SaveDictAsync" StartIcon="@Icons.Material.Filled.Save" Disabled="@_saving">
+                        @if (_saving) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
+                        else { @localizationService.GetString("MakeSureToSave") }
                     </MudButton>
                     <MudButton @onclick="ImportAsync" StartIcon="@Icons.Material.Filled.Upload">
                         @localizationService.GetString("Import")
@@ -51,10 +52,23 @@
                     <MudButton @onclick="ExportAsync" StartIcon="@Icons.Material.Filled.Download">
                         @localizationService.GetString("Export")
                     </MudButton>
-                    <MudButton @onclick="SyncNowAsync" StartIcon="@Icons.Material.Filled.Sync">
-                        Sync
+                    <MudButton @onclick="SyncNowAsync" StartIcon="@Icons.Material.Filled.Sync" Disabled="@_syncing">
+                        @if (_syncing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
+                        else { @localizationService.GetString("Sync") }
                     </MudButton>
                 </MudButtonGroup>
+            </MudStack>
+            <MudStack Row="true" Spacing="2" Class="mb-4">
+                <MudButton @onclick="() => NavigationManager.NavigateTo("/syncsettings")"
+                           Color="Color.Secondary" Variant="Variant.Text" Size="Size.Large"
+                           StartIcon="@Icons.Material.Filled.Settings">
+                    @localizationService.GetString("SyncSettings")
+                </MudButton>
+                <MudButton @onclick="() => NavigationManager.NavigateTo("/packages")"
+                           Color="Color.Secondary" Variant="Variant.Text" Size="Size.Large"
+                           StartIcon="@Icons.Material.Filled.Extension">
+                    @localizationService.GetString("PackageStore")
+                </MudButton>
                 <MudButton @onclick="ForceQuit" Color="Color.Error" Variant="Variant.Outlined" Size="Size.Large"
                            StartIcon="@Icons.Material.Filled.PowerSettingsNew">
                     @localizationService.GetString("ForceQuitApp")
@@ -65,6 +79,10 @@
                 <MudTextField Lines="2" class="mr-1" @bind-Value="currentMatch.Trigger" Label="@localizationService.GetString("Key")" Variant="Variant.Outlined"></MudTextField>
                 <MudTextField Lines="2" class="mr-1" @bind-Value="currentMatch.Replace" Label="@localizationService.GetString("Value")" Variant="Variant.Outlined"></MudTextField>
                 <MudButton @onclick="AddItemAsync" Color="Color.Primary" Variant="Variant.Text">@localizationService.GetString("Add")</MudButton>
+                @if (editingKey is not null)
+                {
+                    <MudButton @onclick="CancelEdit" Color="Color.Default" Variant="Variant.Text">@localizationService.GetString("CancelEdit")</MudButton>
+                }
             </div>
             <MudPaper class="mt-2 pa-2">
                 <MudStack Row="true" Justify="@Justify.SpaceBetween" Align="Align.Center" Class="mb-2">
@@ -165,6 +183,8 @@
     private System.Threading.Timer _gitPollingTimer;
 #endif
     private string editingKey = null;
+    private bool _syncing = false;
+    private bool _saving = false;
 
     private void DismissWelcome()
     {
@@ -185,7 +205,7 @@
                         Type = "date",
                         Params = new()
                         {
-                            Format = "dd/MM/yyyy"
+                            Format = Utils.GetTheRealFormat("dd/MM/yyyy")
                         }
                     });
                 currentMatch.Replace += " {{datenow}}";
@@ -197,7 +217,7 @@
                         Type = "date",
                         Params = new()
                         {
-                            Format = "dd/MM/yyyy",
+                            Format = Utils.GetTheRealFormat("dd/MM/yyyy"),
                             Offset = -86400
                         }
                     });
@@ -210,7 +230,7 @@
                         Type = "date",
                         Params = new()
                         {
-                            Format = "dd/MM/yyyy",
+                            Format = Utils.GetTheRealFormat("dd/MM/yyyy"),
                             Offset = 86400
                         }
                     });
@@ -223,7 +243,7 @@
                         Type = "date",
                         Params = new()
                         {
-                            Format = "HH:mm",
+                            Format = Utils.GetTheRealFormat("HH:mm"),
                         }
                     });
                 currentMatch.Replace += " {{time}}";
@@ -239,41 +259,67 @@
     {
         await base.OnInitializedAsync();
         localizationService.OnLanguageChanged += OnLanguageChanged;
+        SyncManager.SyncCompleted += OnSyncCompleted;
+        WeakReferenceMessenger.Default.Register<ConfigChangedMessage>(this, (r, m) =>
+        {
+            InvokeAsync(async () =>
+            {
+#if ANDROID
+                StopObservers();
+                await StartSafObserver();
+#endif
+            });
+        });
         canTextExpand = acService.IsActivated();
         if (File.Exists(AppSettings.OldDictPath))
         {
-            var stream = File.OpenRead(AppSettings.OldDictPath);
-            dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(stream);
-            if (canTextExpand)
+            try
             {
-                foreach (var item in dict)
+                var stream = File.OpenRead(AppSettings.OldDictPath);
+                dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(stream);
+                if (canTextExpand)
                 {
-                    SendMessage("Add", item.Value);
+                    foreach (var item in dict)
+                    {
+                        SendMessage("Add", item.Value);
+                    }
+                }
+                await stream.DisposeAsync();
+                var backupFn = AppSettings.DictPath + ".oldbackup";
+                File.Copy(AppSettings.OldDictPath, backupFn);
+                await SaveDictAsync();
+                if (File.Exists(backupFn))
+                {
+                    File.Delete(AppSettings.OldDictPath);
+                    await dialogService.DisplayConfirmAsync(localizationService.GetString("MigratedSuccessfully"), localizationService.GetString("MigratedSuccessfullyMessage"));
                 }
             }
-            await stream.DisposeAsync();
-            var backupFn = AppSettings.DictPath + ".oldbackup";
-            File.Copy(AppSettings.OldDictPath, backupFn);
-            await SaveDictAsync();
-            if (File.Exists(backupFn))
+            catch (Exception ex)
             {
-                File.Delete(AppSettings.OldDictPath);
-                await dialogService.DisplayConfirmAsync(localizationService.GetString("MigratedSuccessfully"), localizationService.GetString("MigratedSuccessfullyMessage"));
+                Snackbar.Add(string.Format(localizationService.GetString("MigrationFailed"), ex.Message), Severity.Error);
             }
         }
-        if (File.Exists(AppSettings.DictPath))
+        if (dict is null && File.Exists(AppSettings.DictPath))
         {
-            using var stream = File.OpenRead(AppSettings.DictPath);
-            dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(stream);
-            if (canTextExpand)
+            try
             {
-                foreach (var item in dict)
+                using var stream = File.OpenRead(AppSettings.DictPath);
+                dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(stream);
+                if (canTextExpand)
                 {
-                    SendMessage("Add", item.Value);
+                    foreach (var item in dict)
+                    {
+                        SendMessage("Add", item.Value);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                Snackbar.Add(string.Format(localizationService.GetString("DictLoadFailed"), ex.Message), Severity.Error);
+                dict = new();
+            }
         }
-        else
+        else if (dict is null)
             dict = new();
         if (File.Exists(AppSettings.GlobalVarsPath))
         {
@@ -298,9 +344,9 @@
                 int skips = 0;
                 var skipDetails = new List<string>();
                 var importMode = await dialogService.DisplayConfirmAsync(
-                    "Import Mode",
-                    "Choose import format. Yes = JSON/YML single file, No = YML folder (espanso match directory)",
-                    "Single File", "YML Folder");
+                    localizationService.GetString("ImportMode"),
+                    localizationService.GetString("ImportModeDesc"),
+                    localizationService.GetString("SingleFile"), localizationService.GetString("YmlFolder"));
 
                 if (importMode)
                 {
@@ -312,6 +358,7 @@
                             {
                                 PickerTitle = localizationService.GetString("PickAConfigJsonFile")
                             });
+                        if (result is null) return;
                         using var strm = await result.OpenReadAsync();
                         localDict = await JsonSerializer.DeserializeAsync<DictWrapper>(strm);
                     }
@@ -321,6 +368,7 @@
                             {
                                 PickerTitle = localizationService.GetString("PickAConfigYmlFile")
                             });
+                        if (result is null) return;
                         using var strm = await result.OpenReadAsync();
                         var deserializer = new DeserializerBuilder()
                             .WithNamingConvention(UnderscoredNamingConvention.Instance).IgnoreUnmatchedProperties()
@@ -332,7 +380,15 @@
                     ProcessImport(localDict, baseDir, ref skips, skipDetails, isRoot: true);
                     if (localDict.Global_vars is not null)
                     {
-                        globalVars.AddRange(localDict.Global_vars);
+                        var existingNames = globalVars.Select(v => v.Name).ToHashSet();
+                        foreach (var gv in localDict.Global_vars)
+                        {
+                            if (!existingNames.Contains(gv.Name))
+                            {
+                                globalVars.Add(gv);
+                                existingNames.Add(gv.Name);
+                            }
+                        }
                         var str = JsonSerializer.Serialize(globalVars);
                         await File.WriteAllTextAsync(AppSettings.GlobalVarsPath, str);
                         WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(globalVars));
@@ -342,14 +398,14 @@
                 {
                     var result = await FilePicker.PickAsync(new PickOptions
                     {
-                        PickerTitle = "Pick any YAML file in the espanso match folder"
+                        PickerTitle = localizationService.GetString("PickYmlInMatchFolder")
                     });
                     if (result?.FullPath is null)
                         return;
                     var folderPath = Path.GetDirectoryName(result.FullPath);
                     if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
                     {
-                        Snackbar.Add("Cannot access folder", Severity.Error);
+                        Snackbar.Add(localizationService.GetString("CannotAccessFolder"), Severity.Error);
                         return;
                     }
 
@@ -376,8 +432,20 @@
                             }
                             if (notSupported) continue;
                         }
-                        dict[item.Key] = item.Value;
-                        SendMessage("Add", item.Value);
+                        if (item.Value.Triggers is not null && item.Value.Triggers.Count > 0)
+                        {
+                            foreach (var t in item.Value.Triggers)
+                            {
+                                var clone = new Match(item.Value) { Trigger = t };
+                                dict[t] = clone;
+                                SendMessage("Add", clone);
+                            }
+                        }
+                        else
+                        {
+                            dict[item.Key] = item.Value;
+                            SendMessage("Add", item.Value);
+                        }
                     }
                 }
 
@@ -484,6 +552,10 @@
     {
         try
         {
+            if (dict.Count == 0)
+            {
+                Snackbar.Add(localizationService.GetString("EmptyDictExport"), Severity.Warning);
+            }
             string text = null;
             string name = null;
             DictWrapper dictWrapper = new DictWrapper()
@@ -493,12 +565,13 @@
                 };
             foreach (var item in dict)
             {
-                if (item.Value.Replace is not null)
+                var exportMatch = new Match(item.Value);
+                if (exportMatch.Replace is not null)
                 {
-                    item.Value.Replace = item.Value.Replace.Replace("\\n", Environment.NewLine);
-                    if (item.Value.Vars is not null)
+                    exportMatch.Replace = exportMatch.Replace.Replace("\\n", Environment.NewLine);
+                    if (exportMatch.Vars is not null)
                     {
-                        foreach (var x in item.Value.Vars)
+                        foreach (var x in exportMatch.Vars)
                         {
                             if (x.Type == "date")
                             {
@@ -508,7 +581,7 @@
                     }
 
                 }
-                dictWrapper.Matches.Add(item.Value);
+                dictWrapper.Matches.Add(exportMatch);
             }
             if (await dialogService.DisplayConfirmAsync(localizationService.GetString("ChooseFormat"), localizationService.GetString("SelectYmlIfEspansoConfig"), "Json", "Yml"))
             {
@@ -571,10 +644,19 @@
                     dict.Remove(editingKey);
                     SendMessage("Remove", oldItem);
                 }
+                if (dict.ContainsKey(copy.Trigger) && (editingKey is null || editingKey != copy.Trigger))
+                {
+                    var overwrite = await dialogService.DisplayConfirmAsync(
+                        localizationService.GetString("DuplicateTrigger"),
+                        string.Format(localizationService.GetString("DuplicateTrigger"), copy.Trigger));
+                    if (!overwrite)
+                        return;
+                }
                 dict[copy.Trigger] = new(copy); // need another copy :(
                 copy.Replace = copy.Replace.Replace("\\n", Environment.NewLine);
                 SendMessage("Add", copy);
                 editingKey = null;
+                currentMatch = new() { Replace = "", Trigger = "", Vars = new() };
             }
             else
             {
@@ -605,8 +687,10 @@
             await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), localizationService.GetString("RestartAppToEnsureSync") + e.Message);
         }
     }
-    private async Task SaveDictAsync()
+    private async Task SaveDictAsync(bool silent = false)
     {
+        if (_saving) return;
+        _saving = true;
         try
         {
             foreach (var item in dict)
@@ -618,7 +702,8 @@
             }
             var str = JsonSerializer.Serialize(dict);
             await File.WriteAllTextAsync(AppSettings.DictPath, str);
-            Snackbar.Add(localizationService.GetString("SaveSuccessfulMessage"), Severity.Success);
+            if (!silent)
+                Snackbar.Add(localizationService.GetString("SaveSuccessfulMessage"), Severity.Success);
 
             var config = SyncManager.GetConfig();
             if (config.Method != SyncMethod.None && !string.IsNullOrEmpty(config.SyncUri))
@@ -630,21 +715,33 @@
         {
             await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), e.Message);
         }
+        finally
+        {
+            _saving = false;
+        }
     }
 
     private async Task SyncNowAsync()
     {
+        if (!await SyncManager.SyncLock.WaitAsync(0))
+            return;
+        _syncing = true;
         try
         {
             var config = SyncManager.GetConfig();
             if (config.Method == SyncMethod.None)
             {
-                Snackbar.Add("Sync not configured. Opening setup wizard...", Severity.Info);
+                Snackbar.Add(localizationService.GetString("SyncNotConfigured"), Severity.Info);
                 NavigationManager.NavigateTo("/syncsetup");
                 return;
             }
+            if (config.Method == SyncMethod.Manual)
+            {
+                Snackbar.Add(localizationService.GetString("ManualSyncHint"), Severity.Info);
+                return;
+            }
 
-            await SaveDictAsync();
+            await SaveDictAsync(silent: true);
             var result = await SyncManager.SyncAsync(dict, globalVars);
             if (result.Success)
             {
@@ -660,7 +757,7 @@
                         await File.WriteAllTextAsync(AppSettings.GlobalVarsPath, gvStr);
                         WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(globalVars));
                     }
-                    await SaveDictAsync();
+                    await SaveDictAsync(silent: true);
                     AdjustLazyLoad();
                     StateHasChanged();
                 }
@@ -673,22 +770,67 @@
 
                 if (result.Conflicts > 0)
                 {
-                    Snackbar.Add($"Synced {result.FilesSynced} files, {result.Conflicts} conflicts", Severity.Warning);
+                    Snackbar.Add(string.Format(localizationService.GetString("SyncedFiles"), result.FilesSynced) + ", " + string.Format(localizationService.GetString("ConflictsDetected"), result.Conflicts), Severity.Warning, config =>
+                    {
+                        config.Action = localizationService.GetString("Resolve");
+                        config.ActionColor = Color.Warning;
+                        config.OnClick = snackbar =>
+                        {
+                            NavigationManager.NavigateTo("/conflicts");
+                            return Task.CompletedTask;
+                        };
+                    });
                 }
                 else
                 {
-                    Snackbar.Add($"Synced {result.FilesSynced} files", Severity.Success);
+                    Snackbar.Add(string.Format(localizationService.GetString("SyncedFiles"), result.FilesSynced), Severity.Success);
                 }
             }
             else
             {
-                Snackbar.Add($"Sync failed: {result.ErrorMessage}", Severity.Error);
+                Snackbar.Add(string.Format(localizationService.GetString("SyncFailed"), result.ErrorMessage), Severity.Error);
             }
         }
         catch (Exception e)
         {
-            Snackbar.Add($"Sync error: {e.Message}", Severity.Error);
+            Snackbar.Add(string.Format(localizationService.GetString("SyncError"), e.Message), Severity.Error);
         }
+        finally
+        {
+            _syncing = false;
+            SyncManager.SyncLock.Release();
+        }
+    }
+
+    private void OnSyncCompleted(SyncStatus status, SyncResult result)
+    {
+        InvokeAsync(async () =>
+        {
+            if (result?.HasRemoteChanges == true)
+            {
+                if (File.Exists(AppSettings.DictPath))
+                {
+                    using var stream = File.OpenRead(AppSettings.DictPath);
+                    dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(stream);
+                    foreach (var kv in dict)
+                    {
+                        SendMessage("Update", kv.Value);
+                    }
+                }
+                if (File.Exists(AppSettings.GlobalVarsPath))
+                {
+                    var gvJson = await File.ReadAllTextAsync(AppSettings.GlobalVarsPath);
+                    var gv = JsonSerializer.Deserialize<List<Var>>(gvJson);
+                    if (gv != null)
+                    {
+                        globalVars = gv;
+                        WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(globalVars));
+                    }
+                }
+                AdjustLazyLoad();
+                StateHasChanged();
+            }
+        });
     }
 
     private void SendMessage(string cmd, Match value)
@@ -710,8 +852,12 @@
             await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), e.Message);
         }
     }
-    private void ForceQuit()
+    private async Task ForceQuit()
     {
+        var confirm = await dialogService.DisplayConfirmAsync(
+            localizationService.GetString("ForceQuitApp"),
+            localizationService.GetString("ConfirmForceQuit"));
+        if (!confirm) return;
         WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Quit", null)));
         Application.Current.Quit();
     }
@@ -725,6 +871,14 @@
         {
             currentMatch.Vars = item.Value.Vars.Select(v => new Var(v)).ToList();
         }
+        currentVar = new() { Params = new() };
+        StateHasChanged();
+    }
+
+    private void CancelEdit()
+    {
+        editingKey = null;
+        currentMatch = new() { Replace = "", Trigger = "", Vars = new() };
         StateHasChanged();
     }
     private void AdjustLazyLoad()
@@ -779,7 +933,7 @@
                         }
                         catch { }
                     }),
-                    null, TimeSpan.Zero, TimeSpan.FromSeconds(config.ForegroundPollIntervalSec));
+                    null, TimeSpan.FromSeconds(config.ForegroundPollIntervalSec), TimeSpan.FromSeconds(config.ForegroundPollIntervalSec));
             }
         }
         catch (Exception ex)
@@ -801,10 +955,9 @@
     }
 #endif
 
-    public void Dispose()
-    {
-        localizationService.OnLanguageChanged -= OnLanguageChanged;
 #if ANDROID
+    private void StopObservers()
+    {
         _safObserver?.Stop();
         _safObserver?.Dispose();
         _safObserver = null;
@@ -812,6 +965,16 @@
         _webDavPollingService = null;
         _gitPollingTimer?.Dispose();
         _gitPollingTimer = null;
+    }
+#endif
+
+    public void Dispose()
+    {
+        localizationService.OnLanguageChanged -= OnLanguageChanged;
+        SyncManager.SyncCompleted -= OnSyncCompleted;
+        WeakReferenceMessenger.Default.Unregister<ConfigChangedMessage>(this);
+#if ANDROID
+        StopObservers();
 #endif
     }
 }

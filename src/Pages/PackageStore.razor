@@ -1,90 +1,133 @@
 @page "/packages"
 @using Expandroid.Models
 @using Expandroid.Services
+@using CommunityToolkit.Mvvm.Messaging
 @inject HubClient HubClient
 @inject ISnackbar Snackbar
+@inject ILocalizationService localizationService
+@implements IDisposable
 
 <MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">
-    Package Store
+    @localizationService.GetString("PackageStore")
 </MudText>
 
-<MudTextField @bind-Value="_searchQuery"
-              Label="Search packages"
-              Variant="Variant.Outlined"
-              Adornment="Adornment.Start"
-              AdornmentIcon="@MudBlazor.Icons.Material.Filled.Search"
-              class="mb-4"
-              Immediate="true" />
+<MudTabs @ref="_tabs" Elevation="2" Rounded="true">
+    <MudTabPanel Text="@localizationService.GetString("Browse")">
+        <MudTextField @bind-Value="_searchQuery"
+                      Label="@localizationService.GetString("SearchPackages")"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@MudBlazor.Icons.Material.Filled.Search"
+                      class="mb-4 mt-4"
+                      Immediate="true" />
 
-@if (_loading)
-{
-    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" class="d-flex justify-center" />
-}
-else if (_packages.Count == 0)
-{
-    <MudText Align="Align.Center" Color="Color.Surface" class="mt-4">
-        No packages found. Try refreshing.
-    </MudText>
-}
-else
-{
-    <MudGrid Spacing="3">
-        @foreach (var pkg in _filteredPackages)
+        @if (_loading)
         {
-            <MudItem xs="12" sm="6" md="4">
-                <MudCard Class="mb-3">
-                    <MudCardContent>
-                        <MudText Typo="Typo.h6">@pkg.Title</MudText>
-                        <MudText Typo="Typo.body2" Color="Color.Surface" class="mb-2">by @pkg.Author</MudText>
-                        <MudText Typo="Typo.body2" class="mb-2" Style="min-height: 40px;">
-                            @(pkg.Description?.Length > 100 ? pkg.Description.Substring(0, 100) + "..." : pkg.Description)
-                        </MudText>
-                        @if (!string.IsNullOrEmpty(pkg.Tags))
-                        {
-                            <MudText Typo="Typo.caption" Color="Color.Surface">
-                                @pkg.Tags
-                            </MudText>
-                        }
-                    </MudCardContent>
-                    <MudCardActions>
-                        @if (_installedNames.Contains(pkg.Name))
-                        {
-                            <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => UninstallPackage(pkg)">
-                                Uninstall
-                            </MudButton>
-                        }
-                        else
-                        {
-                            <MudButton Color="Color.Primary" Variant="Variant.Filled"
-                                       OnClick="() => InstallPackage(pkg)"
-                                       Disabled="@_installing">
-                                Install
-                            </MudButton>
-                        }
-                    </MudCardActions>
-                </MudCard>
-            </MudItem>
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" class="d-flex justify-center" />
         }
-    </MudGrid>
-}
+        else if (_packages.Count == 0)
+        {
+            <MudText Align="Align.Center" Color="Color.Surface" class="mt-4">
+                @localizationService.GetString("NoPackagesFound")
+            </MudText>
+        }
+        else
+        {
+            <MudGrid Spacing="3">
+                @foreach (var pkg in _filteredPackages)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Class="mb-3">
+                            <MudCardContent>
+                                <MudText Typo="Typo.h6">@pkg.Title</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Surface" class="mb-2">by @pkg.Author</MudText>
+                                <MudText Typo="Typo.body2" class="mb-2" Style="min-height: 40px;">
+                                    @(pkg.Description?.Length > 100 ? pkg.Description.Substring(0, 100) + "..." : pkg.Description)
+                                </MudText>
+                                @if (!string.IsNullOrEmpty(pkg.Tags))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Surface">
+                                        @pkg.Tags
+                                    </MudText>
+                                }
+                            </MudCardContent>
+                            <MudCardActions>
+                                @if (_installedNames.Contains(pkg.Name))
+                                {
+                                    <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => UninstallPackage(pkg)">
+                                        @localizationService.GetString("Uninstall")
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                                               OnClick="() => InstallPackage(pkg)"
+                                               Disabled="@_installing">
+                                        @localizationService.GetString("Install")
+                                    </MudButton>
+                                }
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
 
-<MudStack Row="true" Spacing="2" class="mt-4" AlignItems="AlignItems.Center">
-    <MudButton Variant="Variant.Outlined" OnClick="RefreshIndex" Disabled="@_loading">
-        Refresh Index
-    </MudButton>
-</MudStack>
+        <MudStack Row="true" Spacing="2" class="mt-4" AlignItems="AlignItems.Center">
+            <MudButton Variant="Variant.Outlined" OnClick="RefreshIndex" Disabled="@_loading">
+                @localizationService.GetString("RefreshIndex")
+            </MudButton>
+        </MudStack>
+    </MudTabPanel>
+
+    <MudTabPanel Text="@localizationService.GetString("Installed")">
+        @if (_installedPackages.Count == 0)
+        {
+            <MudText Align="Align.Center" class="mt-4">
+                @localizationService.GetString("NoInstalledPackages")
+            </MudText>
+        }
+        else
+        {
+            @foreach (var pkg in _installedPackages)
+            {
+                <MudCard Class="mb-3 pa-4">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" Align="Align.Center">
+                        <div>
+                            <MudText Typo="Typo.h6">@pkg.Name</MudText>
+                            <MudText Typo="Typo.body2">@string.Format(localizationService.GetString("MatchFiles"), pkg.MatchFiles.Count)</MudText>
+                        </div>
+                        <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => UninstallInstalledPackage(pkg)" Disabled="@(_uninstalling || _installing)">
+                            @if (_uninstalling) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
+                            else { @localizationService.GetString("Uninstall") }
+                        </MudButton>
+                    </MudStack>
+                </MudCard>
+            }
+        }
+    </MudTabPanel>
+</MudTabs>
 
 @code {
     private List<HubPackageInfo> _packages = new();
     private List<HubPackageInfo> _filteredPackages = new();
     private HashSet<string> _installedNames = new();
+    private List<InstalledPackage> _installedPackages = new();
     private string _searchQuery = "";
     private bool _loading = true;
     private bool _installing = false;
+    private bool _uninstalling = false;
+    private MudTabs _tabs;
 
     protected override async Task OnInitializedAsync()
     {
+        localizationService.OnLanguageChanged += OnLanguageChanged;
         await LoadDataAsync();
+    }
+
+    private void OnLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadDataAsync()
@@ -95,11 +138,12 @@ else
             var index = await HubClient.GetPackageIndexAsync();
             _packages = index.Packages;
             _installedNames = HubClient.GetInstalledPackages().Select(p => p.Name).ToHashSet();
+            _installedPackages = HubClient.GetInstalledPackages();
             ApplyFilter();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to load packages: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(localizationService.GetString("FailedToLoadPackages"), ex.Message), Severity.Error);
         }
         finally
         {
@@ -133,11 +177,11 @@ else
             var index = await HubClient.GetPackageIndexAsync(forceRefresh: true);
             _packages = index.Packages;
             ApplyFilter();
-            Snackbar.Add($"Loaded {_packages.Count} packages", Severity.Success);
+            Snackbar.Add(string.Format(localizationService.GetString("LoadedPackages"), _packages.Count), Severity.Success);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Refresh failed: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(localizationService.GetString("RefreshFailed"), ex.Message), Severity.Error);
         }
         finally
         {
@@ -150,17 +194,20 @@ else
         _installing = true;
         try
         {
-            Snackbar.Add($"Installing {pkg.Name}...", Severity.Info);
+            Snackbar.Add(string.Format(localizationService.GetString("InstallingPackage"), pkg.Name), Severity.Info);
             var installed = await HubClient.InstallPackageAsync(pkg);
             if (installed != null)
             {
                 _installedNames.Add(pkg.Name);
-                Snackbar.Add($"Installed {pkg.Name}: {installed.MatchFiles.Count} files", Severity.Success);
+                _installedPackages = HubClient.GetInstalledPackages();
+                Snackbar.Add(string.Format(localizationService.GetString("InstalledPackage"), pkg.Name, installed.MatchFiles.Count), Severity.Success);
+                WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Reload", null)));
+                _tabs.ActivatePanel(1);
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Install failed: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(localizationService.GetString("InstallFailed"), ex.Message), Severity.Error);
         }
         finally
         {
@@ -168,17 +215,50 @@ else
         }
     }
 
-    private void UninstallPackage(HubPackageInfo pkg)
+    private async Task UninstallPackage(HubPackageInfo pkg)
     {
+        _uninstalling = true;
         try
         {
-            HubClient.UninstallPackage(pkg.Name);
+            await Task.Run(() => HubClient.UninstallPackage(pkg.Name));
             _installedNames.Remove(pkg.Name);
-            Snackbar.Add($"Uninstalled {pkg.Name}", Severity.Success);
+            _installedPackages = HubClient.GetInstalledPackages();
+            Snackbar.Add(string.Format(localizationService.GetString("UninstalledPackage"), pkg.Name), Severity.Success);
+            WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Reload", null)));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Uninstall failed: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(localizationService.GetString("UninstallFailed"), ex.Message), Severity.Error);
         }
+        finally
+        {
+            _uninstalling = false;
+        }
+    }
+
+    private async Task UninstallInstalledPackage(InstalledPackage pkg)
+    {
+        _uninstalling = true;
+        try
+        {
+            await Task.Run(() => HubClient.UninstallPackage(pkg.Name));
+            _installedNames.Remove(pkg.Name);
+            _installedPackages = HubClient.GetInstalledPackages();
+            Snackbar.Add(string.Format(localizationService.GetString("UninstalledPackage"), pkg.Name), Severity.Success);
+            WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Reload", null)));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(string.Format(localizationService.GetString("UninstallFailed"), ex.Message), Severity.Error);
+        }
+        finally
+        {
+            _uninstalling = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        localizationService.OnLanguageChanged -= OnLanguageChanged;
     }
 }

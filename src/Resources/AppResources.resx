@@ -376,4 +376,400 @@
   <data name="SaveSuccessfulMessage" xml:space="preserve">
     <value>Successfully saved all keywords!</value>
   </data>
+  <data name="Sync" xml:space="preserve">
+    <value>Sync</value>
+  </data>
+  <data name="SyncSettings" xml:space="preserve">
+    <value>Sync Settings</value>
+  </data>
+  <data name="SyncNow" xml:space="preserve">
+    <value>Sync Now</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Configuration" xml:space="preserve">
+    <value>Configuration</value>
+  </data>
+  <data name="Advanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="SyncMethod" xml:space="preserve">
+    <value>Sync Method</value>
+  </data>
+  <data name="ConflictStrategy" xml:space="preserve">
+    <value>Conflict Strategy</value>
+  </data>
+  <data name="LastWriteWins" xml:space="preserve">
+    <value>Last Write Wins (default)</value>
+  </data>
+  <data name="KeepBoth" xml:space="preserve">
+    <value>Keep Both Copies</value>
+  </data>
+  <data name="PollInterval" xml:space="preserve">
+    <value>Poll interval</value>
+  </data>
+  <data name="WifiOnly" xml:space="preserve">
+    <value>WiFi only</value>
+  </data>
+  <data name="ClearMergeBaseline" xml:space="preserve">
+    <value>Clear merge baseline</value>
+  </data>
+  <data name="SetupWizard" xml:space="preserve">
+    <value>Setup Wizard</value>
+  </data>
+  <data name="ResolveConflicts" xml:space="preserve">
+    <value>Resolve Conflicts</value>
+  </data>
+  <data name="Resolve" xml:space="preserve">
+    <value>Resolve</value>
+  </data>
+  <data name="ConflictResolution" xml:space="preserve">
+    <value>Conflict Resolution</value>
+  </data>
+  <data name="ConflictChooseKeep" xml:space="preserve">
+    <value>conflict(s) found. Choose which version to keep:</value>
+  </data>
+  <data name="KeepLocal" xml:space="preserve">
+    <value>Keep Local</value>
+  </data>
+  <data name="KeepRemote" xml:space="preserve">
+    <value>Keep Remote</value>
+  </data>
+  <data name="NoConflicts" xml:space="preserve">
+    <value>No conflicts detected.</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="PackageStore" xml:space="preserve">
+    <value>Package Store</value>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>Browse</value>
+  </data>
+  <data name="Installed" xml:space="preserve">
+    <value>Installed</value>
+  </data>
+  <data name="SearchPackages" xml:space="preserve">
+    <value>Search packages</value>
+  </data>
+  <data name="Install" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="Uninstall" xml:space="preserve">
+    <value>Uninstall</value>
+  </data>
+  <data name="NoInstalledPackages" xml:space="preserve">
+    <value>No installed packages.</value>
+  </data>
+  <data name="RefreshIndex" xml:space="preserve">
+    <value>Refresh Index</value>
+  </data>
+  <data name="NoPackagesFound" xml:space="preserve">
+    <value>No packages found. Try refreshing.</value>
+  </data>
+  <data name="ConnectionSuccessful" xml:space="preserve">
+    <value>Connection successful!</value>
+  </data>
+  <data name="ConnectionFailed" xml:space="preserve">
+    <value>Connection failed. Check URL and credentials.</value>
+  </data>
+  <data name="SettingsSaved" xml:space="preserve">
+    <value>Settings saved</value>
+  </data>
+  <data name="SyncConfigured" xml:space="preserve">
+    <value>Sync configured successfully!</value>
+  </data>
+  <data name="NoLocalDataToSync" xml:space="preserve">
+    <value>No local data to sync</value>
+  </data>
+  <data name="SyncedFiles" xml:space="preserve">
+    <value>Synced {0} files</value>
+  </data>
+  <data name="ConflictsDetected" xml:space="preserve">
+    <value>{0} conflicts detected</value>
+  </data>
+  <data name="SyncFailed" xml:space="preserve">
+    <value>Sync failed: {0}</value>
+  </data>
+  <data name="SyncError" xml:space="preserve">
+    <value>Sync error: {0}</value>
+  </data>
+  <data name="SyncNotConfigured" xml:space="preserve">
+    <value>Sync not configured. Opening setup wizard...</value>
+  </data>
+  <data name="SyncOK" xml:space="preserve">
+    <value>Sync OK (last: {0})</value>
+  </data>
+  <data name="Syncing" xml:space="preserve">
+    <value>Syncing...</value>
+  </data>
+  <data name="SyncErrorTapRetry" xml:space="preserve">
+    <value>Sync error - tap to retry</value>
+  </data>
+  <data name="SyncConflictDetected" xml:space="preserve">
+    <value>Sync conflict detected (last: {0})</value>
+  </data>
+  <data name="TapToManage" xml:space="preserve">
+    <value>Tap to manage</value>
+  </data>
+  <data name="TermuxDetected" xml:space="preserve">
+    <value>Detected</value>
+  </data>
+  <data name="TermuxNotFound" xml:space="preserve">
+    <value>Not found</value>
+  </data>
+  <data name="RequiresTermux" xml:space="preserve">
+    <value>Requires Termux with git installed (pkg install git).</value>
+  </data>
+  <data name="GitRepoUrl" xml:space="preserve">
+    <value>Git Repository URL</value>
+  </data>
+  <data name="GitUsername" xml:space="preserve">
+    <value>Git Username</value>
+  </data>
+  <data name="PersonalAccessToken" xml:space="preserve">
+    <value>Personal Access Token</value>
+  </data>
+  <data name="WebDavUrl" xml:space="preserve">
+    <value>WebDAV URL</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="TestConnection" xml:space="preserve">
+    <value>Test Connection</value>
+  </data>
+  <data name="BrowseFolder" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="SyncFolderPath" xml:space="preserve">
+    <value>Sync Folder Path</value>
+  </data>
+  <data name="SetupWizardTitle" xml:space="preserve">
+    <value>Sync Setup Wizard</value>
+  </data>
+  <data name="UseDesktopEspanso" xml:space="preserve">
+    <value>Do you already use desktop espanso?</value>
+  </data>
+  <data name="ChooseSyncMethod" xml:space="preserve">
+    <value>Choose a sync method</value>
+  </data>
+  <data name="CloudFolderRecommended" xml:space="preserve">
+    <value>Cloud Folder (Recommended)</value>
+  </data>
+  <data name="CloudFolderDesc" xml:space="preserve">
+    <value>Use Google Drive, Dropbox, OneDrive, etc. Easiest setup.</value>
+  </data>
+  <data name="SyncthingDesc" xml:space="preserve">
+    <value>P2P sync, no cloud needed. Real-time.</value>
+  </data>
+  <data name="WebDavDesc" xml:space="preserve">
+    <value>For self-hosted NAS / Nextcloud / Nutstore.</value>
+  </data>
+  <data name="GitRepoDesc" xml:space="preserve">
+    <value>For developers. Version history.</value>
+  </data>
+  <data name="ManualDesc" xml:space="preserve">
+    <value>Import/export files manually.</value>
+  </data>
+  <data name="Finish" xml:space="preserve">
+    <value>Finish</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="NoStartFresh" xml:space="preserve">
+    <value>No, start fresh</value>
+  </data>
+  <data name="ConfigureMethod" xml:space="preserve">
+    <value>Configure {0}</value>
+  </data>
+  <data name="ForegroundPollInterval" xml:space="preserve">
+    <value>Foreground poll interval</value>
+  </data>
+  <data name="BackgroundPollInterval" xml:space="preserve">
+    <value>Background poll interval (min)</value>
+  </data>
+  <data name="ImportMode" xml:space="preserve">
+    <value>Import Mode</value>
+  </data>
+  <data name="ImportModeDesc" xml:space="preserve">
+    <value>Choose import format. Yes = JSON/YML single file, No = YML folder (espanso match directory)</value>
+  </data>
+  <data name="SingleFile" xml:space="preserve">
+    <value>Single File</value>
+  </data>
+  <data name="YmlFolder" xml:space="preserve">
+    <value>YML Folder</value>
+  </data>
+  <data name="PickYmlInMatchFolder" xml:space="preserve">
+    <value>Pick any YAML file in the espanso match folder</value>
+  </data>
+  <data name="KeptLocalVersion" xml:space="preserve">
+    <value>Kept local version</value>
+  </data>
+  <data name="KeptRemoteVersion" xml:space="preserve">
+    <value>Kept remote version</value>
+  </data>
+  <data name="LastSync" xml:space="preserve">
+    <value>Last sync</value>
+  </data>
+  <data name="Never" xml:space="preserve">
+    <value>Never</value>
+  </data>
+  <data name="CannotAccessFolder" xml:space="preserve">
+    <value>Cannot access folder</value>
+  </data>
+  <data name="FailedToLoadPackages" xml:space="preserve">
+    <value>Failed to load packages: {0}</value>
+  </data>
+  <data name="LoadedPackages" xml:space="preserve">
+    <value>Loaded {0} packages</value>
+  </data>
+  <data name="RefreshFailed" xml:space="preserve">
+    <value>Refresh failed: {0}</value>
+  </data>
+  <data name="InstallingPackage" xml:space="preserve">
+    <value>Installing {0}...</value>
+  </data>
+  <data name="InstalledPackage" xml:space="preserve">
+    <value>Installed {0}: {1} files</value>
+  </data>
+  <data name="InstallFailed" xml:space="preserve">
+    <value>Install failed: {0}</value>
+  </data>
+  <data name="UninstalledPackage" xml:space="preserve">
+    <value>Uninstalled {0}</value>
+  </data>
+  <data name="UninstallFailed" xml:space="preserve">
+    <value>Uninstall failed: {0}</value>
+  </data>
+  <data name="ErrorWithDetail" xml:space="preserve">
+    <value>Error: {0}</value>
+  </data>
+  <data name="MatchFiles" xml:space="preserve">
+    <value>{0} match files</value>
+  </data>
+  <data name="SyncthingSetupSteps" xml:space="preserve">
+    <value>1. Install Syncthing app from Play Store/F-Droid&lt;br /&gt;2. On desktop: install Syncthing, share espanso match folder (ID: espanso-match)&lt;br /&gt;3. Accept the folder on Android Syncthing app&lt;br /&gt;4. Select the Syncthing-synced folder below</value>
+  </data>
+  <data name="PleaseEnterWebDavUrl" xml:space="preserve">
+    <value>Please enter a WebDAV URL</value>
+  </data>
+  <data name="PleaseConfigureSyncPath" xml:space="preserve">
+    <value>Please configure a sync folder path</value>
+  </data>
+  <data name="SyncMethodNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="SyncMethodCloudFolder" xml:space="preserve">
+    <value>Cloud Folder (SAF)</value>
+  </data>
+  <data name="SyncMethodSyncthing" xml:space="preserve">
+    <value>Syncthing</value>
+  </data>
+  <data name="SyncMethodWebDAV" xml:space="preserve">
+    <value>WebDAV</value>
+  </data>
+  <data name="SyncMethodGit" xml:space="preserve">
+    <value>Git</value>
+  </data>
+  <data name="SyncMethodManual" xml:space="preserve">
+    <value>Manual</value>
+  </data>
+  <data name="WebDavAdvanced" xml:space="preserve">
+    <value>WebDAV (Advanced)</value>
+  </data>
+  <data name="GitRepository" xml:space="preserve">
+    <value>Git Repository</value>
+  </data>
+  <data name="SyncStatusIdle" xml:space="preserve">
+    <value>Idle</value>
+  </data>
+  <data name="SyncStatusSyncing" xml:space="preserve">
+    <value>Syncing</value>
+  </data>
+  <data name="SyncStatusError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="SyncStatusConflict" xml:space="preserve">
+    <value>Conflict</value>
+  </data>
+  <data name="VarsLabel" xml:space="preserve">
+    <value>vars</value>
+  </data>
+  <data name="PleaseEnterGitRepoUrl" xml:space="preserve">
+    <value>Please enter a Git repository URL</value>
+  </data>
+  <data name="PleaseSelectSyncFolder" xml:space="preserve">
+    <value>Please select a sync folder</value>
+  </data>
+  <data name="HintGitRepoUrl" xml:space="preserve">
+    <value>e.g. https://github.com/user/espanso-config.git</value>
+  </data>
+  <data name="HintGitUsername" xml:space="preserve">
+    <value>GitHub: your username or x-access-token</value>
+  </data>
+  <data name="HintCloudFolderPath" xml:space="preserve">
+    <value>Full path to the synced folder on your device</value>
+  </data>
+  <data name="HintWebDavUrl" xml:space="preserve">
+    <value>e.g. https://nas.example.com/dav/espanso-match/</value>
+  </data>
+  <data name="Navigate" xml:space="preserve">
+    <value>Navigate</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="NewKeyword" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="CancelEdit" xml:space="preserve">
+    <value>Cancel Edit</value>
+  </data>
+  <data name="DuplicateTrigger" xml:space="preserve">
+    <value>A keyword with trigger "{0}" already exists. Overwrite?</value>
+  </data>
+  <data name="EmptyDictExport" xml:space="preserve">
+    <value>The dictionary is empty. Export will contain no matches.</value>
+  </data>
+  <data name="AllConflictsResolved" xml:space="preserve">
+    <value>All conflicts resolved! Syncing...</value>
+  </data>
+  <data name="TimestampNotSelected" xml:space="preserve">
+    <value>Please select both date and time for timestamp</value>
+  </data>
+  <data name="MigrationFailed" xml:space="preserve">
+    <value>Failed to migrate old data: {0}</value>
+  </data>
+  <data name="DictLoadFailed" xml:space="preserve">
+    <value>Failed to load dictionary: {0}</value>
+  </data>
+  <data name="ConfirmForceQuit" xml:space="preserve">
+    <value>Unsaved changes will be lost. Are you sure you want to force quit?</value>
+  </data>
+  <data name="ForceQuit" xml:space="preserve">
+    <value>Force Quit</value>
+  </data>
+  <data name="ManualSyncHint" xml:space="preserve">
+    <value>Manual mode: use Import/Export to sync. No automatic sync configured.</value>
+  </data>
+  <data name="ConfirmClearBaseline" xml:space="preserve">
+    <value>Clearing the merge baseline will disable 3-way merge. Next sync may overwrite remote changes. Continue?</value>
+  </data>
+  <data name="GitBranch" xml:space="preserve">
+    <value>Git Branch</value>
+  </data>
+  <data name="FolderPickerCancelled" xml:space="preserve">
+    <value>Folder selection cancelled</value>
+  </data>
 </root>

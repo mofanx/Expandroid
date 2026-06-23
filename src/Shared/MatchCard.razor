@@ -1,4 +1,5 @@
-@using Expandroid.Models
+@using Expandroid.Services
+@inject ILocalizationService LocalizationService
 
 <MudCard Elevation="2" Class="pa-4 mb-3">
     <MudStack Justify="@Justify.SpaceBetween" Row="true">
@@ -13,6 +14,12 @@
         </div>
     </MudStack>
     <MudText class="mr-1" Color="Color.Success" Typo="Typo.h6" Align="Align.Start">@Item.Value.Replace</MudText>
+    @if (Item.Value.Vars?.Count > 0)
+    {
+        <MudChip Size="Size.Small" Color="Color.Secondary" Class="mt-2">
+            @Item.Value.Vars.Count @LocalizationService.GetString("VarsLabel")
+        </MudChip>
+    }
 </MudCard>
 
 @code {

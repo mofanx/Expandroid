@@ -21,6 +21,7 @@ namespace Expandroid.Services
         private readonly YamlWorkspace _yamlWorkspace;
         private string _repoUrl;
         private string _localRepoPath;
+        private string _branch = "main";
 
         public string LocalRepoPath => _localRepoPath;
 
@@ -31,9 +32,10 @@ namespace Expandroid.Services
             _localRepoPath = Path.Combine(FileSystem.Current.AppDataDirectory, "git_repo");
         }
 
-        public void Configure(string repoUrl, string username, string pat)
+        public void Configure(string repoUrl, string username, string pat, string branch = "main")
         {
             _repoUrl = repoUrl;
+            _branch = string.IsNullOrEmpty(branch) ? "main" : branch;
             if (!string.IsNullOrEmpty(pat))
             {
                 _repoUrl = _credentialManager.BuildAuthenticatedUrl(repoUrl, username, pat);
@@ -60,7 +62,8 @@ namespace Expandroid.Services
                 {
                     var fetchOk = await RunGitAsync("fetch origin", _localRepoPath, ct);
                     if (!fetchOk) return false;
-                    await RunGitAsync("merge origin/main --no-edit", _localRepoPath, ct);
+                    var mergeOk = await RunGitAsync($"merge origin/{_branch} --no-edit", _localRepoPath, ct);
+                    if (!mergeOk) return false;
                 }
                 return true;
             }
@@ -95,7 +98,7 @@ namespace Expandroid.Services
                 await RunGitAsync("add -A", _localRepoPath, ct);
                 var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
                 await RunGitAsync($"commit -m \"Expandroid sync {timestamp}\" --allow-empty", _localRepoPath, ct);
-                await RunGitAsync("push origin main", _localRepoPath, ct);
+                await RunGitAsync($"push origin {_branch}", _localRepoPath, ct);
                 return true;
             }
             catch (Exception ex)
@@ -131,7 +134,7 @@ namespace Expandroid.Services
             try
             {
                 await RunGitAsync("fetch origin", _localRepoPath, ct);
-                var output = await RunGitCaptureAsync("log HEAD..origin/main --oneline", _localRepoPath, ct);
+                var output = await RunGitCaptureAsync($"log HEAD..origin/{_branch} --oneline", _localRepoPath, ct);
                 return !string.IsNullOrEmpty(output?.Trim());
             }
             catch
@@ -222,7 +225,7 @@ namespace Expandroid.Services
             // For long operations (clone/push), this may return true before completion.
             // A more robust solution would use Termux:Tasker or a result callback via
             // TermuxResultService, but that requires additional Termux configuration.
-            await Task.Delay(2000, ct);
+            await Task.Delay(5000, ct);
             return true;
         }
 #endif

@@ -376,4 +376,400 @@
   <data name="SaveSuccessfulMessage" xml:space="preserve">
     <value>成功保存所有关键词！</value>
   </data>
+  <data name="Sync" xml:space="preserve">
+    <value>同步</value>
+  </data>
+  <data name="SyncSettings" xml:space="preserve">
+    <value>同步设置</value>
+  </data>
+  <data name="SyncNow" xml:space="preserve">
+    <value>立即同步</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>状态</value>
+  </data>
+  <data name="Configuration" xml:space="preserve">
+    <value>配置</value>
+  </data>
+  <data name="Advanced" xml:space="preserve">
+    <value>高级</value>
+  </data>
+  <data name="SyncMethod" xml:space="preserve">
+    <value>同步方式</value>
+  </data>
+  <data name="ConflictStrategy" xml:space="preserve">
+    <value>冲突策略</value>
+  </data>
+  <data name="LastWriteWins" xml:space="preserve">
+    <value>最后写入优先（默认）</value>
+  </data>
+  <data name="KeepBoth" xml:space="preserve">
+    <value>保留两份</value>
+  </data>
+  <data name="PollInterval" xml:space="preserve">
+    <value>轮询间隔</value>
+  </data>
+  <data name="WifiOnly" xml:space="preserve">
+    <value>仅 WiFi</value>
+  </data>
+  <data name="ClearMergeBaseline" xml:space="preserve">
+    <value>清除合并基线</value>
+  </data>
+  <data name="SetupWizard" xml:space="preserve">
+    <value>设置向导</value>
+  </data>
+  <data name="ResolveConflicts" xml:space="preserve">
+    <value>解决冲突</value>
+  </data>
+  <data name="Resolve" xml:space="preserve">
+    <value>解决</value>
+  </data>
+  <data name="ConflictResolution" xml:space="preserve">
+    <value>冲突解决</value>
+  </data>
+  <data name="ConflictChooseKeep" xml:space="preserve">
+    <value>个冲突。选择保留哪个版本：</value>
+  </data>
+  <data name="KeepLocal" xml:space="preserve">
+    <value>保留本地</value>
+  </data>
+  <data name="KeepRemote" xml:space="preserve">
+    <value>保留远程</value>
+  </data>
+  <data name="NoConflicts" xml:space="preserve">
+    <value>未检测到冲突。</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="PackageStore" xml:space="preserve">
+    <value>包商店</value>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>浏览</value>
+  </data>
+  <data name="Installed" xml:space="preserve">
+    <value>已安装</value>
+  </data>
+  <data name="SearchPackages" xml:space="preserve">
+    <value>搜索包</value>
+  </data>
+  <data name="Install" xml:space="preserve">
+    <value>安装</value>
+  </data>
+  <data name="Uninstall" xml:space="preserve">
+    <value>卸载</value>
+  </data>
+  <data name="NoInstalledPackages" xml:space="preserve">
+    <value>没有已安装的包。</value>
+  </data>
+  <data name="RefreshIndex" xml:space="preserve">
+    <value>刷新索引</value>
+  </data>
+  <data name="NoPackagesFound" xml:space="preserve">
+    <value>未找到包。尝试刷新。</value>
+  </data>
+  <data name="ConnectionSuccessful" xml:space="preserve">
+    <value>连接成功！</value>
+  </data>
+  <data name="ConnectionFailed" xml:space="preserve">
+    <value>连接失败。请检查 URL 和凭据。</value>
+  </data>
+  <data name="SettingsSaved" xml:space="preserve">
+    <value>设置已保存</value>
+  </data>
+  <data name="SyncConfigured" xml:space="preserve">
+    <value>同步配置成功！</value>
+  </data>
+  <data name="NoLocalDataToSync" xml:space="preserve">
+    <value>没有本地数据可同步</value>
+  </data>
+  <data name="SyncedFiles" xml:space="preserve">
+    <value>已同步 {0} 个文件</value>
+  </data>
+  <data name="ConflictsDetected" xml:space="preserve">
+    <value>检测到 {0} 个冲突</value>
+  </data>
+  <data name="SyncFailed" xml:space="preserve">
+    <value>同步失败：{0}</value>
+  </data>
+  <data name="SyncError" xml:space="preserve">
+    <value>同步错误：{0}</value>
+  </data>
+  <data name="SyncNotConfigured" xml:space="preserve">
+    <value>同步未配置。正在打开设置向导...</value>
+  </data>
+  <data name="SyncOK" xml:space="preserve">
+    <value>同步正常（上次：{0}）</value>
+  </data>
+  <data name="Syncing" xml:space="preserve">
+    <value>同步中...</value>
+  </data>
+  <data name="SyncErrorTapRetry" xml:space="preserve">
+    <value>同步错误 - 点击重试</value>
+  </data>
+  <data name="SyncConflictDetected" xml:space="preserve">
+    <value>检测到同步冲突（上次：{0}）</value>
+  </data>
+  <data name="TapToManage" xml:space="preserve">
+    <value>点击管理</value>
+  </data>
+  <data name="TermuxDetected" xml:space="preserve">
+    <value>已检测</value>
+  </data>
+  <data name="TermuxNotFound" xml:space="preserve">
+    <value>未找到</value>
+  </data>
+  <data name="RequiresTermux" xml:space="preserve">
+    <value>需要安装 Termux 并安装 git（pkg install git）。</value>
+  </data>
+  <data name="GitRepoUrl" xml:space="preserve">
+    <value>Git 仓库 URL</value>
+  </data>
+  <data name="GitUsername" xml:space="preserve">
+    <value>Git 用户名</value>
+  </data>
+  <data name="PersonalAccessToken" xml:space="preserve">
+    <value>个人访问令牌</value>
+  </data>
+  <data name="WebDavUrl" xml:space="preserve">
+    <value>WebDAV 地址</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>用户名</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>密码</value>
+  </data>
+  <data name="TestConnection" xml:space="preserve">
+    <value>测试连接</value>
+  </data>
+  <data name="BrowseFolder" xml:space="preserve">
+    <value>浏览...</value>
+  </data>
+  <data name="SyncFolderPath" xml:space="preserve">
+    <value>同步文件夹路径</value>
+  </data>
+  <data name="SetupWizardTitle" xml:space="preserve">
+    <value>同步设置向导</value>
+  </data>
+  <data name="UseDesktopEspanso" xml:space="preserve">
+    <value>您是否已使用桌面版 espanso？</value>
+  </data>
+  <data name="ChooseSyncMethod" xml:space="preserve">
+    <value>选择同步方式</value>
+  </data>
+  <data name="CloudFolderRecommended" xml:space="preserve">
+    <value>云文件夹（推荐）</value>
+  </data>
+  <data name="CloudFolderDesc" xml:space="preserve">
+    <value>使用 Google Drive、Dropbox、OneDrive 等。最简单的设置。</value>
+  </data>
+  <data name="SyncthingDesc" xml:space="preserve">
+    <value>P2P 同步，无需云。实时。</value>
+  </data>
+  <data name="WebDavDesc" xml:space="preserve">
+    <value>适用于自建 NAS / Nextcloud / 坚果云。</value>
+  </data>
+  <data name="GitRepoDesc" xml:space="preserve">
+    <value>适合开发者。版本历史。</value>
+  </data>
+  <data name="ManualDesc" xml:space="preserve">
+    <value>手动导入/导出文件。</value>
+  </data>
+  <data name="Finish" xml:space="preserve">
+    <value>完成</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>是</value>
+  </data>
+  <data name="NoStartFresh" xml:space="preserve">
+    <value>否，从头开始</value>
+  </data>
+  <data name="ConfigureMethod" xml:space="preserve">
+    <value>配置 {0}</value>
+  </data>
+  <data name="ForegroundPollInterval" xml:space="preserve">
+    <value>前台轮询间隔</value>
+  </data>
+  <data name="BackgroundPollInterval" xml:space="preserve">
+    <value>后台轮询间隔（分钟）</value>
+  </data>
+  <data name="ImportMode" xml:space="preserve">
+    <value>导入模式</value>
+  </data>
+  <data name="ImportModeDesc" xml:space="preserve">
+    <value>选择导入格式。是 = JSON/YML 单文件，否 = YML 文件夹（espanso match 目录）</value>
+  </data>
+  <data name="SingleFile" xml:space="preserve">
+    <value>单文件</value>
+  </data>
+  <data name="YmlFolder" xml:space="preserve">
+    <value>YML 文件夹</value>
+  </data>
+  <data name="PickYmlInMatchFolder" xml:space="preserve">
+    <value>选择 espanso match 文件夹中的任意 YAML 文件</value>
+  </data>
+  <data name="KeptLocalVersion" xml:space="preserve">
+    <value>已保留本地版本</value>
+  </data>
+  <data name="KeptRemoteVersion" xml:space="preserve">
+    <value>已保留远程版本</value>
+  </data>
+  <data name="LastSync" xml:space="preserve">
+    <value>上次同步</value>
+  </data>
+  <data name="Never" xml:space="preserve">
+    <value>从未</value>
+  </data>
+  <data name="CannotAccessFolder" xml:space="preserve">
+    <value>无法访问文件夹</value>
+  </data>
+  <data name="FailedToLoadPackages" xml:space="preserve">
+    <value>加载包失败：{0}</value>
+  </data>
+  <data name="LoadedPackages" xml:space="preserve">
+    <value>已加载 {0} 个包</value>
+  </data>
+  <data name="RefreshFailed" xml:space="preserve">
+    <value>刷新失败：{0}</value>
+  </data>
+  <data name="InstallingPackage" xml:space="preserve">
+    <value>正在安装 {0}...</value>
+  </data>
+  <data name="InstalledPackage" xml:space="preserve">
+    <value>已安装 {0}：{1} 个文件</value>
+  </data>
+  <data name="InstallFailed" xml:space="preserve">
+    <value>安装失败：{0}</value>
+  </data>
+  <data name="UninstalledPackage" xml:space="preserve">
+    <value>已卸载 {0}</value>
+  </data>
+  <data name="UninstallFailed" xml:space="preserve">
+    <value>卸载失败：{0}</value>
+  </data>
+  <data name="ErrorWithDetail" xml:space="preserve">
+    <value>错误：{0}</value>
+  </data>
+  <data name="MatchFiles" xml:space="preserve">
+    <value>{0} 个匹配文件</value>
+  </data>
+  <data name="SyncthingSetupSteps" xml:space="preserve">
+    <value>1. 从 Play Store/F-Droid 安装 Syncthing 应用&lt;br /&gt;2. 在桌面端：安装 Syncthing，共享 espanso match 文件夹（ID: espanso-match）&lt;br /&gt;3. 在 Android Syncthing 应用中接受该文件夹&lt;br /&gt;4. 在下方选择 Syncthing 同步的文件夹</value>
+  </data>
+  <data name="PleaseEnterWebDavUrl" xml:space="preserve">
+    <value>请输入 WebDAV 地址</value>
+  </data>
+  <data name="PleaseConfigureSyncPath" xml:space="preserve">
+    <value>请配置同步文件夹路径</value>
+  </data>
+  <data name="SyncMethodNone" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="SyncMethodCloudFolder" xml:space="preserve">
+    <value>云文件夹（SAF）</value>
+  </data>
+  <data name="SyncMethodSyncthing" xml:space="preserve">
+    <value>Syncthing</value>
+  </data>
+  <data name="SyncMethodWebDAV" xml:space="preserve">
+    <value>WebDAV</value>
+  </data>
+  <data name="SyncMethodGit" xml:space="preserve">
+    <value>Git</value>
+  </data>
+  <data name="SyncMethodManual" xml:space="preserve">
+    <value>手动</value>
+  </data>
+  <data name="WebDavAdvanced" xml:space="preserve">
+    <value>WebDAV（高级）</value>
+  </data>
+  <data name="GitRepository" xml:space="preserve">
+    <value>Git 仓库</value>
+  </data>
+  <data name="SyncStatusIdle" xml:space="preserve">
+    <value>空闲</value>
+  </data>
+  <data name="SyncStatusSyncing" xml:space="preserve">
+    <value>同步中</value>
+  </data>
+  <data name="SyncStatusError" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="SyncStatusConflict" xml:space="preserve">
+    <value>冲突</value>
+  </data>
+  <data name="VarsLabel" xml:space="preserve">
+    <value>变量</value>
+  </data>
+  <data name="PleaseEnterGitRepoUrl" xml:space="preserve">
+    <value>请输入 Git 仓库地址</value>
+  </data>
+  <data name="PleaseSelectSyncFolder" xml:space="preserve">
+    <value>请选择同步文件夹</value>
+  </data>
+  <data name="HintGitRepoUrl" xml:space="preserve">
+    <value>例如 https://github.com/user/espanso-config.git</value>
+  </data>
+  <data name="HintGitUsername" xml:space="preserve">
+    <value>GitHub：你的用户名或 x-access-token</value>
+  </data>
+  <data name="HintCloudFolderPath" xml:space="preserve">
+    <value>设备上同步文件夹的完整路径</value>
+  </data>
+  <data name="HintWebDavUrl" xml:space="preserve">
+    <value>例如 https://nas.example.com/dav/espanso-match/</value>
+  </data>
+  <data name="Navigate" xml:space="preserve">
+    <value>导航</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>首页</value>
+  </data>
+  <data name="NewKeyword" xml:space="preserve">
+    <value>新建</value>
+  </data>
+  <data name="CancelEdit" xml:space="preserve">
+    <value>取消编辑</value>
+  </data>
+  <data name="DuplicateTrigger" xml:space="preserve">
+    <value>触发词 "{0}" 已存在，是否覆盖？</value>
+  </data>
+  <data name="EmptyDictExport" xml:space="preserve">
+    <value>词典为空，导出文件将不包含任何匹配项。</value>
+  </data>
+  <data name="AllConflictsResolved" xml:space="preserve">
+    <value>所有冲突已解决！正在同步...</value>
+  </data>
+  <data name="TimestampNotSelected" xml:space="preserve">
+    <value>请同时选择日期和时间</value>
+  </data>
+  <data name="MigrationFailed" xml:space="preserve">
+    <value>迁移旧数据失败：{0}</value>
+  </data>
+  <data name="DictLoadFailed" xml:space="preserve">
+    <value>加载词典失败：{0}</value>
+  </data>
+  <data name="ConfirmForceQuit" xml:space="preserve">
+    <value>未保存的修改将丢失，确定要强制退出吗？</value>
+  </data>
+  <data name="ForceQuit" xml:space="preserve">
+    <value>强制退出</value>
+  </data>
+  <data name="ManualSyncHint" xml:space="preserve">
+    <value>手动模式：请使用导入/导出进行同步。未配置自动同步。</value>
+  </data>
+  <data name="ConfirmClearBaseline" xml:space="preserve">
+    <value>清除合并基线将禁用三方合并。下次同步可能覆盖远程更改。是否继续？</value>
+  </data>
+  <data name="GitBranch" xml:space="preserve">
+    <value>Git 分支</value>
+  </data>
+  <data name="FolderPickerCancelled" xml:space="preserve">
+    <value>已取消选择文件夹</value>
+  </data>
 </root>

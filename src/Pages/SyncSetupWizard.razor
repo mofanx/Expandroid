@@ -2,94 +2,96 @@
 @using Expandroid.Services
 @using Expandroid.Models
 @using CommunityToolkit.Maui.Storage
+@using CommunityToolkit.Mvvm.Messaging
 @inject SyncManager SyncManager
 @inject YamlWorkspace YamlWorkspace
 @inject ISnackbar Snackbar
+@inject ILocalizationService localizationService
 @inject NavigationManager NavigationManager
+@implements IDisposable
 
-<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">Sync Setup Wizard</MudText>
+<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">@localizationService.GetString("SetupWizardTitle")</MudText>
 
 <MudCard Class="mb-4">
     <MudCardContent>
 @if (_step == 1)
     {
-        <MudText Typo="Typo.h6" class="mb-3">Do you already use desktop espanso?</MudText>
+        <MudText Typo="Typo.h6" class="mb-3">@localizationService.GetString("UseDesktopEspanso")</MudText>
         <MudStack Row="true" Spacing="3">
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="() => _step = 2">Yes</MudButton>
-            <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="SkipWizard">No, start fresh</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="() => _step = 2">@localizationService.GetString("Yes")</MudButton>
+            <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="SkipWizard">@localizationService.GetString("NoStartFresh")</MudButton>
         </MudStack>
     }
     else if (_step == 2)
     {
-        <MudText Typo="Typo.h6" class="mb-3">Choose a sync method</MudText>
+        <MudText Typo="Typo.h6" class="mb-3">@localizationService.GetString("ChooseSyncMethod")</MudText>
         <MudList Clickable="true" class="mb-3">
             <MudListItem OnClick="() => SelectMethod(SyncMethod.CloudFolder)">
-                <MudText Typo="Typo.subtitle1">Cloud Folder (Recommended)</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Surface">Use Google Drive, Dropbox, OneDrive, etc. Easiest setup.</MudText>
+                <MudText Typo="Typo.subtitle1">@localizationService.GetString("CloudFolderRecommended")</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Surface">@localizationService.GetString("CloudFolderDesc")</MudText>
             </MudListItem>
             <MudListItem OnClick="() => SelectMethod(SyncMethod.Syncthing)">
-                <MudText Typo="Typo.subtitle1">Syncthing</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Surface">P2P sync, no cloud needed. Real-time.</MudText>
+                <MudText Typo="Typo.subtitle1">@localizationService.GetString("SyncMethodSyncthing")</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Surface">@localizationService.GetString("SyncthingDesc")</MudText>
             </MudListItem>
             <MudListItem OnClick="() => SelectMethod(SyncMethod.WebDAV)">
-                <MudText Typo="Typo.subtitle1">WebDAV (Advanced)</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Surface">For self-hosted NAS / Nextcloud / Nutstore.</MudText>
+                <MudText Typo="Typo.subtitle1">@localizationService.GetString("WebDavAdvanced")</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Surface">@localizationService.GetString("WebDavDesc")</MudText>
             </MudListItem>
             <MudListItem OnClick="() => SelectMethod(SyncMethod.Git)">
-                <MudText Typo="Typo.subtitle1">Git Repository</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Surface">For developers. Version history.</MudText>
+                <MudText Typo="Typo.subtitle1">@localizationService.GetString("GitRepository")</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Surface">@localizationService.GetString("GitRepoDesc")</MudText>
             </MudListItem>
             <MudListItem OnClick="() => SelectMethod(SyncMethod.Manual)">
-                <MudText Typo="Typo.subtitle1">Manual</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Surface">Import/export files manually.</MudText>
+                <MudText Typo="Typo.subtitle1">@localizationService.GetString("SyncMethodManual")</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Surface">@localizationService.GetString("ManualDesc")</MudText>
             </MudListItem>
         </MudList>
-        <MudButton Variant="Variant.Text" OnClick="() => _step = 1">Back</MudButton>
+        <MudButton Variant="Variant.Text" OnClick="() => _step = 1">@localizationService.GetString("Back")</MudButton>
     }
     else if (_step == 3)
     {
-        <MudText Typo="Typo.h6" class="mb-3">Configure @_config.Method</MudText>
+        <MudText Typo="Typo.h6" class="mb-3">@string.Format(localizationService.GetString("ConfigureMethod"), _config.Method)</MudText>
 
         @if (_config.Method == SyncMethod.CloudFolder)
         {
-            <MudText class="mb-3">Select the espanso match folder that is synced by your cloud app (Google Drive, Dropbox, etc.)</MudText>
-            <MudTextField Label="Folder Path" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="Full path to the synced folder on your device" />
-            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="PickFolderAsync" class="mb-3">Browse...</MudButton>
+            <MudText class="mb-3">@localizationService.GetString("CloudFolderDesc")</MudText>
+            <MudTextField Label="@localizationService.GetString("SyncFolderPath")" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="@localizationService.GetString("HintCloudFolderPath")" />
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="PickFolderAsync" class="mb-3">@localizationService.GetString("BrowseFolder")</MudButton>
         }
         else if (_config.Method == SyncMethod.Syncthing)
         {
             <MudAlert Severity="Severity.Info" Class="mb-3">
-                1. Install Syncthing app from Play Store/F-Droid<br />
-                2. On desktop: install Syncthing, share espanso match folder (ID: espanso-match)<br />
-                3. Accept the folder on Android Syncthing app<br />
-                4. Select the Syncthing-synced folder below
+                @((MarkupString)localizationService.GetString("SyncthingSetupSteps"))
             </MudAlert>
-            <MudTextField Label="Syncthing Folder Path" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" />
-            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="PickFolderAsync" class="mb-3">Browse...</MudButton>
+            <MudTextField Label="@localizationService.GetString("SyncFolderPath")" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" />
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="PickFolderAsync" class="mb-3">@localizationService.GetString("BrowseFolder")</MudButton>
         }
         else if (_config.Method == SyncMethod.WebDAV)
         {
-            <MudTextField Label="WebDAV URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="e.g. https://nas.example.com/dav/espanso-match/" />
-            <MudTextField Label="Username" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" />
-            <MudTextField Label="Password" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+            <MudTextField Label="@localizationService.GetString("WebDavUrl")" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="@localizationService.GetString("HintWebDavUrl")" />
+            <MudTextField Label="@localizationService.GetString("Username")" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" />
+            <MudTextField Label="@localizationService.GetString("Password")" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
             <MudButton Color="Color.Info" Variant="Variant.Outlined" OnClick="TestWebDavConnection" Disabled="@_testing" class="mb-3">
                 @if (_testing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
-                Test Connection
+                else { @localizationService.GetString("TestConnection") }
             </MudButton>
         }
         else if (_config.Method == SyncMethod.Git)
         {
-            <MudTextField Label="Git Repository URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="e.g. https://github.com/user/espanso-config.git" />
-            <MudTextField Label="Git Username" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" Hint="GitHub: your username or x-access-token" />
-            <MudTextField Label="Personal Access Token" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
-            <MudAlert Severity="Severity.Info" Class="mb-3">
-                Requires Termux with git installed (pkg install git) and com.termux.permission.RUN_COMMAND granted.
+            <MudTextField Label="@localizationService.GetString("GitRepoUrl")" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="@localizationService.GetString("HintGitRepoUrl")" />
+            <MudTextField Label="@localizationService.GetString("GitUsername")" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" Hint="@localizationService.GetString("HintGitUsername")" />
+            <MudTextField Label="@localizationService.GetString("PersonalAccessToken")" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+            <MudTextField Label="@localizationService.GetString("GitBranch")" @bind-Value="_config.GitBranch" Variant="Variant.Outlined" class="mb-3" />
+            <MudAlert Severity="@(_termuxAvailable ? Severity.Success : Severity.Warning)" Class="mb-3">
+                @localizationService.GetString("RequiresTermux")
+                <br /><strong>Termux: @(_termuxAvailable ? localizationService.GetString("TermuxDetected") : localizationService.GetString("TermuxNotFound"))</strong>
             </MudAlert>
         }
 
         <MudStack Row="true" Spacing="3">
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="FinishSetup">Finish</MudButton>
-            <MudButton Variant="Variant.Text" OnClick="() => _step = 2">Back</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="FinishSetup">@localizationService.GetString("Finish")</MudButton>
+            <MudButton Variant="Variant.Text" OnClick="() => _step = 2">@localizationService.GetString("Back")</MudButton>
         </MudStack>
     }
     </MudCardContent>
@@ -97,12 +99,32 @@
 
 @code {
     private int _step = 1;
-    private SyncConfig _config = new();
+    private SyncConfig _config;
     private bool _testing = false;
+    private bool _termuxAvailable = false;
+
+    protected override void OnInitialized()
+    {
+        _config = SyncManager.GetConfig();
+        if (_config.Method == SyncMethod.Git)
+        {
+            _termuxAvailable = SyncManager.IsTermuxAvailable();
+        }
+        localizationService.OnLanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
 
     private void SelectMethod(SyncMethod method)
     {
         _config.Method = method;
+        if (method == SyncMethod.Git)
+        {
+            _termuxAvailable = SyncManager.IsTermuxAvailable();
+        }
         _step = 3;
     }
 
@@ -110,7 +132,7 @@
     {
         if (string.IsNullOrEmpty(_config.SyncUri))
         {
-            Snackbar.Add("Please enter WebDAV URL", Severity.Warning);
+            Snackbar.Add(localizationService.GetString("PleaseEnterWebDavUrl"), Severity.Warning);
             return;
         }
         _testing = true;
@@ -119,13 +141,13 @@
             using var client = new WebDavClient(_config.SyncUri, _config.Username, _config.Password);
             var ok = await client.TestConnectionAsync();
             if (ok)
-                Snackbar.Add("Connection successful!", Severity.Success);
+                Snackbar.Add(localizationService.GetString("ConnectionSuccessful"), Severity.Success);
             else
-                Snackbar.Add("Connection failed. Check URL and credentials.", Severity.Error);
+                Snackbar.Add(localizationService.GetString("ConnectionFailed"), Severity.Error);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Connection error: {ex.Message}", Severity.Error);
+            Snackbar.Add($"{localizationService.GetString("ConnectionFailed")} {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -154,11 +176,12 @@
                     catch { }
                 }
 #endif
+                StateHasChanged();
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(localizationService.GetString("ErrorWithDetail"), ex.Message), Severity.Error);
         }
     }
 
@@ -166,7 +189,13 @@
     {
         if (string.IsNullOrEmpty(_config.SyncUri) && _config.Method != SyncMethod.Manual)
         {
-            Snackbar.Add("Please configure the sync path", Severity.Warning);
+            var msg = _config.Method switch
+            {
+                SyncMethod.WebDAV => localizationService.GetString("PleaseEnterWebDavUrl"),
+                SyncMethod.Git => localizationService.GetString("PleaseEnterGitRepoUrl"),
+                _ => localizationService.GetString("PleaseSelectSyncFolder")
+            };
+            Snackbar.Add(msg, Severity.Warning);
             return;
         }
 
@@ -179,12 +208,18 @@
 #endif
         }
 
-        Snackbar.Add("Sync configured successfully!", Severity.Success);
-        NavigationManager.NavigateTo("/syncsettings");
+        WeakReferenceMessenger.Default.Send(new ConfigChangedMessage());
+        Snackbar.Add(localizationService.GetString("SyncConfigured"), Severity.Success);
+        NavigationManager.NavigateTo("/");
     }
 
     private void SkipWizard()
     {
         NavigationManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        localizationService.OnLanguageChanged -= OnLanguageChanged;
     }
 }

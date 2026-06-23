@@ -1,15 +1,30 @@
 @using Expandroid.Services
 @inject SyncManager SyncManager
+@inject ILocalizationService LocalizationService
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+@implements IDisposable
 
 @if (SyncManager.GetConfig().Method != SyncMethod.None)
 {
-    <MudAlert Severity="@GetSeverity()" Class="mb-3" Style="cursor: pointer;" OnClick="GoToSyncSettings">
+    <MudAlert Severity="@GetSeverity()" Class="mb-3" Style="cursor: pointer;" OnClick="OnClick">
         <MudStack Row="true" Align="Align.Center" Spacing="2">
+            <MudIcon Icon="@GetStatusIcon()" />
             <MudText>
                 @GetStatusText()
+                <MudChip Size="Size.Small" Color="Color.Default" Class="ml-2">
+                    @GetMethodName()
+                </MudChip>
             </MudText>
-            <MudChip Size="Size.Small" Color="Color.Primary">Tap to manage</MudChip>
+            @if (SyncManager.CurrentStatus == Services.SyncStatus.Conflict)
+            {
+                <MudChip Size="Size.Small" Color="Color.Warning">
+                    @SyncManager.GetConflictFiles().Count @LocalizationService.GetString("Resolve")
+                </MudChip>
+            }
+            else
+            {
+                <MudChip Size="Size.Small" Color="Color.Primary">@LocalizationService.GetString("TapToManage")</MudChip>
+            }
         </MudStack>
     </MudAlert>
 }
@@ -30,18 +45,54 @@
     private string GetStatusText()
     {
         var last = SyncManager.LastSyncTime;
-        var lastStr = last?.ToLocalTime().ToString("g") ?? "never";
+        var lastStr = last?.ToLocalTime().ToString("g") ?? LocalizationService.GetString("Never");
         return SyncManager.CurrentStatus switch
         {
-            Services.SyncStatus.Syncing => "Syncing...",
-            Services.SyncStatus.Error => "Sync error - tap to retry",
-            Services.SyncStatus.Conflict => $"Sync conflict detected (last sync: {lastStr})",
-            _ => $"Sync OK (last: {lastStr})"
+            Services.SyncStatus.Syncing => LocalizationService.GetString("Syncing"),
+            Services.SyncStatus.Error => LocalizationService.GetString("SyncErrorTapRetry"),
+            Services.SyncStatus.Conflict => string.Format(LocalizationService.GetString("SyncConflictDetected"), lastStr),
+            _ => string.Format(LocalizationService.GetString("SyncOK"), lastStr)
         };
     }
 
-    private void GoToSyncSettings()
+    private string GetMethodName() => SyncManager.GetConfig().Method switch
     {
-        NavigationManager.NavigateTo("/syncsettings");
+        SyncMethod.CloudFolder => LocalizationService.GetString("SyncMethodCloudFolder"),
+        SyncMethod.Syncthing => LocalizationService.GetString("SyncMethodSyncthing"),
+        SyncMethod.WebDAV => LocalizationService.GetString("SyncMethodWebDAV"),
+        SyncMethod.Git => LocalizationService.GetString("SyncMethodGit"),
+        SyncMethod.Manual => LocalizationService.GetString("SyncMethodManual"),
+        _ => SyncManager.GetConfig().Method.ToString()
+    };
+
+    private string GetStatusIcon() => SyncManager.CurrentStatus switch
+    {
+        Services.SyncStatus.Syncing => Icons.Material.Filled.Sync,
+        Services.SyncStatus.Error => Icons.Material.Filled.ErrorOutline,
+        Services.SyncStatus.Conflict => Icons.Material.Filled.WarningAmber,
+        _ => Icons.Material.Filled.CheckCircle
+    };
+
+    private void OnClick()
+    {
+        NavigationManager.NavigateTo(
+            SyncManager.CurrentStatus == Services.SyncStatus.Conflict
+                ? "/conflicts" : "/syncsettings"
+        );
+    }
+
+    protected override void OnInitialized()
+    {
+        SyncManager.SyncCompleted += OnSyncCompleted;
+    }
+
+    private void OnSyncCompleted(SyncStatus status, SyncResult result)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        SyncManager.SyncCompleted -= OnSyncCompleted;
     }
 }

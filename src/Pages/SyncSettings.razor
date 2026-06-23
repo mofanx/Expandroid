@@ -3,129 +3,200 @@
 @using Expandroid.Models
 @using System.IO
 @using System.Text.Json
+@using CommunityToolkit.Mvvm.Messaging
 @inject SyncManager SyncManager
+@inject SnapshotManager SnapshotManager
 @inject YamlWorkspace YamlWorkspace
 @inject ISnackbar Snackbar
+@inject ILocalizationService localizationService
 @inject NavigationManager NavigationManager
+@inject Expandroid.Services.IDialogService dialogService
+@implements IDisposable
 
-<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">Sync Settings</MudText>
+<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">@localizationService.GetString("SyncSettings")</MudText>
 
-<MudCard Class="mb-4">
-    <MudCardContent>
-        <MudStack Spacing="3">
-            <MudText Typo="Typo.h6">Current Status</MudText>
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+    @* Tab 1: Status *@
+    <MudTabPanel Text="@localizationService.GetString("Status")">
+        <MudStack Spacing="3" Class="pa-4">
             <MudStack Row="true" Align="Align.Center" Spacing="3">
                 <MudChip Color="@(SyncManager.CurrentStatus == Services.SyncStatus.Idle ? Color.Success :
                                    SyncManager.CurrentStatus == Services.SyncStatus.Syncing ? Color.Info :
                                    SyncManager.CurrentStatus == Services.SyncStatus.Error ? Color.Error :
                                    Color.Warning)">
-                    @SyncManager.CurrentStatus.ToString()
+                    @GetStatusName()
                 </MudChip>
                 <MudText>
-                    Last sync: @(SyncManager.LastSyncTime?.ToLocalTime().ToString("g") ?? "Never")
+                    @localizationService.GetString("LastSync"): @(SyncManager.LastSyncTime?.ToLocalTime().ToString("g") ?? localizationService.GetString("Never"))
                 </MudText>
-                <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="SyncNow">
-                    Sync Now
+                <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="SyncNow" Disabled="@_syncing">
+                    @if (_syncing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
+                    else { @localizationService.GetString("SyncNow") }
                 </MudButton>
             </MudStack>
+            @if (SyncManager.CurrentStatus == Services.SyncStatus.Conflict)
+            {
+                <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="GoToConflicts"
+                           StartIcon="@Icons.Material.Filled.WarningAmber">
+                    @localizationService.GetString("ResolveConflicts")
+                </MudButton>
+            }
+            @if (SyncManager.LastMergeWarnings?.Count > 0)
+            {
+                <MudAlert Severity="Severity.Warning">
+                    @foreach (var w in SyncManager.LastMergeWarnings) { <div>@w</div> }
+                </MudAlert>
+            }
+            @if (_lastResult != null)
+            {
+                <MudAlert Severity="@(_lastResult.Success ? Severity.Success : Severity.Error)">
+                    @if (_lastResult.Success)
+                    {
+                        <text>@string.Format(localizationService.GetString("SyncedFiles"), _lastResult.FilesSynced) @if (_lastResult.Conflicts > 0) { <text>@string.Format(localizationService.GetString("ConflictsDetected"), _lastResult.Conflicts)</text> }</text>
+                    }
+                    else
+                    {
+                        <text>@_lastResult.ErrorMessage</text>
+                    }
+                </MudAlert>
+            }
         </MudStack>
-    </MudCardContent>
-</MudCard>
+    </MudTabPanel>
 
-<MudCard Class="mb-4">
-    <MudCardContent>
-        <MudText Typo="Typo.h6" class="mb-3">Sync Method</MudText>
-        <MudSelect T="SyncMethod" @bind-Value="_config.Method" Label="Method" Variant="Variant.Outlined" class="mb-3">
-            <MudSelectItem Value="@(SyncMethod.None)">None</MudSelectItem>
-            <MudSelectItem Value="@(SyncMethod.CloudFolder)">Cloud Folder (SAF)</MudSelectItem>
-            <MudSelectItem Value="@(SyncMethod.Syncthing)">Syncthing</MudSelectItem>
-            <MudSelectItem Value="@(SyncMethod.WebDAV)">WebDAV</MudSelectItem>
-            <MudSelectItem Value="@(SyncMethod.Git)">Git</MudSelectItem>
-            <MudSelectItem Value="@(SyncMethod.Manual)">Manual</MudSelectItem>
-        </MudSelect>
+    @* Tab 2: Configuration *@
+    <MudTabPanel Text="@localizationService.GetString("Configuration")">
+        <MudStack Spacing="3" Class="pa-4">
+            <MudSelect T="SyncMethod" Value="_config.Method" ValueChanged="OnMethodChanged" Label="@localizationService.GetString("SyncMethod")" Variant="Variant.Outlined" class="mb-3">
+                <MudSelectItem Value="@(SyncMethod.None)">@localizationService.GetString("SyncMethodNone")</MudSelectItem>
+                <MudSelectItem Value="@(SyncMethod.CloudFolder)">@localizationService.GetString("SyncMethodCloudFolder")</MudSelectItem>
+                <MudSelectItem Value="@(SyncMethod.Syncthing)">@localizationService.GetString("SyncMethodSyncthing")</MudSelectItem>
+                <MudSelectItem Value="@(SyncMethod.WebDAV)">@localizationService.GetString("SyncMethodWebDAV")</MudSelectItem>
+                <MudSelectItem Value="@(SyncMethod.Git)">@localizationService.GetString("SyncMethodGit")</MudSelectItem>
+                <MudSelectItem Value="@(SyncMethod.Manual)">@localizationService.GetString("SyncMethodManual")</MudSelectItem>
+            </MudSelect>
 
-        @if (_config.Method == SyncMethod.CloudFolder || _config.Method == SyncMethod.Syncthing)
-        {
-            <MudTextField Label="Sync Folder Path" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" />
-            <MudButton Color="Color.Primary" Variant="Variant.Text" OnClick="PickFolder">Browse...</MudButton>
-        }
-        else if (_config.Method == SyncMethod.WebDAV)
-        {
-            <MudTextField Label="WebDAV URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" />
-            <MudTextField Label="Username" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" />
-            <MudTextField Label="Password" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
-            <MudButton Color="Color.Info" Variant="Variant.Outlined" OnClick="TestWebDavConnection" Disabled="@_testing" class="mb-3">
-                @if (_testing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
-                Test Connection
+            @if (_config.Method == SyncMethod.CloudFolder || _config.Method == SyncMethod.Syncthing)
+            {
+                <MudTextField Label="@localizationService.GetString("SyncFolderPath")" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" />
+                <MudButton Color="Color.Primary" Variant="Variant.Text" OnClick="PickFolder">@localizationService.GetString("BrowseFolder")</MudButton>
+            }
+            else if (_config.Method == SyncMethod.WebDAV)
+            {
+                <MudTextField Label="@localizationService.GetString("WebDavUrl")" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" />
+                <MudTextField Label="@localizationService.GetString("Username")" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" />
+                <MudTextField Label="@localizationService.GetString("Password")" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+                <MudButton Color="Color.Info" Variant="Variant.Outlined" OnClick="TestWebDavConnection" Disabled="@_testing" class="mb-3">
+                    @if (_testing) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
+                    else { @localizationService.GetString("TestConnection") }
+                </MudButton>
+            }
+            else if (_config.Method == SyncMethod.Git)
+            {
+                <MudTextField Label="@localizationService.GetString("GitRepoUrl")" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="@localizationService.GetString("HintGitRepoUrl")" />
+                <MudTextField Label="@localizationService.GetString("GitUsername")" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" Hint="@localizationService.GetString("HintGitUsername")" />
+                <MudTextField Label="@localizationService.GetString("PersonalAccessToken")" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
+                <MudTextField Label="@localizationService.GetString("GitBranch")" @bind-Value="_config.GitBranch" Variant="Variant.Outlined" class="mb-3" />
+                <MudAlert Severity="@(_termuxAvailable ? Severity.Success : Severity.Warning)" Class="mb-3">
+                    @localizationService.GetString("RequiresTermux")
+                    <br /><strong>Termux: @(_termuxAvailable ? localizationService.GetString("TermuxDetected") : localizationService.GetString("TermuxNotFound"))</strong>
+                </MudAlert>
+            }
+        </MudStack>
+    </MudTabPanel>
+
+    @* Tab 3: Advanced *@
+    <MudTabPanel Text="@localizationService.GetString("Advanced")">
+        <MudStack Spacing="3" Class="pa-4">
+            <MudText Typo="Typo.h6">@localizationService.GetString("ConflictStrategy")</MudText>
+            <MudRadioGroup T="ConflictStrategy" @bind-Value="_config.ConflictStrategy">
+                <MudRadio Value="@(ConflictStrategy.LastWriteWins)" Label="@localizationService.GetString("LastWriteWins")" />
+                <MudRadio Value="@(ConflictStrategy.KeepBoth)" Label="@localizationService.GetString("KeepBoth")" />
+            </MudRadioGroup>
+
+            <MudText Typo="Typo.h6" class="mt-4">@localizationService.GetString("PollInterval")</MudText>
+            <MudSlider T="int" @bind-Value="_config.ForegroundPollIntervalSec" Min="30" Max="300" Step="30" Color="Color.Primary" />
+            <MudText>@localizationService.GetString("ForegroundPollInterval"): @_config.ForegroundPollIntervalSec s</MudText>
+            <MudSlider T="int" @bind-Value="_config.BackgroundPollIntervalMin" Min="15" Max="60" Step="5" Color="Color.Secondary" />
+            <MudText>@localizationService.GetString("BackgroundPollInterval"): @_config.BackgroundPollIntervalMin min</MudText>
+
+            <MudCheckBox @bind-Value="_config.WifiOnly" Label="@localizationService.GetString("WifiOnly")" class="mt-3" />
+
+            <MudButton Color="Color.Error" Variant="Variant.Outlined" OnClick="ClearSnapshot"
+                       StartIcon="@Icons.Material.Filled.DeleteSweep">
+                @localizationService.GetString("ClearMergeBaseline")
             </MudButton>
-        }
-        else if (_config.Method == SyncMethod.Git)
-        {
-            <MudTextField Label="Git Repository URL" @bind-Value="_config.SyncUri" Variant="Variant.Outlined" class="mb-3" Hint="e.g. https://github.com/user/espanso-config.git" />
-            <MudTextField Label="Git Username" @bind-Value="_config.Username" Variant="Variant.Outlined" class="mb-3" Hint="GitHub: your username or x-access-token" />
-            <MudTextField Label="Personal Access Token" @bind-Value="_config.Password" Variant="Variant.Outlined" InputType="InputType.Password" class="mb-3" />
-            <MudAlert Severity="Severity.Info" Class="mb-3">
-                Requires Termux with git installed (pkg install git).
-                @if (!string.IsNullOrEmpty(_termuxStatus))
-                {
-                    <br /><strong>Termux: @_termuxStatus</strong>
-                }
-            </MudAlert>
-        }
+        </MudStack>
+    </MudTabPanel>
+</MudTabs>
 
-        <MudText Typo="Typo.h6" class="mb-2 mt-4">Conflict Strategy</MudText>
-        <MudRadioGroup T="ConflictStrategy" @bind-Value="_config.ConflictStrategy">
-            <MudRadio Value="@(ConflictStrategy.LastWriteWins)" Label="Last Write Wins (default)" />
-            <MudRadio Value="@(ConflictStrategy.KeepBoth)" Label="Keep Both Copies" />
-        </MudRadioGroup>
-
-        <MudText Typo="Typo.h6" class="mb-2 mt-4">Sync Interval</MudText>
-        <MudSlider T="int" @bind-Value="_config.ForegroundPollIntervalSec" Min="30" Max="300" Step="30" Color="Color.Primary" />
-        <MudText>Foreground poll: @_config.ForegroundPollIntervalSec seconds</MudText>
-
-        <MudCheckBox @bind-Value="_config.WifiOnly" Label="WiFi only" class="mt-3" />
-    </MudCardContent>
-    <MudCardActions>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveConfig">Save</MudButton>
-        <MudButton Color="Color.Secondary" Variant="Variant.Text" OnClick="GoBack">Back</MudButton>
-        <MudButton Color="Color.Tertiary" Variant="Variant.Text" OnClick="GoToPackages">Package Store</MudButton>
-    </MudCardActions>
-</MudCard>
-
-@if (_lastResult != null)
-{
-    <MudAlert Severity="@(_lastResult.Success ? Severity.Success : Severity.Error)" Class="mb-4">
-        @if (_lastResult.Success)
-        {
-            <text>Synced @_lastResult.FilesSynced files. @if (_lastResult.Conflicts > 0) { <text>@_lastResult.Conflicts conflicts detected.</text> }</text>
-        }
-        else
-        {
-            <text>@_lastResult.ErrorMessage</text>
-        }
-    </MudAlert>
-}
+<MudStack Row="true" Spacing="2" Class="mt-4">
+    <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveConfig">
+        @localizationService.GetString("Save")
+    </MudButton>
+    <MudButton Color="Color.Info" Variant="Variant.Text" OnClick="GoToSetupWizard">
+        @localizationService.GetString("SetupWizard")
+    </MudButton>
+    <MudButton Color="Color.Secondary" Variant="Variant.Text" OnClick="GoBack">
+        @localizationService.GetString("Back")
+    </MudButton>
+</MudStack>
 
 @code {
     private SyncConfig _config;
     private SyncResult _lastResult;
     private bool _testing = false;
-    private string _termuxStatus = "";
+    private bool _syncing = false;
+    private bool _termuxAvailable = false;
 
     protected override void OnInitialized()
     {
         _config = SyncManager.GetConfig();
         if (_config.Method == SyncMethod.Git)
         {
-            _termuxStatus = SyncManager.IsTermuxAvailable() ? "Detected" : "Not found";
+            _termuxAvailable = SyncManager.IsTermuxAvailable();
         }
+        SyncManager.SyncCompleted += OnSyncCompleted;
+        localizationService.OnLanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string GetStatusName() => SyncManager.CurrentStatus switch
+    {
+        Services.SyncStatus.Idle => localizationService.GetString("SyncStatusIdle"),
+        Services.SyncStatus.Syncing => localizationService.GetString("SyncStatusSyncing"),
+        Services.SyncStatus.Error => localizationService.GetString("SyncStatusError"),
+        Services.SyncStatus.Conflict => localizationService.GetString("SyncStatusConflict"),
+        _ => SyncManager.CurrentStatus.ToString()
+    };
+
+    private void OnMethodChanged(SyncMethod method)
+    {
+        _config.Method = method;
+        if (method == SyncMethod.Git)
+        {
+            _termuxAvailable = SyncManager.IsTermuxAvailable();
+        }
+        StateHasChanged();
+    }
+
+    private void OnSyncCompleted(SyncStatus status, SyncResult result)
+    {
+        InvokeAsync(() =>
+        {
+            _lastResult = result;
+            StateHasChanged();
+        });
     }
 
     private async Task TestWebDavConnection()
     {
         if (string.IsNullOrEmpty(_config.SyncUri))
         {
-            Snackbar.Add("Please enter WebDAV URL", Severity.Warning);
+            Snackbar.Add(localizationService.GetString("PleaseEnterWebDavUrl"), Severity.Warning);
             return;
         }
         _testing = true;
@@ -134,13 +205,13 @@
             using var client = new WebDavClient(_config.SyncUri, _config.Username, _config.Password);
             var ok = await client.TestConnectionAsync();
             if (ok)
-                Snackbar.Add("Connection successful!", Severity.Success);
+                Snackbar.Add(localizationService.GetString("ConnectionSuccessful"), Severity.Success);
             else
-                Snackbar.Add("Connection failed. Check URL and credentials.", Severity.Error);
+                Snackbar.Add(localizationService.GetString("ConnectionFailed"), Severity.Error);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Connection error: {ex.Message}", Severity.Error);
+            Snackbar.Add($"{localizationService.GetString("ConnectionFailed")} {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -150,43 +221,102 @@
 
     private async Task SyncNow()
     {
-        if (string.IsNullOrEmpty(AppSettings.DictPath) || !File.Exists(AppSettings.DictPath))
-        {
-            Snackbar.Add("No local data to sync", Severity.Warning);
+        if (!await SyncManager.SyncLock.WaitAsync(0))
             return;
-        }
-
-        var dictJson = File.ReadAllText(AppSettings.DictPath);
-        var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Match>>(dictJson);
-
-        List<Var> globalVars = null;
-        if (File.Exists(AppSettings.GlobalVarsPath))
+        _syncing = true;
+        try
         {
-            var gvJson = File.ReadAllText(AppSettings.GlobalVarsPath);
-            globalVars = System.Text.Json.JsonSerializer.Deserialize<List<Var>>(gvJson);
-        }
-
-        _lastResult = await SyncManager.SyncAsync(dict, globalVars);
-
-        if (_lastResult.Success && _lastResult.HasRemoteChanges)
-        {
-            var mergedJson = System.Text.Json.JsonSerializer.Serialize(dict);
-            await File.WriteAllTextAsync(AppSettings.DictPath, mergedJson);
-            var finalVars = _lastResult.MergedGlobalVars ?? globalVars;
-            if (finalVars != null)
+            if (string.IsNullOrEmpty(AppSettings.DictPath) || !File.Exists(AppSettings.DictPath))
             {
-                var gvStr = System.Text.Json.JsonSerializer.Serialize(finalVars);
-                await File.WriteAllTextAsync(AppSettings.GlobalVarsPath, gvStr);
+                Snackbar.Add(localizationService.GetString("NoLocalDataToSync"), Severity.Warning);
+                return;
             }
-        }
 
-        StateHasChanged();
+            var dictJson = File.ReadAllText(AppSettings.DictPath);
+            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Match>>(dictJson);
+
+            List<Var> globalVars = null;
+            if (File.Exists(AppSettings.GlobalVarsPath))
+            {
+                var gvJson = File.ReadAllText(AppSettings.GlobalVarsPath);
+                globalVars = System.Text.Json.JsonSerializer.Deserialize<List<Var>>(gvJson);
+            }
+
+            _lastResult = await SyncManager.SyncAsync(dict, globalVars);
+
+            if (_lastResult.Success && _lastResult.HasRemoteChanges)
+            {
+                var mergedJson = System.Text.Json.JsonSerializer.Serialize(dict);
+                await File.WriteAllTextAsync(AppSettings.DictPath, mergedJson);
+                var finalVars = _lastResult.MergedGlobalVars ?? globalVars;
+                if (finalVars != null)
+                {
+                    var gvStr = System.Text.Json.JsonSerializer.Serialize(finalVars);
+                    await File.WriteAllTextAsync(AppSettings.GlobalVarsPath, gvStr);
+                    WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(finalVars));
+                }
+                foreach (var kv in dict)
+                {
+                    WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Update", kv.Value)));
+                }
+            }
+
+            if (_lastResult.Success)
+            {
+                if (_lastResult.Conflicts > 0)
+                    Snackbar.Add(string.Format(localizationService.GetString("SyncedFiles"), _lastResult.FilesSynced) + ", " + string.Format(localizationService.GetString("ConflictsDetected"), _lastResult.Conflicts), Severity.Warning);
+                else
+                    Snackbar.Add(string.Format(localizationService.GetString("SyncedFiles"), _lastResult.FilesSynced), Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(string.Format(localizationService.GetString("SyncFailed"), _lastResult.ErrorMessage), Severity.Error);
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add(string.Format(localizationService.GetString("SyncError"), e.Message), Severity.Error);
+        }
+        finally
+        {
+            _syncing = false;
+            SyncManager.SyncLock.Release();
+        }
     }
 
     private void SaveConfig()
     {
         SyncManager.UpdateConfig(_config);
-        Snackbar.Add("Settings saved", Severity.Success);
+#if ANDROID
+        if (_config.Method != SyncMethod.None && _config.Method != SyncMethod.Manual)
+        {
+            SyncWorker.SchedulePeriodicSync(_config.BackgroundPollIntervalMin);
+        }
+#endif
+        WeakReferenceMessenger.Default.Send(new ConfigChangedMessage());
+        Snackbar.Add(localizationService.GetString("SettingsSaved"), Severity.Success);
+    }
+
+    private async Task ClearSnapshot()
+    {
+        var confirm = await dialogService.DisplayConfirmAsync(
+            localizationService.GetString("ClearMergeBaseline"),
+            localizationService.GetString("ConfirmClearBaseline"));
+        if (!confirm) return;
+        SnapshotManager.ClearSnapshot();
+        Snackbar.Add(localizationService.GetString("ClearMergeBaseline"), Severity.Success);
+    }
+
+    private void GoToConflicts()
+    {
+        NavigationManager.NavigateTo("/conflicts");
+    }
+
+    private void GoToSetupWizard()
+    {
+        NavigationManager.NavigateTo("/syncsetup");
     }
 
     private async Task PickFolder()
@@ -210,10 +340,14 @@
 #endif
                 StateHasChanged();
             }
+            else
+            {
+                Snackbar.Add(localizationService.GetString("FolderPickerCancelled"), Severity.Info);
+            }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(localizationService.GetString("ErrorWithDetail"), ex.Message), Severity.Error);
         }
     }
 
@@ -222,8 +356,9 @@
         NavigationManager.NavigateTo("/");
     }
 
-    private void GoToPackages()
+    public void Dispose()
     {
-        NavigationManager.NavigateTo("/packages");
+        SyncManager.SyncCompleted -= OnSyncCompleted;
+        localizationService.OnLanguageChanged -= OnLanguageChanged;
     }
 }

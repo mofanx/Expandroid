@@ -3,18 +3,24 @@
 @using Expandroid.Models
 @inject SyncManager SyncManager
 @inject ISnackbar Snackbar
+@inject ILocalizationService localizationService
 @inject NavigationManager NavigationManager
+@implements IDisposable
 
-<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">Conflict Resolution</MudText>
+<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">@localizationService.GetString("ConflictResolution")</MudText>
 
 @if (_conflicts.Count == 0)
 {
-    <MudText Align="Align.Center" class="mb-4">No conflicts detected.</MudText>
-    <MudButton Variant="Variant.Outlined" OnClick="GoBack">Back</MudButton>
+    @if (_allResolved)
+    {
+        <MudAlert Severity="Severity.Success" Class="mb-3">@localizationService.GetString("AllConflictsResolved")</MudAlert>
+    }
+    <MudText Align="Align.Center" class="mb-4">@localizationService.GetString("NoConflicts")</MudText>
+    <MudButton Variant="Variant.Outlined" OnClick="GoBack">@localizationService.GetString("Back")</MudButton>
 }
 else
 {
-    <MudText class="mb-3">@_conflicts.Count conflict(s) found. Choose which version to keep:</MudText>
+    <MudText class="mb-3">@_conflicts.Count @localizationService.GetString("ConflictChooseKeep")</MudText>
 
     @foreach (var conflict in _conflicts)
     {
@@ -23,10 +29,10 @@ else
                 <MudText Typo="Typo.h6">@conflict</MudText>
                 <MudStack Row="true" Spacing="3" class="mt-3">
                     <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="() => KeepLocal(conflict)">
-                        Keep Local
+                        @localizationService.GetString("KeepLocal")
                     </MudButton>
                     <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="() => KeepRemote(conflict)">
-                        Keep Remote
+                        @localizationService.GetString("KeepRemote")
                     </MudButton>
                 </MudStack>
             </MudCardContent>
@@ -36,10 +42,27 @@ else
 
 @code {
     private List<string> _conflicts = new();
+    private bool _allResolved = false;
 
     protected override void OnInitialized()
     {
         LoadConflicts();
+        SyncManager.SyncCompleted += OnSyncCompleted;
+        localizationService.OnLanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnSyncCompleted(SyncStatus status, SyncResult result)
+    {
+        InvokeAsync(() =>
+        {
+            LoadConflicts();
+            StateHasChanged();
+        });
     }
 
     private void LoadConflicts()
@@ -53,12 +76,13 @@ else
         {
             SyncManager.ResolveConflict(fileName, keepLocal: true);
             _conflicts.Remove(fileName);
-            Snackbar.Add("Kept local version", Severity.Success);
+            Snackbar.Add(localizationService.GetString("KeptLocalVersion"), Severity.Success);
+            CheckAllResolved();
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(localizationService.GetString("ErrorWithDetail"), ex.Message), Severity.Error);
         }
     }
 
@@ -68,17 +92,59 @@ else
         {
             SyncManager.ResolveConflict(fileName, keepLocal: false);
             _conflicts.Remove(fileName);
-            Snackbar.Add("Kept remote version", Severity.Success);
+            Snackbar.Add(localizationService.GetString("KeptRemoteVersion"), Severity.Success);
+            CheckAllResolved();
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(localizationService.GetString("ErrorWithDetail"), ex.Message), Severity.Error);
         }
+    }
+
+    private void CheckAllResolved()
+    {
+        if (_conflicts.Count == 0)
+        {
+            _allResolved = true;
+            Snackbar.Add(localizationService.GetString("AllConflictsResolved"), Severity.Success);
+            _ = TriggerSyncAsync();
+        }
+    }
+
+    private async Task TriggerSyncAsync()
+    {
+        try
+        {
+            var config = SyncManager.GetConfig();
+            if (config.Method != SyncMethod.None)
+            {
+                Dictionary<string, Match> dict = null;
+                if (File.Exists(AppSettings.DictPath))
+                {
+                    var json = File.ReadAllText(AppSettings.DictPath);
+                    dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Match>>(json);
+                }
+                List<Var> globalVars = null;
+                if (File.Exists(AppSettings.GlobalVarsPath))
+                {
+                    var gvJson = File.ReadAllText(AppSettings.GlobalVarsPath);
+                    globalVars = System.Text.Json.JsonSerializer.Deserialize<List<Var>>(gvJson);
+                }
+                await SyncManager.SyncAsync(dict, globalVars);
+            }
+        }
+        catch { }
     }
 
     private void GoBack()
     {
         NavigationManager.NavigateTo("/syncsettings");
+    }
+
+    public void Dispose()
+    {
+        SyncManager.SyncCompleted -= OnSyncCompleted;
+        localizationService.OnLanguageChanged -= OnLanguageChanged;
     }
 }

@@ -84,6 +84,25 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             {
                 DisableSelf();
             }
+            else if (cmd == "Reload")
+            {
+                dict.Clear();
+                regexDict.Clear();
+                if (File.Exists(AppSettings.DictPath))
+                {
+                    var json = File.ReadAllText(AppSettings.DictPath);
+                    var loaded = JsonSerializer.Deserialize<Dictionary<string, Match>>(json);
+                    foreach (var kv in loaded)
+                    {
+                        if (!string.IsNullOrEmpty(kv.Value.Regex))
+                        {
+                            try { regexDict[new Regex(kv.Value.Regex, RegexOptions.Compiled)] = kv.Value; }
+                            catch { }
+                        }
+                        else dict[kv.Key] = kv.Value;
+                    }
+                }
+            }
             else if (cmd is not "_")
             {
                 dict.Remove(item.Trigger, out var _);

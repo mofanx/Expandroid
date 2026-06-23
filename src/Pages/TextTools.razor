@@ -143,38 +143,46 @@
             }
             else
             {
-                if (makeBold)
+                var text = textList[index - 1];
+                if (makeBold && !text.StartsWith("**") && !text.EndsWith("**"))
                 {
-                    textList[index - 1] = "**" + textList[index - 1] + "**";
+                    text = "**" + text + "**";
                 }
-                if (makeItalic)
+                if (makeItalic && !text.StartsWith("*") && !text.EndsWith("*"))
                 {
-                    textList[index - 1] = "*" + textList[index - 1] + "*";
+                    text = "*" + text + "*";
                 }
-                if (makeUnderline)
+                if (makeUnderline && !text.StartsWith("__") && !text.EndsWith("__"))
                 {
-                    textList[index - 1] = "__" + textList[index - 1] + "__";
+                    text = "__" + text + "__";
                 }
-                if (makeStrike)
+                if (makeStrike && !text.StartsWith("~~") && !text.EndsWith("~~"))
                 {
-                    textList[index - 1] = "~~" + textList[index - 1] + "~~";
+                    text = "~~" + text + "~~";
                 }
-                if (makeSpoiler)
+                if (makeSpoiler && !text.StartsWith("||") && !text.EndsWith("||"))
                 {
-                    textList[index - 1] = "||" + textList[index - 1] + "||";
+                    text = "||" + text + "||";
                 }
-                if (makeCode)
+                if (makeCode && !text.StartsWith("```") && !text.EndsWith("```"))
                 {
-                    textList[index - 1] = "```" + textList[index - 1] + "```";
+                    text = "```" + text + "```";
                 }
-                if (makeQuote)
+                if (makeQuote && !text.StartsWith(">>>"))
                 {
-                    textList[index - 1] = ">>>" + textList[index - 1];
+                    text = ">>>" + text;
                 }
                 if (addTimeStamp)
                 {
-                    textList[index - 1] += " <t:" + ((DateTimeOffset)(date + timeSpan)).ToUnixTimeSeconds() + ":f>";
+                    if (date is null || timeSpan is null)
+                    {
+                        await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), localizationService.GetString("TimestampNotSelected"));
+                        processing = false;
+                        return;
+                    }
+                    text += " <t:" + ((DateTimeOffset)(date + timeSpan)).ToUnixTimeSeconds() + ":f>";
                 }
+                textList[index - 1] = text;
             }
         }
         catch (Exception e)

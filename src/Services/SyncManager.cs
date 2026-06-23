@@ -80,6 +80,7 @@ namespace Expandroid.Services
         public int ForegroundPollIntervalSec { get; set; } = 60;
         public int BackgroundPollIntervalMin { get; set; } = 15;
         public bool WifiOnly { get; set; } = false;
+        public string GitBranch { get; set; } = "main";
     }
 
     public class SyncManager
@@ -94,6 +95,9 @@ namespace Expandroid.Services
         private WebDavClient _webDavClient;
         private GitSyncService _gitSyncService;
         private readonly CredentialManager _credentialManager;
+
+        public static readonly SemaphoreSlim SyncLock = new(1, 1);
+        private bool _suppressSyncCompleted = false;
 
         public SyncStatus CurrentStatus { get; private set; } = SyncStatus.Idle;
         public DateTime? LastSyncTime => _state?.LastSyncTime;
@@ -133,7 +137,7 @@ namespace Expandroid.Services
             {
                 _gitSyncService ??= new GitSyncService(_credentialManager, _yamlWorkspace);
                 var pat = _credentialManager.GetPat(_config.SyncUri);
-                _gitSyncService.Configure(_config.SyncUri, _config.Username, pat ?? _config.Password);
+                _gitSyncService.Configure(_config.SyncUri, _config.Username, pat ?? _config.Password, _config.GitBranch);
             }
             else
             {
@@ -213,7 +217,7 @@ namespace Expandroid.Services
                 result.Success = true;
                 result.Status = SyncStatus.Idle;
                 CurrentStatus = SyncStatus.Idle;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
             catch (Exception ex)
@@ -221,7 +225,7 @@ namespace Expandroid.Services
                 result.ErrorMessage = ex.Message;
                 result.Status = SyncStatus.Error;
                 CurrentStatus = SyncStatus.Error;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
         }
@@ -267,7 +271,7 @@ namespace Expandroid.Services
                     result.Success = true;
                     result.Status = SyncStatus.Idle;
                     CurrentStatus = SyncStatus.Idle;
-                    SyncCompleted?.Invoke(CurrentStatus, result);
+                    if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                     return result;
                 }
 
@@ -329,7 +333,7 @@ namespace Expandroid.Services
                 result.ConflictFiles = conflicts;
                 result.Status = conflicts.Count > 0 ? SyncStatus.Conflict : SyncStatus.Idle;
                 CurrentStatus = result.Status;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
             catch (Exception ex)
@@ -337,7 +341,7 @@ namespace Expandroid.Services
                 result.ErrorMessage = ex.Message;
                 result.Status = SyncStatus.Error;
                 CurrentStatus = SyncStatus.Error;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
         }
@@ -348,9 +352,16 @@ namespace Expandroid.Services
 
         public async Task<SyncResult> SyncAsync(Dictionary<string, Match> dict, List<Var> globalVars = null, CancellationToken ct = default)
         {
+            _suppressSyncCompleted = true;
+            SyncResult finalResult;
+            try
+            {
             var pullResult = await PullAsync(ct);
             if (!pullResult.Success)
-                return pullResult;
+            {
+                finalResult = pullResult;
+                goto done;
+            }
 
             if (pullResult.HasRemoteChanges && pullResult.PulledDict != null)
             {
@@ -421,7 +432,11 @@ namespace Expandroid.Services
             pushResult.Conflicts = pullResult.Conflicts;
             pushResult.ConflictFiles = pullResult.ConflictFiles;
 
-            return pushResult;
+            finalResult = pushResult;
+            done:
+            _suppressSyncCompleted = false;
+            if (!_suppressSyncCompleted) SyncCompleted?.Invoke(finalResult.Status, finalResult);
+            return finalResult;
         }
 
         #endregion
@@ -542,7 +557,7 @@ namespace Expandroid.Services
                 {
                     result.ErrorMessage = "Git push failed";
                     CurrentStatus = SyncStatus.Error;
-                    SyncCompleted?.Invoke(CurrentStatus, result);
+                    if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                     return result;
                 }
 
@@ -552,7 +567,7 @@ namespace Expandroid.Services
                 result.Success = true;
                 result.Status = SyncStatus.Idle;
                 CurrentStatus = SyncStatus.Idle;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
             catch (Exception ex)
@@ -560,7 +575,7 @@ namespace Expandroid.Services
                 result.ErrorMessage = ex.Message;
                 result.Status = SyncStatus.Error;
                 CurrentStatus = SyncStatus.Error;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
         }
@@ -583,7 +598,7 @@ namespace Expandroid.Services
                 {
                     result.ErrorMessage = "Git pull failed";
                     CurrentStatus = SyncStatus.Error;
-                    SyncCompleted?.Invoke(CurrentStatus, result);
+                    if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                     return result;
                 }
 
@@ -592,10 +607,10 @@ namespace Expandroid.Services
                 result.Success = true;
                 result.PulledDict = pulledDict;
                 result.PulledGlobalVars = pulledVars;
-                result.HasRemoteChanges = pulledDict.Count > 0;
+                result.HasRemoteChanges = pulledDict.Count > 0 || (pulledVars != null && pulledVars.Count > 0);
                 result.Status = SyncStatus.Idle;
                 CurrentStatus = SyncStatus.Idle;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
             catch (Exception ex)
@@ -603,7 +618,7 @@ namespace Expandroid.Services
                 result.ErrorMessage = ex.Message;
                 result.Status = SyncStatus.Error;
                 CurrentStatus = SyncStatus.Error;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
         }
@@ -667,7 +682,7 @@ namespace Expandroid.Services
                 result.Success = true;
                 result.Status = SyncStatus.Idle;
                 CurrentStatus = SyncStatus.Idle;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
             catch (Exception ex)
@@ -675,7 +690,7 @@ namespace Expandroid.Services
                 result.ErrorMessage = ex.Message;
                 result.Status = SyncStatus.Error;
                 CurrentStatus = SyncStatus.Error;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
         }
@@ -706,7 +721,7 @@ namespace Expandroid.Services
                     result.Success = true;
                     result.Status = SyncStatus.Idle;
                     CurrentStatus = SyncStatus.Idle;
-                    SyncCompleted?.Invoke(CurrentStatus, result);
+                    if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                     return result;
                 }
 
@@ -779,7 +794,7 @@ namespace Expandroid.Services
                 result.ConflictFiles = conflicts;
                 result.Status = conflicts.Count > 0 ? SyncStatus.Conflict : SyncStatus.Idle;
                 CurrentStatus = result.Status;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
             catch (Exception ex)
@@ -787,7 +802,7 @@ namespace Expandroid.Services
                 result.ErrorMessage = ex.Message;
                 result.Status = SyncStatus.Error;
                 CurrentStatus = SyncStatus.Error;
-                SyncCompleted?.Invoke(CurrentStatus, result);
+                if (!_suppressSyncCompleted) SyncCompleted?.Invoke(CurrentStatus, result);
                 return result;
             }
         }

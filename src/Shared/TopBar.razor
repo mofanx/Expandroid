@@ -1,9 +1,17 @@
 @inject IThemeService ThemeService
+@inject NavigationManager NavigationManager
+@inject ILocalizationService LocalizationService
 
 <MudAppBar Elevation="2" Color="Color.Primary" Fixed="true">
     <MudText Typo="Typo.h6" Class="flex-grow-1">
         Expandroid
     </MudText>
+
+    <MudMenu Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Label="@LocalizationService.GetString("Navigate")" Size="Size.Small" Variant="Variant.Text" Class="mr-2">
+        <MudMenuItem Icon="@Icons.Material.Filled.Home" OnClick="GoHome">@LocalizationService.GetString("Home")</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Sync" OnClick="GoSyncSettings">@LocalizationService.GetString("SyncSettings")</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Extension" OnClick="GoPackages">@LocalizationService.GetString("PackageStore")</MudMenuItem>
+    </MudMenu>
 
     <MudToggleGroup Value="_themeValue" ValueChanged="@((string? v) => OnThemeChanged(v))" Color="Color.Surface" Size="Size.Small" Class="mr-2">
         <MudToggleItem Value="@("light")" Icon="@Icons.Material.Filled.WbSunny" />
@@ -23,6 +31,12 @@
     {
         UpdateThemeValue();
         ThemeService.OnThemeChanged += UpdateThemeValue;
+        LocalizationService.OnLanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     private void UpdateThemeValue()
@@ -47,8 +61,13 @@
         ThemeService.SetTheme(theme);
     }
 
+    private void GoHome() => NavigationManager.NavigateTo("/");
+    private void GoSyncSettings() => NavigationManager.NavigateTo("/syncsettings");
+    private void GoPackages() => NavigationManager.NavigateTo("/packages");
+
     public void Dispose()
     {
         ThemeService.OnThemeChanged -= UpdateThemeValue;
+        LocalizationService.OnLanguageChanged -= OnLanguageChanged;
     }
 }
