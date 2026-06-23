@@ -70,6 +70,7 @@
     <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.6" />
     <PackageReference Include="Xamarin.AndroidX.Work.Runtime" Version="2.9.0.2" />
     <PackageReference Include="Xamarin.AndroidX.DocumentFile" Version="1.0.1.23" />
+    <PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.2.0.9" ExcludeAssets="all" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\Images\" />
