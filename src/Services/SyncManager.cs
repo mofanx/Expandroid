@@ -621,7 +621,7 @@ namespace Expandroid.Services
             try
             {
                 var pm = Android.App.Application.Context.PackageManager;
-                var info = pm.GetPackageInfo("com.termux", Android.Content.PM.PackageInfoFlags.Of(0));
+                var info = pm.GetPackageInfo("com.termux", (Android.Content.PM.PackageInfoFlags)0);
                 return info != null;
             }
             catch { return false; }
