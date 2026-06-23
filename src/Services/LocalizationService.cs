@@ -35,6 +35,9 @@ public class LocalizationService : ILocalizationService
 
     public void SetCulture(string cultureCode)
     {
+        // Map neutral culture "zh" to specific "zh-CN" for proper ResourceManager satellite assembly lookup
+        if (cultureCode == "zh")
+            cultureCode = "zh-CN";
         var newCulture = new CultureInfo(cultureCode);
         if (_currentCulture.Name != newCulture.Name)
         {

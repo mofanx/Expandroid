@@ -3,7 +3,7 @@
 }
 
 ::deep .app-content {
-    padding-top: 64px;
+    padding-top: 0;
 }
 
 ::deep .lang-switcher .mud-input {

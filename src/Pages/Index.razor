@@ -58,22 +58,25 @@
                     </MudButton>
                 </MudButtonGroup>
             </MudStack>
-            <MudStack Row="true" Spacing="2" Class="mb-4">
-                <MudButton @onclick='() => NavigationManager.NavigateTo("/syncsettings")'
-                           Color="Color.Secondary" Variant="Variant.Text" Size="Size.Large"
-                           StartIcon="@Icons.Material.Filled.Settings">
-                    @localizationService.GetString("SyncSettings")
-                </MudButton>
-                <MudButton @onclick='() => NavigationManager.NavigateTo("/packages")'
-                           Color="Color.Secondary" Variant="Variant.Text" Size="Size.Large"
-                           StartIcon="@Icons.Material.Filled.Extension">
-                    @localizationService.GetString("PackageStore")
-                </MudButton>
-                <MudButton @onclick="ForceQuit" Color="Color.Error" Variant="Variant.Outlined" Size="Size.Large"
-                           StartIcon="@Icons.Material.Filled.PowerSettingsNew">
-                    @localizationService.GetString("ForceQuitApp")
-                </MudButton>
-            </MudStack>
+        }
+        <MudStack Row="true" Spacing="2" Class="mb-4">
+            <MudButton @onclick='() => NavigationManager.NavigateTo("/syncsettings")'
+                       Color="Color.Secondary" Variant="Variant.Text" Size="Size.Large"
+                       StartIcon="@Icons.Material.Filled.Settings">
+                @localizationService.GetString("SyncSettings")
+            </MudButton>
+            <MudButton @onclick='() => NavigationManager.NavigateTo("/packages")'
+                       Color="Color.Secondary" Variant="Variant.Text" Size="Size.Large"
+                       StartIcon="@Icons.Material.Filled.Extension">
+                @localizationService.GetString("PackageStore")
+            </MudButton>
+            <MudButton @onclick="ForceQuit" Color="Color.Error" Variant="Variant.Outlined" Size="Size.Large"
+                       StartIcon="@Icons.Material.Filled.PowerSettingsNew">
+                @localizationService.GetString("ForceQuitApp")
+            </MudButton>
+        </MudStack>
+        @if (canTextExpand)
+        {
             <MudText class="mb-3">@localizationService.GetString("Keywords")</MudText>
             <div class="d-flex">
                 <MudTextField Lines="2" class="mr-1" @bind-Value="currentMatch.Trigger" Label="@localizationService.GetString("Key")" Variant="Variant.Outlined"></MudTextField>
@@ -171,7 +174,7 @@
 
 @code {
     bool canTextExpand = false;
-    Match currentMatch = new() { Replace = "On my way", Trigger = "t:omw", Vars = new() { } };
+    Match currentMatch = new() { Replace = "", Trigger = "", Vars = new() { } };
     private Dictionary<string, Match> dict;
     private List<Var> globalVars = new();
     private Var currentVar = new() { Params = new() };
