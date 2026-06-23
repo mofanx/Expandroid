@@ -172,5 +172,3 @@ namespace Expandroid.Models
         }
     }
 }
-    }
-}
