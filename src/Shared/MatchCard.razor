@@ -3,18 +3,16 @@
 @inject ILocalizationService LocalizationService
 
 <MudCard Elevation="2" Class="pa-4 mb-3">
-    <MudStack Justify="@Justify.SpaceBetween" Row="true">
-        <div>
-            <MudText Color="Color.Primary" Typo="Typo.h6" Align="Align.Start">@Item.Key</MudText>
-        </div>
-        <div>
-            <MudStack Row="true" Spacing="1">
-                <MudIconButton OnClick="OnEdit" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Variant="Variant.Text" Size="Size.Large" />
-                <MudIconButton OnClick="OnDelete" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Large" />
-            </MudStack>
-        </div>
+    <MudStack Justify="@Justify.SpaceBetween" Row="true" Align="Align.Center">
+        <MudStack Spacing="0" Class="flex-grow-1" Style="overflow: hidden;">
+            <MudText Color="Color.Primary" Typo="Typo.h6" Align="Align.Start" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@Item.Key</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Surface" Align="Align.Start" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">@Item.Value.Replace</MudText>
+        </MudStack>
+        <MudStack Row="true" Spacing="1">
+            <MudIconButton OnClick="OnEdit" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Variant="Variant.Text" Size="Size.Medium" />
+            <MudIconButton OnClick="OnDelete" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Medium" />
+        </MudStack>
     </MudStack>
-    <MudText class="mr-1" Color="Color.Success" Typo="Typo.h6" Align="Align.Start">@Item.Value.Replace</MudText>
     @if (Item.Value.Vars?.Count > 0)
     {
         <MudChip Size="Size.Small" Color="Color.Secondary" Class="mt-2">

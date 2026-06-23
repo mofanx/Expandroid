@@ -2,79 +2,90 @@
 @inject Expandroid.Services.IDialogService dialogService
 @inject ISnackbar Snackbar
 
-<MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[0].Length" Label="@localizationService.GetString("Text1")" Variant="Variant.Text" @bind-Value="@textList[0]" Lines="5" />
-<MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[1].Length" Label="@localizationService.GetString("Text2")" Variant="Variant.Text" @bind-Value="@textList[1]" Lines="5" />
-<MudTabs @ref="@Tabs" class="mt-3" Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-2">
-    <MudTabPanel Text="@localizationService.GetString("Basic")">
-        <div class="d-flex flex-wrap">
-            <MudCheckBox Label="@localizationService.GetString("Compare")" @bind-Value="@compare" Color="Color.Primary"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("IgnoreCase")" @bind-Value="@ignoreCase" Color="Color.Secondary"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("CompareLength")" @bind-Value="@lengthCompare" Color="Color.Warning"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("Contains")" @bind-Value="@contains" Color="Color.Primary"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("Replace")" @bind-Value="@replace" Color="Color.Secondary"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("ToUpper")" @bind-Value="@toUpper" Color="Color.Warning"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("ToLower")" @bind-Value="@toLower" Color="Color.Tertiary"></MudCheckBox>
-        </div>
-    </MudTabPanel>
-    <MudTabPanel Text="@localizationService.GetString("DiscordMarkdown")">
-        <div class="d-flex flex-wrap">
-            <MudCheckBox Label="@localizationService.GetString("Bold")" @bind-Value="@makeBold" Color="Color.Primary"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("Italic")" @bind-Value="@makeItalic" Color="Color.Secondary"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("Underline")" @bind-Value="@makeUnderline" Color="Color.Warning"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("Strikethrough")" @bind-Value="@makeStrike" Color="Color.Primary"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("Spoilers")" @bind-Value="@makeSpoiler" Color="Color.Secondary"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("CodeBlock")" @bind-Value="@makeCode" Color="Color.Warning"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("Quote")" @bind-Value="@makeQuote" Color="Color.Tertiary"></MudCheckBox>
-            <MudCheckBox Label="@localizationService.GetString("AddTimestamp")" @bind-Value="@addTimeStamp" Color="Color.Tertiary"></MudCheckBox>
-        </div>
-    </MudTabPanel>
-    @if (contains)
-    {
-        <MudTextField class="mt-3" T="string" Label="@localizationService.GetString("ContainsWhat")" @bind-Value="@containsText" Variant="Variant.Text" Lines="2" />
-    }
-    @if (addTimeStamp)
-    {
-        <MudDatePicker Class="mt-3" Label="@localizationService.GetString("PickADate")" @bind-Date="date" />
-        <MudTimePicker Class="mt-3" Label="@localizationService.GetString("PickATime")" @bind-Time="timeSpan" />
-    }
-    @if (replace)
-    {
-        <MudTextField class="mt-3" T="string" Label="@localizationService.GetString("Replace")" @bind-Value="@replaceText" Variant="Variant.Text" Lines="2" />
-        <MudTextField class="mt-3" T="string" Label="@localizationService.GetString("ReplaceWith")" @bind-Value="@replaceWithText" Variant="Variant.Text" Lines="2" />
-    }
-    <MudNumericField Class="mt-3" Label="@localizationService.GetString("ProcessOnTextNumber")" Min="1" Max="2" @bind-Value="@index"></MudNumericField>
-    <div class="d-flex justify-center mt-3 mb-3">
-        <MudButtonGroup class="mb-3" Variant="Variant.Outlined" Color="Color.Primary">
-            <MudButton Disabled="@processing" OnClick="Process" StartIcon="@Icons.Material.Filled.PlayArrow">
-                @if (processing)
-                {
-                    <MudProgressCircular Class="ms-n1 mr-2" Size="Size.Small" Indeterminate="true" />
-                    <MudText Class="ms-2">@localizationService.GetString("Processing")</MudText>
-                }
-                else
-                {
-                    <MudText>@localizationService.GetString("Process")</MudText>
-                }
-            </MudButton>
-            <MudButton OnClick="async () => await CopyTextAsync(1)" StartIcon="@Icons.Material.Filled.ContentCopy">@localizationService.GetString("CopyText1")</MudButton>
-            <MudButton OnClick="async () => await CopyTextAsync(2)" StartIcon="@Icons.Material.Filled.ContentCopy">@localizationService.GetString("CopyText2")</MudButton>
-        </MudButtonGroup>
-    </div>
-    <MudDivider />
-    <MudCard class="mt-3 mb-3">
-        <MudCardContent>
-            <MudText Typo="Typo.h5">@localizationService.GetString("Results")</MudText>
-            <MudText Typo="Typo.h6">@localizationService.GetString("ProcessCount") @processCount</MudText>
-            <MudDivider class="mb-2 mt-2" />
-            <div class="d-flex flex-wrap">
-                <MudCheckBox Label="@localizationService.GetString("IsTextEqual")" ReadOnly="true" Value="@compareResult" Color="Color.Success"></MudCheckBox>
-                <MudCheckBox Label="@localizationService.GetString("ContainsTheWordSpecified")" ReadOnly="true" Value="@containsResult" Color="Color.Primary"></MudCheckBox>
-                <MudCheckBox Label="@localizationService.GetString("IsLengthEqual")" ReadOnly="true" Value="@lengthCompareResult" Color="Color.Warning"></MudCheckBox>
-                <MudCheckBox Label="@localizationService.GetString("CanTextExpand")" ReadOnly="true" Value="@CanTextExpand" Color="Color.Warning"></MudCheckBox>
-            </div>
-        </MudCardContent>
-    </MudCard>
-</MudTabs>
+<MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[0].Length" Label="@localizationService.GetString("Text1")" Variant="Variant.Outlined" @bind-Value="@textList[0]" Lines="3" Class="mb-3" />
+<MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[1].Length" Label="@localizationService.GetString("Text2")" Variant="Variant.Outlined" @bind-Value="@textList[1]" Lines="3" Class="mb-3" />
+
+<MudExpansionPanels Elevation="0" Outlined="true" Class="mb-3" MultiSelection="false">
+    <MudExpansionPanel Text="@localizationService.GetString("Basic")" MaxHeight="1000" Expanded="@(_activeMode == 0)" ExpandedChanged="@((v) => { if (v) _activeMode = 0; })">
+        <MudStack Spacing="2">
+            <MudCheckBox Label="@localizationService.GetString("Compare")" @bind-Value="@compare" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("IgnoreCase")" @bind-Value="@ignoreCase" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("CompareLength")" @bind-Value="@lengthCompare" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("Contains")" @bind-Value="@contains" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("Replace")" @bind-Value="@replace" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("ToUpper")" @bind-Value="@toUpper" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("ToLower")" @bind-Value="@toLower" Color="Color.Primary" />
+            @if (contains)
+            {
+                <MudTextField T="string" Label="@localizationService.GetString("ContainsWhat")" @bind-Value="@containsText" Variant="Variant.Outlined" Dense="true" Lines="2" />
+            }
+            @if (replace)
+            {
+                <MudTextField T="string" Label="@localizationService.GetString("Replace")" @bind-Value="@replaceText" Variant="Variant.Outlined" Dense="true" Lines="2" />
+                <MudTextField T="string" Label="@localizationService.GetString("ReplaceWith")" @bind-Value="@replaceWithText" Variant="Variant.Outlined" Dense="true" Lines="2" />
+            }
+        </MudStack>
+    </MudExpansionPanel>
+    <MudExpansionPanel Text="@localizationService.GetString("DiscordMarkdown")" MaxHeight="1000" Expanded="@(_activeMode == 1)" ExpandedChanged="@((v) => { if (v) _activeMode = 1; })">
+        <MudStack Spacing="2">
+            <MudCheckBox Label="@localizationService.GetString("Bold")" @bind-Value="@makeBold" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("Italic")" @bind-Value="@makeItalic" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("Underline")" @bind-Value="@makeUnderline" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("Strikethrough")" @bind-Value="@makeStrike" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("Spoilers")" @bind-Value="@makeSpoiler" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("CodeBlock")" @bind-Value="@makeCode" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("Quote")" @bind-Value="@makeQuote" Color="Color.Primary" />
+            <MudCheckBox Label="@localizationService.GetString("AddTimestamp")" @bind-Value="@addTimeStamp" Color="Color.Primary" />
+            @if (addTimeStamp)
+            {
+                <MudDatePicker Label="@localizationService.GetString("PickADate")" @bind-Date="date" Dense="true" />
+                <MudTimePicker Label="@localizationService.GetString("PickATime")" @bind-Time="timeSpan" Dense="true" />
+            }
+        </MudStack>
+    </MudExpansionPanel>
+</MudExpansionPanels>
+
+<MudNumericField Label="@localizationService.GetString("ProcessOnTextNumber")" Min="1" Max="2" @bind-Value="@index" Dense="true" Variant="Variant.Outlined" Class="mb-3" />
+
+<div class="d-flex justify-center mb-3">
+    <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
+        <MudButton Disabled="@processing" OnClick="Process" StartIcon="@Icons.Material.Filled.PlayArrow">
+            @if (processing)
+            {
+                <MudProgressCircular Class="ms-n1 mr-2" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">@localizationService.GetString("Processing")</MudText>
+            }
+            else
+            {
+                <MudText>@localizationService.GetString("Process")</MudText>
+            }
+        </MudButton>
+        <MudButton OnClick="async () => await CopyTextAsync(1)" StartIcon="@Icons.Material.Filled.ContentCopy">@localizationService.GetString("CopyText1")</MudButton>
+        <MudButton OnClick="async () => await CopyTextAsync(2)" StartIcon="@Icons.Material.Filled.ContentCopy">@localizationService.GetString("CopyText2")</MudButton>
+    </MudButtonGroup>
+</div>
+
+<MudDivider Class="mb-3" />
+<MudCard Elevation="1">
+    <MudCardContent>
+        <MudText Typo="Typo.h6" Class="mb-2">@localizationService.GetString("Results")</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Surface" Class="mb-2">@localizationService.GetString("ProcessCount") @processCount</MudText>
+        <MudStack Spacing="1">
+            <MudStack Row="true" Align="Align.Center" Spacing="2">
+                <MudIcon Icon="@(compareResult ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)" Color="@(compareResult ? Color.Success : Color.Error)" Size="Size.Small" />
+                <MudText Typo="Typo.body2">@localizationService.GetString("IsTextEqual")</MudText>
+            </MudStack>
+            <MudStack Row="true" Align="Align.Center" Spacing="2">
+                <MudIcon Icon="@(containsResult ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)" Color="@(containsResult ? Color.Success : Color.Error)" Size="Size.Small" />
+                <MudText Typo="Typo.body2">@localizationService.GetString("ContainsTheWordSpecified")</MudText>
+            </MudStack>
+            <MudStack Row="true" Align="Align.Center" Spacing="2">
+                <MudIcon Icon="@(lengthCompareResult ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)" Color="@(lengthCompareResult ? Color.Success : Color.Error)" Size="Size.Small" />
+                <MudText Typo="Typo.body2">@localizationService.GetString("IsLengthEqual")</MudText>
+            </MudStack>
+        </MudStack>
+    </MudCardContent>
+</MudCard>
 
 @code {
     [Parameter] public bool CanTextExpand { get; set; }
@@ -96,7 +107,7 @@
     private bool toUpper = false;
     private bool toLower = false;
     private ulong processCount = 0;
-    private MudTabs Tabs;
+    private int _activeMode = 0;
     private bool makeBold = true;
     private bool makeItalic = false;
     private bool makeStrike = false;
@@ -114,7 +125,7 @@
         processCount++;
         try
         {
-            if (Tabs.ActivePanelIndex == 0)
+            if (_activeMode == 0)
             {
                 if (compare)
                 {

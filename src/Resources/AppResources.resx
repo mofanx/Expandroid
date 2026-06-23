@@ -790,4 +790,22 @@
   <data name="QuitApp" xml:space="preserve">
     <value>Quit App</value>
   </data>
+  <data name="Matches" xml:space="preserve">
+    <value>Matches</value>
+  </data>
+  <data name="Trigger" xml:space="preserve">
+    <value>Trigger</value>
+  </data>
+  <data name="Replacement" xml:space="preserve">
+    <value>Replacement</value>
+  </data>
+  <data name="SearchMatches" xml:space="preserve">
+    <value>Search matches...</value>
+  </data>
+  <data name="NoMatchesFound" xml:space="preserve">
+    <value>No matches found.</value>
+  </data>
+  <data name="WholeWord" xml:space="preserve">
+    <value>Whole word</value>
+  </data>
 </root>

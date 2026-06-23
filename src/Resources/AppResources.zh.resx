@@ -790,4 +790,22 @@
   <data name="QuitApp" xml:space="preserve">
     <value>退出应用</value>
   </data>
+  <data name="Matches" xml:space="preserve">
+    <value>匹配</value>
+  </data>
+  <data name="Trigger" xml:space="preserve">
+    <value>触发词</value>
+  </data>
+  <data name="Replacement" xml:space="preserve">
+    <value>替换文本</value>
+  </data>
+  <data name="SearchMatches" xml:space="preserve">
+    <value>搜索匹配...</value>
+  </data>
+  <data name="NoMatchesFound" xml:space="preserve">
+    <value>未找到匹配项。</value>
+  </data>
+  <data name="WholeWord" xml:space="preserve">
+    <value>整词匹配</value>
+  </data>
 </root>
