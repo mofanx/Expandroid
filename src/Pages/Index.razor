@@ -59,12 +59,12 @@
                 </MudButtonGroup>
             </MudStack>
             <MudStack Row="true" Spacing="2" Class="mb-4">
-                <MudButton @onclick="() => NavigationManager.NavigateTo("/syncsettings")"
+                <MudButton @onclick='() => NavigationManager.NavigateTo("/syncsettings")'
                            Color="Color.Secondary" Variant="Variant.Text" Size="Size.Large"
                            StartIcon="@Icons.Material.Filled.Settings">
                     @localizationService.GetString("SyncSettings")
                 </MudButton>
-                <MudButton @onclick="() => NavigationManager.NavigateTo("/packages")"
+                <MudButton @onclick='() => NavigationManager.NavigateTo("/packages")'
                            Color="Color.Secondary" Variant="Variant.Text" Size="Size.Large"
                            StartIcon="@Icons.Material.Filled.Extension">
                     @localizationService.GetString("PackageStore")
@@ -802,7 +802,7 @@
         }
     }
 
-    private void OnSyncCompleted(SyncStatus status, SyncResult result)
+    private void OnSyncCompleted(Services.SyncStatus status, SyncResult result)
     {
         InvokeAsync(async () =>
         {

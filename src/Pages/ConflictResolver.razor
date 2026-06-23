@@ -56,7 +56,7 @@ else
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnSyncCompleted(SyncStatus status, SyncResult result)
+    private void OnSyncCompleted(Services.SyncStatus status, SyncResult result)
     {
         InvokeAsync(() =>
         {
