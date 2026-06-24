@@ -1,4 +1,4 @@
-using Android;
+ï»¿using Android;
 using Android.AccessibilityServices;
 using Android.App;
 using Android.Content;
@@ -23,6 +23,7 @@ using System.Linq;
 [MetaData("android.accessibilityservice", Resource = "@xml/accessibility_service")]
 public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.View.IOnTouchListener
 {
+    private static WeakReference<ExpanderAccessibilityservice> _instanceRef;
     private Dictionary<string, EspansoGo.Models.Match> dict;
     private Dictionary<Regex, EspansoGo.Models.Match> regexDict;
     private List<Var> globals;
@@ -48,12 +49,14 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
     public override void OnCreate()
     {
         base.OnCreate();
+        _instanceRef = new WeakReference<ExpanderAccessibilityservice>(this);
         dict = new();
         regexDict = new();
         WeakReferenceMessenger.Default.Register<AcServiceMessage>(this, (r, m) =>
         {
             var cmd = m.Value.Item1;
             var item = m.Value.Item2;
+            Android.Util.Log.Debug("A11Y", $"Received message: cmd={cmd}, trigger={item?.Trigger}");
             if (cmd == "Add" || cmd == "Update")
             {
                 if (cmd == "Update")
@@ -69,6 +72,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
                 if (!string.IsNullOrEmpty(item.Form) || !(string.IsNullOrEmpty(item.Trigger) || string.IsNullOrEmpty(item.Replace)))
                 {
                     dict[item.Trigger] = item;
+                    Android.Util.Log.Debug("A11Y", $"Added to dict: trigger={item.Trigger}, replace={item.Replace}, dictCount={dict.Count}");
                 }
                 if (!string.IsNullOrEmpty(item.Regex))
                 {
@@ -105,6 +109,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             }
             else if (cmd is not "_")
             {
+                if (item == null) return;
                 dict.Remove(item.Trigger, out var _);
                 if (!string.IsNullOrEmpty(item.Regex))
                 {
@@ -162,6 +167,8 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
                 return;
 
             var node = e.Source;
+
+            Android.Util.Log.Debug("A11Y", $"OnAccessibilityEvent: pkg={packageName}, eventType={e.EventType}, dictCount={dict?.Count}");
 
             // --------------------------------------------------
             // NORMAL FAST PATH
@@ -245,7 +252,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
                     var focused = FindFocusedEditText(root);
 
                     // --------------------------------------------------
-                    // 1. FOCUS ACTIVE ¡ú KEEP ALIVE + PROCESS TEXT
+                    // 1. FOCUS ACTIVE â†’ KEEP ALIVE + PROCESS TEXT
                     // --------------------------------------------------
                     if (focused != null)
                     {
@@ -272,7 +279,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
                     }
 
                     // --------------------------------------------------
-                    // 2. NO FOCUS ¡ú CHECK INACTIVITY TIMEOUT
+                    // 2. NO FOCUS â†’ CHECK INACTIVITY TIMEOUT
                     // --------------------------------------------------
                     if (_lastFocusTime.TryGetValue(packageName, out var lastFocus))
                     {
@@ -349,7 +356,9 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             var arr = expansionStr.Split(_separators, StringSplitOptions.RemoveEmptyEntries);
             bool send = false;
             bool storeOriginal = true;
+            if (arr.Length == 0) return;
             var text = arr[^1];
+            Android.Util.Log.Debug("A11Y", $"HandleTextExpansion: fullText={original}, lastWord={text}, dictCount={dict.Count}");
             if (previousOriginal == original)
             {
                 return;
@@ -380,6 +389,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             else if (dict.TryGetValue(text, out var match))
             {
                 string replace = match.Replace;
+                Android.Util.Log.Debug("A11Y", $"Trigger matched: text={text}, replace={replace}");
                 var triggerIndex = expansionStr.IndexOf(text);
                 // word / left_word / right_word boundary checks
                 if (match.Word || match.LeftWord || match.RightWord)
@@ -569,6 +579,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             }
             if (send)
             {
+                Android.Util.Log.Debug("A11Y", $"DoExpansion called with: {expansionStr}");
                 DoExpansion(e, expansionStr);
                 if (storeOriginal)
                 {
@@ -595,6 +606,8 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
     {
         AccessibilityNodeInfo node = e?.Source;
 
+        Android.Util.Log.Debug("A11Y", $"DoExpansion: node={(node != null ? "not null" : "null")}, text={og}");
+
         // --------------------------------------------------
         // FALLBACK: if Source is null, scan full root tree
         // --------------------------------------------------
@@ -603,13 +616,19 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             var root = RootInActiveWindow;
 
             if (root == null)
+            {
+                Android.Util.Log.Debug("A11Y", "DoExpansion: RootInActiveWindow is null, aborting");
                 return;
+            }
 
             node = FindFocusedEditText(root);
         }
 
         if (node == null)
+        {
+            Android.Util.Log.Debug("A11Y", "DoExpansion: no focused EditText found, aborting");
             return;
+        }
 
         try
         {
@@ -621,7 +640,8 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
                 AccessibilityNodeInfo.ActionArgumentSetTextCharsequence,
                 og);
 
-            node.PerformAction(Android.Views.Accessibility.Action.SetText, TextArgs);
+            bool result = node.PerformAction(Android.Views.Accessibility.Action.SetText, TextArgs);
+            Android.Util.Log.Debug("A11Y", $"DoExpansion: SetText result={result}");
 
             // --------------------------------------------------
             // REFRESH + CURSOR HANDLING
@@ -851,6 +871,15 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             windowManager.RemoveView(floatView);
         }
         return base.OnUnbind(intent);
+    }
+
+    public override void OnDestroy()
+    {
+        WeakReferenceMessenger.Default.Unregister<AcServiceMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<AcGlobalsMessage>(this);
+        _instanceRef = null;
+        Android.Util.Log.Debug("A11Y", "ExpanderAccessibilityService OnDestroy");
+        base.OnDestroy();
     }
     public bool OnTouch(Android.Views.View v, MotionEvent e)
     {

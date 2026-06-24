@@ -749,6 +749,7 @@ else
 
     private void SendMessage(string cmd, Match value)
     {
+        System.Diagnostics.Debug.WriteLine($"[Index] SendMessage: cmd={cmd}, trigger={value?.Trigger}");
         WeakReferenceMessenger.Default.Send(new AcServiceMessage((cmd, value)));
     }
     private async Task EditItem(KeyValuePair<string, Match> item)
