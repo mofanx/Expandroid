@@ -1,16 +1,19 @@
 using CommunityToolkit.Mvvm.Messaging;
 using EspansoGo.Models;
+using EspansoGo.Services;
 
 namespace EspansoGo;
 
 public partial class App : Application
 {
     private Window window = null;
-    public App()
+    private readonly IThemeService _themeService;
+
+    public App(IThemeService themeService)
     {
         InitializeComponent();
-
-        MainPage = new MainPage();
+        _themeService = themeService;
+        MainPage = new MainPage(_themeService);
     }
     protected override Window CreateWindow(IActivationState activationState)
     {
@@ -20,7 +23,7 @@ public partial class App : Application
         }
         else
         {
-            MainPage = new MainPage();
+            MainPage = new MainPage(_themeService);
         }
         return window;
     }
