@@ -13,8 +13,6 @@
 @inject EspansoGo.Services.IDialogService dialogService
 @implements IDisposable
 
-<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">@localizationService.GetString("SyncSettings")</MudText>
-
 <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
     @* Tab 1: Status *@
     <MudTabPanel Text="@localizationService.GetString("Status")">
@@ -137,15 +135,12 @@
     </MudTabPanel>
 </MudTabs>
 
-<MudStack Row="true" Spacing="2" Class="mt-4">
+<MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" Class="mt-4">
     <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveConfig">
         @localizationService.GetString("Save")
     </MudButton>
     <MudButton Color="Color.Info" Variant="Variant.Text" OnClick="GoToSetupWizard">
         @localizationService.GetString("SetupWizard")
-    </MudButton>
-    <MudButton Color="Color.Secondary" Variant="Variant.Text" OnClick="GoBack">
-        @localizationService.GetString("Back")
     </MudButton>
 </MudStack>
 
@@ -352,11 +347,6 @@
         {
             Snackbar.Add(string.Format(localizationService.GetString("ErrorWithDetail"), ex.Message), Severity.Error);
         }
-    }
-
-    private void GoBack()
-    {
-        NavigationManager.NavigateTo("/");
     }
 
     public void Dispose()

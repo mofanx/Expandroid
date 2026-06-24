@@ -2,10 +2,15 @@
 @inject NavigationManager NavigationManager
 @inject ILocalizationService LocalizationService
 @using Microsoft.Maui.Storage
+@using Microsoft.AspNetCore.Components.Routing
 
 <MudAppBar Elevation="2" Color="Color.Primary" Fixed="true" Style="padding-top: env(safe-area-inset-top); height: calc(64px + env(safe-area-inset-top));">
+    @if (_showBack)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Inherit" OnClick="GoBack" Class="mr-2" />
+    }
     <MudText Typo="Typo.h6" Class="flex-grow-1">
-        EspansoGo
+        @_pageTitle
     </MudText>
 
     <MudMenu Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Size="Size.Small" Variant="Variant.Text" Class="mr-2">
@@ -17,6 +22,8 @@
         <MudMenuItem Icon="@Icons.Material.Filled.WbSunny" OnClick="@(() => SetTheme("light"))">@LocalizationService.GetString("ThemeLight")</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.NightsStay" OnClick="@(() => SetTheme("dark"))">@LocalizationService.GetString("ThemeDark")</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.BrightnessAuto" OnClick="@(() => SetTheme("auto"))">@LocalizationService.GetString("ThemeAuto")</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Language" OnClick="@(() => SwitchLanguage("zh"))">中文</MudMenuItem>
+        <MudMenuItem Icon="@Icons.Material.Filled.Language" OnClick="@(() => SwitchLanguage("en"))">English</MudMenuItem>
         <MudMenuItem Icon="@Icons.Material.Filled.PowerSettingsNew" OnClick="QuitApp">@LocalizationService.GetString("QuitApp")</MudMenuItem>
     </MudMenu>
 
@@ -35,17 +42,80 @@
 
 @code {
     private string _themeValue = "auto";
+    private string _pageTitle = "EspansoGo";
+    private bool _showBack = false;
 
     protected override void OnInitialized()
     {
         UpdateThemeValue();
+        UpdateRouteInfo();
         ThemeService.OnThemeChanged += UpdateThemeValue;
         LocalizationService.OnLanguageChanged += OnLanguageChanged;
+        NavigationManager.LocationChanged += OnLocationChanged;
     }
 
     private void OnLanguageChanged()
     {
-        InvokeAsync(StateHasChanged);
+        InvokeAsync(() =>
+        {
+            UpdateRouteInfo();
+            StateHasChanged();
+        });
+    }
+
+    private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        InvokeAsync(() =>
+        {
+            UpdateRouteInfo();
+            StateHasChanged();
+        });
+    }
+
+    private void UpdateRouteInfo()
+    {
+        var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+
+        if (string.IsNullOrEmpty(path) || path == "/")
+        {
+            _pageTitle = "EspansoGo";
+            _showBack = false;
+        }
+        else if (path.StartsWith("tools"))
+        {
+            _pageTitle = LocalizationService.GetString("ToolsTitle");
+            _showBack = true;
+        }
+        else if (path.StartsWith("permission"))
+        {
+            _pageTitle = LocalizationService.GetString("PermissionCheck");
+            _showBack = false;
+        }
+        else if (path.StartsWith("syncsetup"))
+        {
+            _pageTitle = LocalizationService.GetString("SetupWizardTitle");
+            _showBack = true;
+        }
+        else if (path.StartsWith("syncsettings"))
+        {
+            _pageTitle = LocalizationService.GetString("SyncSettings");
+            _showBack = true;
+        }
+        else if (path.StartsWith("packages"))
+        {
+            _pageTitle = LocalizationService.GetString("PackageStore");
+            _showBack = true;
+        }
+        else if (path.StartsWith("conflicts"))
+        {
+            _pageTitle = LocalizationService.GetString("ConflictResolution");
+            _showBack = true;
+        }
+        else
+        {
+            _pageTitle = "EspansoGo";
+            _showBack = false;
+        }
     }
 
     private void UpdateThemeValue()
@@ -72,7 +142,17 @@
 
     private void SetTheme(string value) => OnThemeChanged(value);
 
+    private void SwitchLanguage(string lang) => LocalizationService.SetCulture(lang);
+
     private void GoHome() => NavigationManager.NavigateTo("/");
+    private void GoBack()
+    {
+        var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        if (path.StartsWith("conflicts"))
+            NavigationManager.NavigateTo("/syncsettings");
+        else
+            NavigationManager.NavigateTo("/");
+    }
     private void GoTools() => NavigationManager.NavigateTo("/tools");
     private void GoPermissionCheck()
     {
@@ -87,5 +167,6 @@
     {
         ThemeService.OnThemeChanged -= UpdateThemeValue;
         LocalizationService.OnLanguageChanged -= OnLanguageChanged;
+        NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }

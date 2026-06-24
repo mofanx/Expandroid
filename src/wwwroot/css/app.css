@@ -122,3 +122,13 @@ h1:focus {
 .step-line.active {
     background: #6366f1;
 }
+
+@media (prefers-color-scheme: dark) {
+    .step-dot {
+        background: #334155;
+        color: #64748b;
+    }
+    .step-line {
+        background: #334155;
+    }
+}

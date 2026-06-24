@@ -2,8 +2,6 @@
 @inject EspansoGo.Services.IDialogService dialogService
 @inject ISnackbar Snackbar
 
-<MudText Typo="Typo.h5" Class="mb-3">@localizationService.GetString("ToolsTitle")</MudText>
-
 <MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[0].Length" Label="@localizationService.GetString("Text1")" Variant="Variant.Outlined" @bind-Value="@textList[0]" Lines="3" Class="mb-2" />
 <MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[1].Length" Label="@localizationService.GetString("Text2")" Variant="Variant.Outlined" @bind-Value="@textList[1]" Lines="3" Class="mb-3" />
 

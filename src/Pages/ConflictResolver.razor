@@ -6,10 +6,7 @@
 @inject SyncManager SyncManager
 @inject ISnackbar Snackbar
 @inject ILocalizationService localizationService
-@inject NavigationManager NavigationManager
 @implements IDisposable
-
-<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">@localizationService.GetString("ConflictResolution")</MudText>
 
 @if (_conflicts.Count == 0)
 {
@@ -21,7 +18,6 @@
         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" />
         <MudText Typo="Typo.body2" Color="Color.Default" Align="Align.Center">@localizationService.GetString("NoConflicts")</MudText>
     </MudStack>
-    <MudButton Variant="Variant.Outlined" OnClick="GoBack">@localizationService.GetString("Back")</MudButton>
 }
 else
 {
@@ -237,11 +233,6 @@ else
             }
         }
         catch { }
-    }
-
-    private void GoBack()
-    {
-        NavigationManager.NavigateTo("/syncsettings");
     }
 
     public void Dispose()

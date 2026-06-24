@@ -7,11 +7,7 @@
 @inject ILocalizationService localizationService
 @implements IDisposable
 
-<MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">
-    @localizationService.GetString("PackageStore")
-</MudText>
-
-<MudTabs @ref="_tabs" Elevation="2" Rounded="true">
+<MudTabs @bind-ActivePanelIndex="_activeTab" Elevation="2" Rounded="true">
     <MudTabPanel Text="@localizationService.GetString("Browse")">
         <MudTextField @bind-Value="_searchQuery"
                       Label="@localizationService.GetString("SearchPackages")"
@@ -127,7 +123,7 @@
     private string _searchQuery = "";
     private bool _loading = true;
     private string _busyPackage = null;
-    private MudTabs _tabs;
+    private int _activeTab = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -212,7 +208,7 @@
                 _installedPackages = HubClient.GetInstalledPackages();
                 Snackbar.Add(string.Format(localizationService.GetString("InstalledPackage"), pkg.Name, installed.MatchFiles.Count), Severity.Success);
                 WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Reload", null)));
-                _tabs.ActivatePanel(1);
+                _activeTab = 1;
             }
         }
         catch (Exception ex)
