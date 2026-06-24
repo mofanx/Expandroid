@@ -115,9 +115,17 @@
 
             <MudText Typo="Typo.h6" class="mt-4">@localizationService.GetString("PollInterval")</MudText>
             <MudSlider T="int" @bind-Value="_config.ForegroundPollIntervalSec" Min="30" Max="300" Step="30" Color="Color.Primary" />
-            <MudText>@localizationService.GetString("ForegroundPollInterval"): @_config.ForegroundPollIntervalSec s</MudText>
+            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                <MudText Typo="Typo.caption">@string.Format(localizationService.GetString("SecondsShort"), "30")</MudText>
+                <MudText Typo="Typo.caption">@localizationService.GetString("ForegroundPollInterval"): @_config.ForegroundPollIntervalSec s</MudText>
+                <MudText Typo="Typo.caption">@string.Format(localizationService.GetString("SecondsShort"), "300")</MudText>
+            </MudStack>
             <MudSlider T="int" @bind-Value="_config.BackgroundPollIntervalMin" Min="15" Max="60" Step="5" Color="Color.Secondary" />
-            <MudText>@localizationService.GetString("BackgroundPollInterval"): @_config.BackgroundPollIntervalMin min</MudText>
+            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                <MudText Typo="Typo.caption">@string.Format(localizationService.GetString("MinutesShort"), "15")</MudText>
+                <MudText Typo="Typo.caption">@localizationService.GetString("BackgroundPollInterval"): @_config.BackgroundPollIntervalMin min</MudText>
+                <MudText Typo="Typo.caption">@string.Format(localizationService.GetString("MinutesShort"), "60")</MudText>
+            </MudStack>
 
             <MudCheckBox @bind-Value="_config.WifiOnly" Label="@localizationService.GetString("WifiOnly")" class="mt-3" />
 
@@ -202,16 +210,11 @@
         _testing = true;
         try
         {
-            using var client = new WebDavClient(_config.SyncUri, _config.Username, _config.Password);
-            var ok = await client.TestConnectionAsync();
+            var (ok, error) = await SyncManager.TestWebDavConnectionAsync(_config.SyncUri, _config.Username, _config.Password);
             if (ok)
                 Snackbar.Add(localizationService.GetString("ConnectionSuccessful"), Severity.Success);
             else
-                Snackbar.Add(localizationService.GetString("ConnectionFailed"), Severity.Error);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"{localizationService.GetString("ConnectionFailed")} {ex.Message}", Severity.Error);
+                Snackbar.Add($"{localizationService.GetString("ConnectionFailed")} {error}", Severity.Error);
         }
         finally
         {

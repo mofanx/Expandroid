@@ -99,6 +99,20 @@ namespace Expandroid.Services
         public static readonly SemaphoreSlim SyncLock = new(1, 1);
         private bool _suppressSyncCompleted = false;
 
+        public static async Task<(bool success, string error)> TestWebDavConnectionAsync(string url, string username, string password)
+        {
+            try
+            {
+                using var client = new WebDavClient(url, username, password);
+                var ok = await client.TestConnectionAsync();
+                return (ok, ok ? null : "Connection failed");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
+
         public SyncStatus CurrentStatus { get; private set; } = SyncStatus.Idle;
         public DateTime? LastSyncTime => _state?.LastSyncTime;
         public event Action<SyncStatus, SyncResult> SyncCompleted;
@@ -914,6 +928,15 @@ namespace Expandroid.Services
                     return _config.SyncUri;
             }
             return null;
+        }
+
+        public string GetSyncFolderPath() => ResolveSyncFolder();
+
+        public FileSyncEntry GetSyncStateEntry(string relativePath)
+        {
+            if (_state?.Files == null) return null;
+            _state.Files.TryGetValue(relativePath, out var entry);
+            return entry;
         }
 
         private static string GetRelativePath(string fullPath, string basePath)

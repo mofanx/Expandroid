@@ -12,6 +12,20 @@
 
 <MudText Typo="Typo.h4" Align="Align.Center" class="mb-4">@localizationService.GetString("SetupWizardTitle")</MudText>
 
+<MudStack Row="true" Spacing="0" Justify="@Justify.Center" Align="Align.Center" Class="mb-4">
+    @for (int i = 1; i <= 3; i++)
+    {
+        var stepNum = i;
+        <div class="step-dot @(stepNum <= _step ? "active" : "")">
+            <span>@stepNum</span>
+        </div>
+        @if (stepNum < 3)
+        {
+            <div class="step-line @(stepNum < _step ? "active" : "")"></div>
+        }
+    }
+</MudStack>
+
 <MudCard Class="mb-4">
     <MudCardContent>
 @if (_step == 1)
@@ -138,16 +152,11 @@
         _testing = true;
         try
         {
-            using var client = new WebDavClient(_config.SyncUri, _config.Username, _config.Password);
-            var ok = await client.TestConnectionAsync();
+            var (ok, error) = await SyncManager.TestWebDavConnectionAsync(_config.SyncUri, _config.Username, _config.Password);
             if (ok)
                 Snackbar.Add(localizationService.GetString("ConnectionSuccessful"), Severity.Success);
             else
-                Snackbar.Add(localizationService.GetString("ConnectionFailed"), Severity.Error);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"{localizationService.GetString("ConnectionFailed")} {ex.Message}", Severity.Error);
+                Snackbar.Add($"{localizationService.GetString("ConnectionFailed")} {error}", Severity.Error);
         }
         finally
         {

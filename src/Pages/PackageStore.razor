@@ -19,17 +19,23 @@
                       Adornment="Adornment.Start"
                       AdornmentIcon="@MudBlazor.Icons.Material.Filled.Search"
                       class="mb-4 mt-4"
-                      Immediate="true" />
+                      Immediate="true" DebounceInterval="300" />
 
         @if (_loading)
         {
-            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" class="d-flex justify-center" />
+            <MudStack Spacing="3" Class="pa-4">
+                @for (int i = 0; i < 4; i++)
+                {
+                    <MudSkeleton Height="120px" Elevation="1" />
+                }
+            </MudStack>
         }
         else if (_packages.Count == 0)
         {
-            <MudText Align="Align.Center" Color="Color.Default" class="mt-4">
-                @localizationService.GetString("NoPackagesFound")
-            </MudText>
+            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pa-8">
+                <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.body2" Color="Color.Default" Align="Align.Center">@localizationService.GetString("NoPackagesFound")</MudText>
+            </MudStack>
         }
         else
         {
@@ -41,8 +47,8 @@
                             <MudCardContent>
                                 <MudText Typo="Typo.h6">@pkg.Title</MudText>
                                 <MudText Typo="Typo.body2" Color="Color.Default" class="mb-2">by @pkg.Author</MudText>
-                                <MudText Typo="Typo.body2" class="mb-2" Style="min-height: 40px;">
-                                    @(pkg.Description?.Length > 100 ? pkg.Description.Substring(0, 100) + "..." : pkg.Description)
+                                <MudText Typo="Typo.body2" class="mb-2" Style="min-height: 40px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                    @pkg.Description
                                 </MudText>
                                 @if (!string.IsNullOrEmpty(pkg.Tags))
                                 {
@@ -54,16 +60,19 @@
                             <MudCardActions>
                                 @if (_installedNames.Contains(pkg.Name))
                                 {
-                                    <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => UninstallPackage(pkg)">
-                                        @localizationService.GetString("Uninstall")
+                                    <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => UninstallPackage(pkg)"
+                                               Disabled="@(_busyPackage != null)">
+                                        @if (_busyPackage == pkg.Name) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
+                                        else { @localizationService.GetString("Uninstall") }
                                     </MudButton>
                                 }
                                 else
                                 {
                                     <MudButton Color="Color.Primary" Variant="Variant.Filled"
                                                OnClick="() => InstallPackage(pkg)"
-                                               Disabled="@_installing">
-                                        @localizationService.GetString("Install")
+                                               Disabled="@(_busyPackage != null)">
+                                        @if (_busyPackage == pkg.Name) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
+                                        else { @localizationService.GetString("Install") }
                                     </MudButton>
                                 }
                             </MudCardActions>
@@ -83,9 +92,10 @@
     <MudTabPanel Text="@localizationService.GetString("Installed")">
         @if (_installedPackages.Count == 0)
         {
-            <MudText Align="Align.Center" class="mt-4">
-                @localizationService.GetString("NoInstalledPackages")
-            </MudText>
+            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pa-8">
+                <MudIcon Icon="@Icons.Material.Filled.DownloadDone" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.body2" Color="Color.Default" Align="Align.Center">@localizationService.GetString("NoInstalledPackages")</MudText>
+            </MudStack>
         }
         else
         {
@@ -97,8 +107,9 @@
                             <MudText Typo="Typo.h6">@pkg.Name</MudText>
                             <MudText Typo="Typo.body2">@string.Format(localizationService.GetString("MatchFiles"), pkg.MatchFiles.Count)</MudText>
                         </div>
-                        <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => UninstallInstalledPackage(pkg)" Disabled="@(_uninstalling || _installing)">
-                            @if (_uninstalling) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
+                        <MudButton Color="Color.Error" Variant="Variant.Text" OnClick="() => UninstallInstalledPackage(pkg)"
+                                   Disabled="@(_busyPackage != null)">
+                            @if (_busyPackage == pkg.Name) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-2" /> }
                             else { @localizationService.GetString("Uninstall") }
                         </MudButton>
                     </MudStack>
@@ -115,8 +126,7 @@
     private List<InstalledPackage> _installedPackages = new();
     private string _searchQuery = "";
     private bool _loading = true;
-    private bool _installing = false;
-    private bool _uninstalling = false;
+    private string _busyPackage = null;
     private MudTabs _tabs;
 
     protected override async Task OnInitializedAsync()
@@ -191,7 +201,7 @@
 
     private async Task InstallPackage(HubPackageInfo pkg)
     {
-        _installing = true;
+        _busyPackage = pkg.Name;
         try
         {
             Snackbar.Add(string.Format(localizationService.GetString("InstallingPackage"), pkg.Name), Severity.Info);
@@ -211,19 +221,23 @@
         }
         finally
         {
-            _installing = false;
+            _busyPackage = null;
         }
     }
 
-    private async Task UninstallPackage(HubPackageInfo pkg)
+    private async Task UninstallPackage(HubPackageInfo pkg) => await DoUninstall(pkg.Name);
+
+    private async Task UninstallInstalledPackage(InstalledPackage pkg) => await DoUninstall(pkg.Name);
+
+    private async Task DoUninstall(string pkgName)
     {
-        _uninstalling = true;
+        _busyPackage = pkgName;
         try
         {
-            await Task.Run(() => HubClient.UninstallPackage(pkg.Name));
-            _installedNames.Remove(pkg.Name);
+            await Task.Run(() => HubClient.UninstallPackage(pkgName));
+            _installedNames.Remove(pkgName);
             _installedPackages = HubClient.GetInstalledPackages();
-            Snackbar.Add(string.Format(localizationService.GetString("UninstalledPackage"), pkg.Name), Severity.Success);
+            Snackbar.Add(string.Format(localizationService.GetString("UninstalledPackage"), pkgName), Severity.Success);
             WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Reload", null)));
         }
         catch (Exception ex)
@@ -232,28 +246,7 @@
         }
         finally
         {
-            _uninstalling = false;
-        }
-    }
-
-    private async Task UninstallInstalledPackage(InstalledPackage pkg)
-    {
-        _uninstalling = true;
-        try
-        {
-            await Task.Run(() => HubClient.UninstallPackage(pkg.Name));
-            _installedNames.Remove(pkg.Name);
-            _installedPackages = HubClient.GetInstalledPackages();
-            Snackbar.Add(string.Format(localizationService.GetString("UninstalledPackage"), pkg.Name), Severity.Success);
-            WeakReferenceMessenger.Default.Send(new AcServiceMessage(("Reload", null)));
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(string.Format(localizationService.GetString("UninstallFailed"), ex.Message), Severity.Error);
-        }
-        finally
-        {
-            _uninstalling = false;
+            _busyPackage = null;
         }
     }
 

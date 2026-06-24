@@ -84,6 +84,19 @@ namespace Expandroid.Models
             Cmd = og.Cmd;
             Choices = og.Choices;
             Values = og.Values;
+            Url = og.Url;
+            Method = og.Method;
+            Headers = og.Headers;
+            Body = og.Body;
+            JsonPath = og.JsonPath;
+            Code = og.Code;
+            Args = og.Args;
+            Trim = og.Trim;
+            IgnoreError = og.IgnoreError;
+            MatchTrigger = og.MatchTrigger;
+            IntentAction = og.IntentAction;
+            ContentUri = og.ContentUri;
+            ContentProjection = og.ContentProjection;
         }
         public string Echo { get; set; }
         public string Format { get; set; }
@@ -93,5 +106,31 @@ namespace Expandroid.Models
         public List<string> Choices { get; set; }
         [YamlMember(Alias = "values")]
         public List<string> Values { get; set; }
+        [YamlMember(Alias = "url")]
+        public string Url { get; set; }
+        [YamlMember(Alias = "method")]
+        public string Method { get; set; }
+        [YamlMember(Alias = "headers")]
+        public Dictionary<string, string> Headers { get; set; }
+        [YamlMember(Alias = "body")]
+        public string Body { get; set; }
+        [YamlMember(Alias = "json_path")]
+        public string JsonPath { get; set; }
+        [YamlMember(Alias = "code")]
+        public string Code { get; set; }
+        [YamlMember(Alias = "args")]
+        public List<string> Args { get; set; }
+        [YamlMember(Alias = "trim")]
+        public bool Trim { get; set; } = false;
+        [YamlMember(Alias = "ignore_error")]
+        public bool IgnoreError { get; set; } = false;
+        [YamlMember(Alias = "trigger")]
+        public string MatchTrigger { get; set; }
+        [YamlMember(Alias = "action")]
+        public string IntentAction { get; set; }
+        [YamlMember(Alias = "uri")]
+        public string ContentUri { get; set; }
+        [YamlMember(Alias = "projection")]
+        public List<string> ContentProjection { get; set; }
     }
 }

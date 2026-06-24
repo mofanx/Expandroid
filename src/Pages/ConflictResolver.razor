@@ -2,6 +2,7 @@
 @using Expandroid.Services
 @using Expandroid.Models
 @using System.IO
+@using System.Text
 @inject SyncManager SyncManager
 @inject ISnackbar Snackbar
 @inject ILocalizationService localizationService
@@ -16,18 +17,35 @@
     {
         <MudAlert Severity="Severity.Success" Class="mb-3">@localizationService.GetString("AllConflictsResolved")</MudAlert>
     }
-    <MudText Align="Align.Center" class="mb-4">@localizationService.GetString("NoConflicts")</MudText>
+    <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pa-8 mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" />
+        <MudText Typo="Typo.body2" Color="Color.Default" Align="Align.Center">@localizationService.GetString("NoConflicts")</MudText>
+    </MudStack>
     <MudButton Variant="Variant.Outlined" OnClick="GoBack">@localizationService.GetString("Back")</MudButton>
 }
 else
 {
     <MudText class="mb-3">@_conflicts.Count @localizationService.GetString("ConflictChooseKeep")</MudText>
 
+    <MudStack Row="true" Spacing="2" class="mb-3">
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="KeepAllLocal">
+            @localizationService.GetString("KeepAllLocal")
+        </MudButton>
+        <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="KeepAllRemote">
+            @localizationService.GetString("KeepAllRemote")
+        </MudButton>
+    </MudStack>
+
     @foreach (var conflict in _conflicts)
     {
         <MudCard Class="mb-3">
             <MudCardContent>
                 <MudText Typo="Typo.h6">@conflict</MudText>
+                <MudExpansionPanels Elevation="0" Outlined="true" MultiSelection="false" Class="mt-2">
+                    <MudExpansionPanel Text="@localizationService.GetString("FileDetails")" Dense="true">
+                        <MudText Typo="Typo.body2">@GetConflictInfo(conflict)</MudText>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
                 <MudStack Row="true" Spacing="3" class="mt-3">
                     <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="() => KeepLocal(conflict)">
                         @localizationService.GetString("KeepLocal")
@@ -71,6 +89,49 @@ else
         _conflicts = SyncManager.GetConflictFiles();
     }
 
+    private string GetConflictInfo(string fileName)
+    {
+        try
+        {
+            var info = new StringBuilder();
+
+            // Local file info
+            var syncFolder = SyncManager.GetSyncFolderPath();
+            if (!string.IsNullOrEmpty(syncFolder))
+            {
+                var localPath = Path.Combine(syncFolder, fileName);
+                if (File.Exists(localPath))
+                {
+                    var fi = new FileInfo(localPath);
+                    info.AppendLine($"📍 {localizationService.GetString("LocalSize")}: {fi.Length} bytes");
+                    info.AppendLine($"📍 {localizationService.GetString("LocalModified")}: {fi.LastWriteTime:yyyy-MM-dd HH:mm}");
+                }
+                else
+                {
+                    info.AppendLine($"📍 {localizationService.GetString("LocalFileNotFound")}");
+                }
+            }
+
+            // Remote (last-synced) state info
+            var remoteEntry = SyncManager.GetSyncStateEntry(fileName);
+            if (remoteEntry is not null)
+            {
+                info.AppendLine($"☁️ {localizationService.GetString("RemoteSize")}: {remoteEntry.Size} bytes");
+                info.AppendLine($"☁️ {localizationService.GetString("RemoteModified")}: {remoteEntry.LastModified:yyyy-MM-dd HH:mm}");
+            }
+            else
+            {
+                info.AppendLine($"☁️ {localizationService.GetString("RemoteFileNotFound")}");
+            }
+
+            return info.ToString();
+        }
+        catch
+        {
+            return localizationService.GetString("NoFileInfo");
+        }
+    }
+
     private void KeepLocal(string fileName)
     {
         try
@@ -111,6 +172,46 @@ else
             Snackbar.Add(localizationService.GetString("AllConflictsResolved"), Severity.Success);
             _ = TriggerSyncAsync();
         }
+    }
+
+    private void KeepAllLocal()
+    {
+        var conflicts = _conflicts.ToList();
+        foreach (var conflict in conflicts)
+        {
+            try
+            {
+                SyncManager.ResolveConflict(conflict, keepLocal: true);
+                _conflicts.Remove(conflict);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(string.Format(localizationService.GetString("ErrorWithDetail"), ex.Message), Severity.Error);
+            }
+        }
+        Snackbar.Add(localizationService.GetString("KeptLocalVersion"), Severity.Success);
+        CheckAllResolved();
+        StateHasChanged();
+    }
+
+    private void KeepAllRemote()
+    {
+        var conflicts = _conflicts.ToList();
+        foreach (var conflict in conflicts)
+        {
+            try
+            {
+                SyncManager.ResolveConflict(conflict, keepLocal: false);
+                _conflicts.Remove(conflict);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(string.Format(localizationService.GetString("ErrorWithDetail"), ex.Message), Severity.Error);
+            }
+        }
+        Snackbar.Add(localizationService.GetString("KeptRemoteVersion"), Severity.Success);
+        CheckAllResolved();
+        StateHasChanged();
     }
 
     private async Task TriggerSyncAsync()

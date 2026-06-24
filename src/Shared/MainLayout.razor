@@ -10,7 +10,9 @@
     <TopBar />
     <MudMainContent Class="pt-24">
         <MudContainer MaxWidth="MaxWidth.Medium" Class="pa-4 app-content">
-            @Body
+            <div class="page-enter">
+                @Body
+            </div>
         </MudContainer>
     </MudMainContent>
 </MudLayout>
@@ -38,7 +40,7 @@
             Error = "#fb7185",
             Background = "#0f172a",
             Surface = "#1e293b",
-            AppbarBackground = "#1e293b",
+            AppbarBackground = "#312e81",
             AppbarText = "#f1f5f9",
             TextPrimary = "#f1f5f9",
         },

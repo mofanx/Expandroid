@@ -1,0 +1,251 @@
+@using Expandroid.Models
+@using Expandroid.Services
+@inject ILocalizationService localizationService
+@inject ISnackbar Snackbar
+
+<MudExpansionPanels Elevation="0" Outlined="true" MultiSelection="false">
+    <MudExpansionPanel Text="@localizationService.GetString("Templates")" MaxHeight="1000">
+        <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
+            <MudText>@localizationService.GetString("DateToday")</MudText>
+            <MudButton @onclick="() => AddPreBuiltVar(0)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
+        </MudStack>
+        <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
+            <MudText>@localizationService.GetString("DateYesterday")</MudText>
+            <MudButton @onclick="() => AddPreBuiltVar(1)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
+        </MudStack>
+        <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
+            <MudText>@localizationService.GetString("DateTomorrow")</MudText>
+            <MudButton @onclick="() => AddPreBuiltVar(2)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
+        </MudStack>
+        <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
+            <MudText>@localizationService.GetString("TimeNow")</MudText>
+            <MudButton @onclick="() => AddPreBuiltVar(3)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddVariable")</MudButton>
+        </MudStack>
+        <MudStack class="mt-1" Justify="@Justify.SpaceBetween" Row="true">
+            <MudText>@localizationService.GetString("AddSelectionCursor")</MudText>
+            <MudButton @onclick="() => AddPreBuiltVar(4)" Color="Color.Primary" Variant="Variant.Outlined">@localizationService.GetString("AddCursor")</MudButton>
+        </MudStack>
+    </MudExpansionPanel>
+    <MudExpansionPanel Text="@localizationService.GetString("AdvancedOptions")" MaxHeight="1000">
+        <MudTextField @bind-Value="currentVar.Name" T="string" Label="@localizationService.GetString("VariableName")" Dense="true" Class="mb-2" />
+        <MudSelect Value="currentVar.Type" ValueChanged="OnTypeChanged" T="string" Label="@localizationService.GetString("VariableType")" Dense="true" Variant="Variant.Outlined" Class="mb-2">
+            <MudSelectItem T="string" Value="echo">echo</MudSelectItem>
+            <MudSelectItem T="string" Value="date">date</MudSelectItem>
+            <MudSelectItem T="string" Value="clipboard">clipboard</MudSelectItem>
+            <MudSelectItem T="string" Value="random">random</MudSelectItem>
+            <MudSelectItem T="string" Value="choice">choice</MudSelectItem>
+            <MudSelectItem T="string" Value="shell">shell</MudSelectItem>
+            <MudSelectItem T="string" Value="script">script</MudSelectItem>
+            <MudSelectItem T="string" Value="http">http</MudSelectItem>
+            <MudSelectItem T="string" Value="javascript">javascript</MudSelectItem>
+            <MudSelectItem T="string" Value="match">match</MudSelectItem>
+            <MudSelectItem T="string" Value="form">form</MudSelectItem>
+        </MudSelect>
+
+        @if (!string.IsNullOrEmpty(currentVar.Type))
+        {
+            <MudText Typo="Typo.caption" Color="Color.Default" Class="mb-2">@localizationService.GetString($"VarTypeHelp_{currentVar.Type}")</MudText>
+            <MudDivider Class="mb-2" />
+            @switch (currentVar.Type)
+            {
+                case "echo":
+                    <MudTextField @bind-Value="currentVar.Params.Echo" T="string" Label="@localizationService.GetString("Echo")" Dense="true" Class="mb-2" />
+                    break;
+                case "date":
+                    <MudTextField @bind-Value="currentVar.Params.Format" T="string" Label="@localizationService.GetString("Format")" Dense="true" Class="mb-2" />
+                    <MudTextField @bind-Value="currentVar.Params.Offset" T="long" Label="@localizationService.GetString("Offset")" Dense="true" Class="mb-2" />
+                    break;
+                case "random":
+                    <MudTextField @bind-Value="_choicesText" T="string" Label="@localizationService.GetString("Choices")" Dense="true" Class="mb-2"
+                                  Hint="@localizationService.GetString("ChoicesHint")" />
+                    break;
+                case "choice":
+                    <MudTextField @bind-Value="_choicesText" T="string" Label="@localizationService.GetString("Choices")" Dense="true" Class="mb-2"
+                                  Hint="@localizationService.GetString("ChoicesHint")" />
+                    break;
+                case "clipboard":
+                    <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-2">@localizationService.GetString("ClipboardNoParams")</MudText>
+                    break;
+                case "shell":
+                    <MudTextField @bind-Value="currentVar.Params.Cmd" T="string" Label="@localizationService.GetString("ShellCommand")" Dense="true" Class="mb-2" />
+                    <MudCheckBox @bind-Value="currentVar.Params.Trim" Label="@localizationService.GetString("TrimOutput")" Class="mb-2" />
+                    break;
+                case "script":
+                    <MudTextField @bind-Value="_argsText" T="string" Label="@localizationService.GetString("ScriptArgs")" Dense="true" Class="mb-2"
+                                  Hint="@localizationService.GetString("ScriptArgsHint")" />
+                    <MudCheckBox @bind-Value="currentVar.Params.Trim" Label="@localizationService.GetString("TrimOutput")" Class="mb-2" />
+                    <MudCheckBox @bind-Value="currentVar.Params.IgnoreError" Label="@localizationService.GetString("IgnoreError")" Class="mb-2" />
+                    break;
+                case "http":
+                    <MudTextField @bind-Value="currentVar.Params.Url" T="string" Label="@localizationService.GetString("Url")" Dense="true" Class="mb-2" />
+                    <MudSelect @bind-Value="currentVar.Params.Method" T="string" Label="@localizationService.GetString("HttpMethod")" Dense="true" Variant="Variant.Outlined" Class="mb-2">
+                        <MudSelectItem T="string" Value="GET">GET</MudSelectItem>
+                        <MudSelectItem T="string" Value="POST">POST</MudSelectItem>
+                        <MudSelectItem T="string" Value="PUT">PUT</MudSelectItem>
+                        <MudSelectItem T="string" Value="DELETE">DELETE</MudSelectItem>
+                    </MudSelect>
+                    <MudTextField @bind-Value="currentVar.Params.Body" T="string" Label="@localizationService.GetString("HttpBody")" Dense="true" Class="mb-2" />
+                    <MudTextField @bind-Value="currentVar.Params.JsonPath" T="string" Label="@localizationService.GetString("JsonPath")" Dense="true" Class="mb-2"
+                                  Hint="@localizationService.GetString("JsonPathHint")" />
+                    break;
+                case "javascript":
+                    <MudTextField @bind-Value="currentVar.Params.Code" T="string" Label="@localizationService.GetString("JsCode")" Dense="true" Class="mb-2"
+                                  Variant="Variant.Outlined" Lines="4" />
+                    break;
+                case "match":
+                    <MudTextField @bind-Value="currentVar.Params.MatchTrigger" T="string" Label="@localizationService.GetString("MatchTrigger")" Dense="true" Class="mb-2"
+                                  Hint="@localizationService.GetString("MatchTriggerHint")" />
+                    break;
+                case "form":
+                    <MudTextField @bind-Value="currentVar.Params.Layout" T="string" Label="@localizationService.GetString("FormLayout")" Dense="true" Class="mb-2"
+                                  Variant="Variant.Outlined" Lines="3" />
+                    break;
+                default:
+                    <MudText Typo="Typo.body2" Color="Color.Default">@localizationService.GetString("NoSpecificParams")</MudText>
+                    break;
+            }
+        }
+        <MudButton @onclick="AddCurrentVar" Color="Color.Primary" Variant="Variant.Outlined" FullWidth="true" Class="mt-2">
+            @localizationService.GetString("AddVariable")
+        </MudButton>
+    </MudExpansionPanel>
+</MudExpansionPanels>
+
+@code {
+    [Parameter] public Match currentMatch { get; set; }
+    [Parameter] public Var currentVar { get; set; }
+    [Parameter] public Var EditingVar { get; set; }
+    [Parameter] public EventCallback<Var> OnVarReset { get; set; }
+
+    private string _choicesText = "";
+    private string _argsText = "";
+    private Var _lastEditingVar = null;
+
+    protected override void OnParametersSet()
+    {
+        if (EditingVar is not null && EditingVar != _lastEditingVar)
+        {
+            _lastEditingVar = EditingVar;
+            if (EditingVar.Params?.Choices?.Count > 0)
+                _choicesText = string.Join(", ", EditingVar.Params.Choices);
+            if (EditingVar.Params?.Args?.Count > 0)
+                _argsText = string.Join(", ", EditingVar.Params.Args);
+        }
+        else if (EditingVar is null)
+        {
+            _lastEditingVar = null;
+        }
+    }
+
+    private void OnTypeChanged(string newType)
+    {
+        currentVar.Type = newType;
+        _choicesText = "";
+        _argsText = "";
+    }
+
+    private void AddPreBuiltVar(int i)
+    {
+        switch (i)
+        {
+            case 0:
+                currentMatch.Vars.Add(new()
+                {
+                    Name = "datenow",
+                    Type = "date",
+                    Params = new()
+                    {
+                        Format = Utils.GetTheRealFormat("dd/MM/yyyy")
+                    }
+                });
+                currentMatch.Replace += " {{datenow}}";
+                break;
+            case 1:
+                currentMatch.Vars.Add(new()
+                {
+                    Name = "yesterday",
+                    Type = "date",
+                    Params = new()
+                    {
+                        Format = Utils.GetTheRealFormat("dd/MM/yyyy"),
+                        Offset = -86400
+                    }
+                });
+                currentMatch.Replace += " {{yesterday}}";
+                break;
+            case 2:
+                currentMatch.Vars.Add(new()
+                {
+                    Name = "tomorrow",
+                    Type = "date",
+                    Params = new()
+                    {
+                        Format = Utils.GetTheRealFormat("dd/MM/yyyy"),
+                        Offset = 86400
+                    }
+                });
+                currentMatch.Replace += " {{tomorrow}}";
+                break;
+            case 3:
+                currentMatch.Vars.Add(new()
+                {
+                    Name = "time",
+                    Type = "date",
+                    Params = new()
+                    {
+                        Format = Utils.GetTheRealFormat("HH:mm"),
+                    }
+                });
+                currentMatch.Replace += " {{time}}";
+                break;
+            case 4:
+                currentMatch.Replace += " $|$";
+                break;
+        }
+    }
+
+    private void AddCurrentVar()
+    {
+        if (string.IsNullOrEmpty(currentVar.Type))
+        {
+            Snackbar.Add(localizationService.GetString("SelectVariableType"), Severity.Warning);
+            return;
+        }
+
+        var copy = new Var(currentVar) { Params = new(currentVar.Params) };
+
+        if (!string.IsNullOrEmpty(copy.Params.Format))
+        {
+            copy.Params.Format = Utils.GetTheRealFormat(copy.Params.Format);
+        }
+
+        if (currentVar.Type is "random" or "choice")
+        {
+            copy.Params.Choices = _choicesText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        }
+
+        if (currentVar.Type == "script" && !string.IsNullOrWhiteSpace(_argsText))
+        {
+            copy.Params.Args = _argsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        }
+
+        if (EditingVar is not null)
+        {
+            var idx = currentMatch.Vars.IndexOf(EditingVar);
+            if (idx >= 0)
+                currentMatch.Vars[idx] = copy;
+            else
+                currentMatch.Vars.Add(copy);
+        }
+        else
+        {
+            currentMatch.Vars.Add(copy);
+        }
+        currentVar.Name = "";
+        currentVar.Type = null;
+        currentVar.Params = new();
+        _choicesText = "";
+        _argsText = "";
+        OnVarReset.InvokeAsync(currentVar);
+    }
+}

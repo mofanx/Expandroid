@@ -3,7 +3,7 @@
 @inject ILocalizationService LocalizationService
 @inject Expandroid.Services.IDialogService DialogService
 
-<MudCard Elevation="2" Class="pa-4 mb-3">
+<MudCard Elevation="2" Class="pa-4 mb-3 match-card-hover">
     <MudStack Justify="@Justify.SpaceBetween" Row="true" Align="Align.Center">
         <MudStack Spacing="0" Class="flex-grow-1 me-2" Style="overflow: hidden; min-width: 0;">
             <MudText Color="Color.Primary" Typo="Typo.h6" Align="Align.Start" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@Item.Key</MudText>
@@ -16,9 +16,19 @@
     </MudStack>
     @if (Item.Value.Vars?.Count > 0)
     {
-        <MudChip Size="Size.Small" Color="Color.Secondary" Class="mt-2">
-            @Item.Value.Vars.Count @LocalizationService.GetString("VarsLabel")
-        </MudChip>
+        <MudStack Row="true" Spacing="1" Class="mt-2" Wrap="Wrap.Wrap">
+            <MudChip Size="Size.Small" Color="Color.Secondary">
+                @Item.Value.Vars.Count @LocalizationService.GetString("VarsLabel")
+            </MudChip>
+            @foreach (var v in Item.Value.Vars.Take(3))
+            {
+                <MudChip Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">@v.Type</MudChip>
+            }
+            @if (Item.Value.Vars.Count > 3)
+            {
+                <MudChip Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">+@(Item.Value.Vars.Count - 3)</MudChip>
+            }
+        </MudStack>
     }
 </MudCard>
 

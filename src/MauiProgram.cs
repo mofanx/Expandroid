@@ -43,6 +43,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<CredentialManager>();
         builder.Services.AddSingleton<SyncManager>();
         builder.Services.AddSingleton<HubClient>();
+        builder.Services.AddSingleton<ImportService>();
         return builder.Build();
     }
 }

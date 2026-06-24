@@ -2,6 +2,10 @@
 @inject Expandroid.Services.IDialogService dialogService
 @inject ISnackbar Snackbar
 
+<MudStack Row="true" Justify="Justify.End" Class="mb-2">
+    <MudIconButton Icon="@Icons.Material.Filled.SwapVert" OnClick="SwapText" Size="Size.Small" Title="@localizationService.GetString("Swap")" />
+    <MudIconButton Icon="@Icons.Material.Filled.Clear" OnClick="ClearText" Size="Size.Small" Title="@localizationService.GetString("Clear")" />
+</MudStack>
 <MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[0].Length" Label="@localizationService.GetString("Text1")" Variant="Variant.Outlined" @bind-Value="@textList[0]" Lines="3" Class="mb-3" />
 <MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[1].Length" Label="@localizationService.GetString("Text2")" Variant="Variant.Outlined" @bind-Value="@textList[1]" Lines="3" Class="mb-3" />
 
@@ -69,7 +73,7 @@
 <MudCard Elevation="1">
     <MudCardContent>
         <MudText Typo="Typo.h6" Class="mb-2">@localizationService.GetString("Results")</MudText>
-        <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-2">@localizationService.GetString("ProcessCount") @processCount</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-2" Style="font-family: monospace;">@localizationService.GetString("ProcessCount") @processCount</MudText>
         <MudStack Spacing="1">
             <MudStack Row="true" Align="Align.Center" Spacing="2">
                 <MudIcon Icon="@(compareResult ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)" Color="@(compareResult ? Color.Success : Color.Error)" Size="Size.Small" />
@@ -218,5 +222,16 @@
     {
         await Clipboard.Default.SetTextAsync(textList[n - 1]);
         Snackbar.Add(localizationService.GetString("CopiedTextMessage"), Severity.Success);
+    }
+
+    private void SwapText()
+    {
+        (textList[0], textList[1]) = (textList[1], textList[0]);
+    }
+
+    private void ClearText()
+    {
+        textList[0] = "";
+        textList[1] = "";
     }
 }

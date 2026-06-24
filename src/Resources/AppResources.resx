@@ -826,4 +826,169 @@
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
+  <data name="DeleteVariable" xml:space="preserve">
+    <value>Delete Variable</value>
+  </data>
+  <data name="ConfirmDeleteVariable" xml:space="preserve">
+    <value>Are you sure you want to delete variable "{0}"?</value>
+  </data>
+  <data name="Undo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="MatchDeleted" xml:space="preserve">
+    <value>Match "{0}" deleted</value>
+  </data>
+  <data name="KeepAllLocal" xml:space="preserve">
+    <value>Keep All Local</value>
+  </data>
+  <data name="KeepAllRemote" xml:space="preserve">
+    <value>Keep All Remote</value>
+  </data>
+  <data name="Step" xml:space="preserve">
+    <value>Step</value>
+  </data>
+  <data name="SortByTrigger" xml:space="preserve">
+    <value>Sort by Trigger</value>
+  </data>
+  <data name="SortByRecent" xml:space="preserve">
+    <value>Recent First</value>
+  </data>
+  <data name="Restored" xml:space="preserve">
+    <value>Restored</value>
+  </data>
+  <data name="Choices" xml:space="preserve">
+    <value>Choices</value>
+  </data>
+  <data name="ChoicesHint" xml:space="preserve">
+    <value>Comma-separated values</value>
+  </data>
+  <data name="ClipboardNoParams" xml:space="preserve">
+    <value>Clipboard variable has no parameters</value>
+  </data>
+  <data name="ShellCommand" xml:space="preserve">
+    <value>Command</value>
+  </data>
+  <data name="TrimOutput" xml:space="preserve">
+    <value>Trim output whitespace</value>
+  </data>
+  <data name="ScriptArgs" xml:space="preserve">
+    <value>Script arguments</value>
+  </data>
+  <data name="ScriptArgsHint" xml:space="preserve">
+    <value>Comma-separated arguments</value>
+  </data>
+  <data name="IgnoreError" xml:space="preserve">
+    <value>Ignore errors</value>
+  </data>
+  <data name="Url" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="HttpMethod" xml:space="preserve">
+    <value>HTTP Method</value>
+  </data>
+  <data name="HttpBody" xml:space="preserve">
+    <value>Request Body</value>
+  </data>
+  <data name="JsonPath" xml:space="preserve">
+    <value>JSON Path</value>
+  </data>
+  <data name="JsonPathHint" xml:space="preserve">
+    <value>e.g. data.result or $.result</value>
+  </data>
+  <data name="JsCode" xml:space="preserve">
+    <value>JavaScript Code</value>
+  </data>
+  <data name="MatchTrigger" xml:space="preserve">
+    <value>Match Trigger</value>
+  </data>
+  <data name="MatchTriggerHint" xml:space="preserve">
+    <value>Trigger of the match to reference</value>
+  </data>
+  <data name="FormLayout" xml:space="preserve">
+    <value>Form Layout</value>
+  </data>
+  <data name="NoSpecificParams" xml:space="preserve">
+    <value>No specific parameters for this type</value>
+  </data>
+  <data name="SelectVariableType" xml:space="preserve">
+    <value>Please select a variable type</value>
+  </data>
+  <data name="VarTypeHelp_echo" xml:space="preserve">
+    <value>Outputs a fixed text string</value>
+  </data>
+  <data name="VarTypeHelp_date" xml:space="preserve">
+    <value>Formats the current date/time with a custom format</value>
+  </data>
+  <data name="VarTypeHelp_clipboard" xml:space="preserve">
+    <value>Inserts the current clipboard content</value>
+  </data>
+  <data name="VarTypeHelp_random" xml:space="preserve">
+    <value>Picks a random value from a comma-separated list</value>
+  </data>
+  <data name="VarTypeHelp_choice" xml:space="preserve">
+    <value>Shows a selection dialog to choose from a list</value>
+  </data>
+  <data name="VarTypeHelp_shell" xml:space="preserve">
+    <value>Executes a shell command and inserts its output</value>
+  </data>
+  <data name="VarTypeHelp_script" xml:space="preserve">
+    <value>Runs a script file with arguments and inserts its output</value>
+  </data>
+  <data name="VarTypeHelp_http" xml:space="preserve">
+    <value>Makes an HTTP request and extracts data from the response</value>
+  </data>
+  <data name="VarTypeHelp_javascript" xml:space="preserve">
+    <value>Executes JavaScript code and inserts the result</value>
+  </data>
+  <data name="VarTypeHelp_match" xml:space="preserve">
+    <value>References another match by its trigger</value>
+  </data>
+  <data name="VarTypeHelp_form" xml:space="preserve">
+    <value>Shows a form dialog with custom fields for user input</value>
+  </data>
+  <data name="Swap" xml:space="preserve">
+    <value>Swap</value>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="FileDetails" xml:space="preserve">
+    <value>File Details</value>
+  </data>
+  <data name="LocalSize" xml:space="preserve">
+    <value>Local size</value>
+  </data>
+  <data name="LocalModified" xml:space="preserve">
+    <value>Local modified</value>
+  </data>
+  <data name="LocalFileNotFound" xml:space="preserve">
+    <value>Local file not found</value>
+  </data>
+  <data name="NoFileInfo" xml:space="preserve">
+    <value>No file info available</value>
+  </data>
+  <data name="UnsavedChanges" xml:space="preserve">
+    <value>Unsaved Changes</value>
+  </data>
+  <data name="DiscardChangesPrompt" xml:space="preserve">
+    <value>You have unsaved changes. Discard them?</value>
+  </data>
+  <data name="Discard" xml:space="preserve">
+    <value>Discard</value>
+  </data>
+  <data name="SecondsShort" xml:space="preserve">
+    <value>{0}s</value>
+  </data>
+  <data name="MinutesShort" xml:space="preserve">
+    <value>{0}min</value>
+  </data>
+  <data name="RemoteSize" xml:space="preserve">
+    <value>Remote size</value>
+  </data>
+  <data name="RemoteModified" xml:space="preserve">
+    <value>Remote modified</value>
+  </data>
+  <data name="RemoteFileNotFound" xml:space="preserve">
+    <value>Remote file not found</value>
+  </data>
 </root>
