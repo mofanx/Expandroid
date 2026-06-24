@@ -2,7 +2,7 @@
 @inject Expandroid.Services.IDialogService dialogService
 @inject ISnackbar Snackbar
 
-<MudStack Row="true" Justify="Justify.End" Class="mb-2">
+<MudStack Row="true" Justify="Justify.FlexEnd" Class="mb-2">
     <MudIconButton Icon="@Icons.Material.Filled.SwapVert" OnClick="SwapText" Size="Size.Small" Title="@localizationService.GetString("Swap")" />
     <MudIconButton Icon="@Icons.Material.Filled.Clear" OnClick="ClearText" Size="Size.Small" Title="@localizationService.GetString("Clear")" />
 </MudStack>

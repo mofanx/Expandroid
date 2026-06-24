@@ -29,17 +29,17 @@
     <MudExpansionPanel Text="@localizationService.GetString("AdvancedOptions")" MaxHeight="1000">
         <MudTextField @bind-Value="currentVar.Name" T="string" Label="@localizationService.GetString("VariableName")" Dense="true" Class="mb-2" />
         <MudSelect Value="currentVar.Type" ValueChanged="OnTypeChanged" T="string" Label="@localizationService.GetString("VariableType")" Dense="true" Variant="Variant.Outlined" Class="mb-2">
-            <MudSelectItem T="string" Value="echo">echo</MudSelectItem>
-            <MudSelectItem T="string" Value="date">date</MudSelectItem>
-            <MudSelectItem T="string" Value="clipboard">clipboard</MudSelectItem>
-            <MudSelectItem T="string" Value="random">random</MudSelectItem>
-            <MudSelectItem T="string" Value="choice">choice</MudSelectItem>
-            <MudSelectItem T="string" Value="shell">shell</MudSelectItem>
-            <MudSelectItem T="string" Value="script">script</MudSelectItem>
-            <MudSelectItem T="string" Value="http">http</MudSelectItem>
-            <MudSelectItem T="string" Value="javascript">javascript</MudSelectItem>
-            <MudSelectItem T="string" Value="match">match</MudSelectItem>
-            <MudSelectItem T="string" Value="form">form</MudSelectItem>
+            <MudSelectItem T="string" Value="@("echo")">echo</MudSelectItem>
+            <MudSelectItem T="string" Value="@("date")">date</MudSelectItem>
+            <MudSelectItem T="string" Value="@("clipboard")">clipboard</MudSelectItem>
+            <MudSelectItem T="string" Value="@("random")">random</MudSelectItem>
+            <MudSelectItem T="string" Value="@("choice")">choice</MudSelectItem>
+            <MudSelectItem T="string" Value="@("shell")">shell</MudSelectItem>
+            <MudSelectItem T="string" Value="@("script")">script</MudSelectItem>
+            <MudSelectItem T="string" Value="@("http")">http</MudSelectItem>
+            <MudSelectItem T="string" Value="@("javascript")">javascript</MudSelectItem>
+            <MudSelectItem T="string" Value="@("match")">match</MudSelectItem>
+            <MudSelectItem T="string" Value="@("form")">form</MudSelectItem>
         </MudSelect>
 
         @if (!string.IsNullOrEmpty(currentVar.Type))
@@ -79,10 +79,10 @@
                 case "http":
                     <MudTextField @bind-Value="currentVar.Params.Url" T="string" Label="@localizationService.GetString("Url")" Dense="true" Class="mb-2" />
                     <MudSelect @bind-Value="currentVar.Params.Method" T="string" Label="@localizationService.GetString("HttpMethod")" Dense="true" Variant="Variant.Outlined" Class="mb-2">
-                        <MudSelectItem T="string" Value="GET">GET</MudSelectItem>
-                        <MudSelectItem T="string" Value="POST">POST</MudSelectItem>
-                        <MudSelectItem T="string" Value="PUT">PUT</MudSelectItem>
-                        <MudSelectItem T="string" Value="DELETE">DELETE</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("GET")">GET</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("POST")">POST</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("PUT")">PUT</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("DELETE")">DELETE</MudSelectItem>
                     </MudSelect>
                     <MudTextField @bind-Value="currentVar.Params.Body" T="string" Label="@localizationService.GetString("HttpBody")" Dense="true" Class="mb-2" />
                     <MudTextField @bind-Value="currentVar.Params.JsonPath" T="string" Label="@localizationService.GetString("JsonPath")" Dense="true" Class="mb-2"
