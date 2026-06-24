@@ -22,8 +22,9 @@ public class ConfigImportReceiver : BroadcastReceiver
     {
         WeakReferenceMessenger.Default.Send(new AcServiceMessage((cmd, value)));
     }
-    public override void OnReceive(Context context, Intent intent)
+    public override void OnReceive(Context? context, Intent? intent)
     {
+        if (intent is null) return;
         // Only check on Android 4.4+ (API 19+)
         if (Build.VERSION.SdkInt >= BuildVersionCodes.JellyBeanMr1)
         {

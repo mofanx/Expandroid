@@ -149,7 +149,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _packageWatchers = new();
     private readonly ConcurrentDictionary<string, string> _lastKnownText = new();
 
-    public override async void OnAccessibilityEvent(AccessibilityEvent e)
+    public override async void OnAccessibilityEvent(AccessibilityEvent? e)
     {
         try
         {
@@ -842,7 +842,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
         }
     }
 
-    public override bool OnUnbind(Intent intent)
+    public override bool OnUnbind(Intent? intent)
     {
         //Remove the overlay when the service is unbound
         if (floatView != null)
@@ -852,8 +852,9 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
         }
         return base.OnUnbind(intent);
     }
-    public bool OnTouch(Android.Views.View v, MotionEvent e)
+    public bool OnTouch(Android.Views.View? v, MotionEvent? e)
     {
+        if (e is null) return false;
         var action = e.Action;
 
         switch (action)

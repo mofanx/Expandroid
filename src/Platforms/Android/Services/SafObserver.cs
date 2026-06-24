@@ -61,7 +61,7 @@ namespace Expandroid.Services
             OnChange(selfChange, null);
         }
 
-        public override void OnChange(bool selfChange, Android.Net.Uri uri)
+        public override void OnChange(bool selfChange, Android.Net.Uri? uri)
         {
             System.Diagnostics.Debug.WriteLine($"SafObserver: ContentObserver triggered for {uri}");
             _ = TriggerSyncAsync();
