@@ -5,6 +5,7 @@
              x:Class="EspansoGo.App">
     <Application.Resources>
         <ResourceDictionary>
+            <Color x:Key="PageBackgroundColor">#f8fafc</Color>
 
             <Style TargetType="Label">
                 <Setter Property="FontFamily" Value="OpenSansRegular" />
