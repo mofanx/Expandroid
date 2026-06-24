@@ -46,22 +46,6 @@ jobs:
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASS: ${{ secrets.KEY_PASS }}
 
-    - name: Build Release (armeabi-v7a)
-      run: dotnet build src/EspansoGo.csproj -c Release -f net9.0-android35.0 -r android-arm --no-restore
-      env:
-        KEYSTORE_PATH: /tmp/espansogo.jks
-        KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PASS: ${{ secrets.KEY_PASS }}
-
-    - name: Build Release (x86_64)
-      run: dotnet build src/EspansoGo.csproj -c Release -f net9.0-android35.0 -r android-x64 --no-restore
-      env:
-        KEYSTORE_PATH: /tmp/espansogo.jks
-        KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PASS: ${{ secrets.KEY_PASS }}
-
     - name: Rename Debug APK
       run: |
         cd src/bin/Debug/net9.0-android35.0
@@ -69,12 +53,9 @@ jobs:
           cp "$f" "espansogo-debug-${f}"
         done
 
-    - name: Rename Release APKs
+    - name: Rename Release APK
       run: |
-        mkdir -p src/bin/Release/net9.0-android35.0
         cp src/bin/Release/net9.0-android35.0/android-arm64/*-Signed.apk src/bin/Release/net9.0-android35.0/espansogo-release-arm64-v8a-signed.apk 2>/dev/null || true
-        cp src/bin/Release/net9.0-android35.0/android-arm/*-Signed.apk src/bin/Release/net9.0-android35.0/espansogo-release-armeabi-v7a-signed.apk 2>/dev/null || true
-        cp src/bin/Release/net9.0-android35.0/android-x64/*-Signed.apk src/bin/Release/net9.0-android35.0/espansogo-release-x86_64-signed.apk 2>/dev/null || true
         ls -lh src/bin/Release/net9.0-android35.0/espansogo-release-*.apk
 
     - name: Upload Debug APK
