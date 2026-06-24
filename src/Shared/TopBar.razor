@@ -1,3 +1,4 @@
+#nullable enable
 @inject IThemeService ThemeService
 @inject NavigationManager NavigationManager
 @inject ILocalizationService LocalizationService
@@ -31,7 +32,6 @@
 @implements IDisposable
 
 @code {
-#nullable enable
     private string? _themeValue;
 
     protected override void OnInitialized()
@@ -73,7 +73,7 @@
     private void GoHome() => NavigationManager.NavigateTo("/");
     private void GoSyncSettings() => NavigationManager.NavigateTo("/syncsettings");
     private void GoPackages() => NavigationManager.NavigateTo("/packages");
-    private void QuitApp() => Application.Current.Quit();
+    private void QuitApp() => Application.Current?.Quit();
 
     public void Dispose()
     {

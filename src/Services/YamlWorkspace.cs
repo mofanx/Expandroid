@@ -139,7 +139,9 @@ namespace Expandroid.Services
             return ParseYaml(fsText, filePath);
         }
 
+#nullable enable
         public MatchGroup ParseYaml(string yamlText, string? sourceFile = null)
+#nullable restore
         {
             var dynamicResult = _deserializer.Deserialize<Dictionary<string, object>>(yamlText);
             if (dynamicResult == null)

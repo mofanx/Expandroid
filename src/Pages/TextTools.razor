@@ -10,7 +10,7 @@
 <MudTextField T="string" HelperText="@localizationService.GetString("Length")" Counter="textList[1].Length" Label="@localizationService.GetString("Text2")" Variant="Variant.Outlined" @bind-Value="@textList[1]" Lines="3" Class="mb-3" />
 
 <MudExpansionPanels Elevation="0" Outlined="true" Class="mb-3" MultiSelection="false">
-    <MudExpansionPanel Text="@localizationService.GetString("Basic")" MaxHeight="1000" Expanded="@(_activeMode == 0)" ExpandedChanged="@(OnBasicExpandedChanged)">
+    <MudExpansionPanel Text="@localizationService.GetString("Basic")" MaxHeight="1000" Expanded="@(_activeMode == 0)" ExpandedChanged="@(EventCallback.Factory.Create<bool>(this, OnBasicExpandedChanged))">
         <MudStack Spacing="2">
             <MudCheckBox Label="@localizationService.GetString("Compare")" @bind-Value="@compare" Color="Color.Primary" />
             <MudCheckBox Label="@localizationService.GetString("IgnoreCase")" @bind-Value="@ignoreCase" Color="Color.Primary" />
@@ -30,7 +30,7 @@
             }
         </MudStack>
     </MudExpansionPanel>
-    <MudExpansionPanel Text="@localizationService.GetString("DiscordMarkdown")" MaxHeight="1000" Expanded="@(_activeMode == 1)" ExpandedChanged="@(OnDiscordExpandedChanged)">
+    <MudExpansionPanel Text="@localizationService.GetString("DiscordMarkdown")" MaxHeight="1000" Expanded="@(_activeMode == 1)" ExpandedChanged="@(EventCallback.Factory.Create<bool>(this, OnDiscordExpandedChanged))">
         <MudStack Spacing="2">
             <MudCheckBox Label="@localizationService.GetString("Bold")" @bind-Value="@makeBold" Color="Color.Primary" />
             <MudCheckBox Label="@localizationService.GetString("Italic")" @bind-Value="@makeItalic" Color="Color.Primary" />

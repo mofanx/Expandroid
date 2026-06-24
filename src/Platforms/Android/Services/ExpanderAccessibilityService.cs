@@ -585,7 +585,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
 
 
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
         }

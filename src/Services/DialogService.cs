@@ -1,4 +1,5 @@
-﻿namespace Expandroid.Services
+﻿#nullable enable
+namespace Expandroid.Services
 {
     internal class DialogService : IDialogService
     {
