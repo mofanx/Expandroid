@@ -1,0 +1,421 @@
+@page "/globalvars"
+@using CommunityToolkit.Mvvm.Messaging
+@using EspansoGo.Models
+@using EspansoGo.Services
+@using System.Text.Json
+@inject ILocalizationService localizationService
+@inject EspansoGo.Services.IDialogService dialogService
+@inject ISnackbar Snackbar
+@inject SyncManager SyncManager
+@implements IDisposable
+
+<MudStack Spacing="3">
+    <MudStack Row="true" Justify="@Justify.SpaceBetween" Align="Align.Center" Class="mb-1">
+        <MudStack Row="true" Align="Align.Center" Spacing="2">
+            <MudText Typo="Typo.h6">@localizationService.GetString("GlobalVariables")</MudText>
+            @if (globalVars.Count > 0)
+            {
+                <MudChip Size="Size.Small" Color="Color.Default">@globalVars.Count</MudChip>
+            }
+        </MudStack>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ToggleEditor" Class="px-4">
+            <MudText Typo="Typo.h6">
+                @(editingIndex is not null ? localizationService.GetString("EditGlobalVar") : localizationService.GetString("AddGlobalVar"))
+            </MudText>
+            <MudIcon Icon="@(_showEditor ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Class="ms-1" />
+        </MudButton>
+    </MudStack>
+
+    @if (_showEditor)
+    {
+        <MudPaper Class="pa-4 mb-4" Elevation="1">
+            <MudStack Spacing="3">
+                <MudTextField @ref="_nameRef" @bind-Value="currentVar.Name" Label="@localizationService.GetString("VariableName")" Variant="Variant.Outlined" Dense="true" KeyDown="OnEditorKeyDown" />
+                <MudSelect @bind-Value="currentVar.Type" T="string" Label="@localizationService.GetString("VariableType")" Dense="true" Variant="Variant.Outlined" Class="mb-2">
+                    <MudSelectItem T="string" Value="@("echo")">echo</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("date")">date</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("clipboard")">clipboard</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("random")">random</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("choice")">choice</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("shell")">shell</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("script")">script</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("http")">http</MudSelectItem>
+                    <MudSelectItem T="string" Value="@("javascript")">javascript</MudSelectItem>
+                </MudSelect>
+
+                @if (!string.IsNullOrEmpty(currentVar.Type))
+                {
+                    <MudText Typo="Typo.caption" Style="opacity: 0.6;">@localizationService.GetString($"VarTypeHelp_{currentVar.Type}")</MudText>
+                    <MudDivider Class="mb-2" />
+                    @switch (currentVar.Type)
+                    {
+                        case "echo":
+                            <MudTextField @bind-Value="currentVar.Params.Echo" T="string" Label="@localizationService.GetString("Echo")" Variant="Variant.Outlined" Dense="true" Class="mb-2" />
+                            break;
+                        case "date":
+                            <MudTextField @bind-Value="currentVar.Params.Format" T="string" Label="@localizationService.GetString("Format")" Variant="Variant.Outlined" Dense="true" Class="mb-2" />
+                            <MudTextField @bind-Value="currentVar.Params.Offset" T="long" Label="@localizationService.GetString("Offset")" Variant="Variant.Outlined" Dense="true" Class="mb-2" />
+                            break;
+                        case "random":
+                            <MudTextField @bind-Value="_choicesText" T="string" Label="@localizationService.GetString("Choices")" Variant="Variant.Outlined" Dense="true" Class="mb-2"
+                                          Hint="@localizationService.GetString("ChoicesHint")" />
+                            break;
+                        case "choice":
+                            <MudTextField @bind-Value="_choicesText" T="string" Label="@localizationService.GetString("Choices")" Variant="Variant.Outlined" Dense="true" Class="mb-2"
+                                          Hint="@localizationService.GetString("ChoicesHint")" />
+                            break;
+                        case "clipboard":
+                            <MudText Typo="Typo.body2" Style="opacity: 0.7;" Class="mb-2">@localizationService.GetString("ClipboardNoParams")</MudText>
+                            break;
+                        case "shell":
+                            <MudTextField @bind-Value="currentVar.Params.Cmd" T="string" Label="@localizationService.GetString("ShellCommand")" Variant="Variant.Outlined" Dense="true" Class="mb-2" />
+                            <MudCheckBox @bind-Value="currentVar.Params.Trim" Label="@localizationService.GetString("TrimOutput")" Class="mb-2" />
+                            break;
+                        case "script":
+                            <MudTextField @bind-Value="_argsText" T="string" Label="@localizationService.GetString("ScriptArgs")" Variant="Variant.Outlined" Dense="true" Class="mb-2"
+                                          Hint="@localizationService.GetString("ScriptArgsHint")" />
+                            <MudCheckBox @bind-Value="currentVar.Params.Trim" Label="@localizationService.GetString("TrimOutput")" Class="mb-2" />
+                            <MudCheckBox @bind-Value="currentVar.Params.IgnoreError" Label="@localizationService.GetString("IgnoreError")" Class="mb-2" />
+                            break;
+                        case "http":
+                            <MudTextField @bind-Value="currentVar.Params.Url" T="string" Label="@localizationService.GetString("Url")" Variant="Variant.Outlined" Dense="true" Class="mb-2" />
+                            <MudSelect @bind-Value="currentVar.Params.Method" T="string" Label="@localizationService.GetString("HttpMethod")" Dense="true" Variant="Variant.Outlined" Class="mb-2">
+                                <MudSelectItem T="string" Value="@("GET")">GET</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("POST")">POST</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("PUT")">PUT</MudSelectItem>
+                                <MudSelectItem T="string" Value="@("DELETE")">DELETE</MudSelectItem>
+                            </MudSelect>
+                            <MudTextField @bind-Value="currentVar.Params.Body" T="string" Label="@localizationService.GetString("HttpBody")" Variant="Variant.Outlined" Dense="true" Class="mb-2" />
+                            <MudTextField @bind-Value="currentVar.Params.JsonPath" T="string" Label="@localizationService.GetString("JsonPath")" Variant="Variant.Outlined" Dense="true" Class="mb-2"
+                                          Hint="@localizationService.GetString("JsonPathHint")" />
+                            break;
+                        case "javascript":
+                            <MudTextField @bind-Value="currentVar.Params.Code" T="string" Label="@localizationService.GetString("JsCode")" Variant="Variant.Outlined" Dense="true" Class="mb-2"
+                                          Lines="4" />
+                            break;
+                        default:
+                            <MudText Typo="Typo.body2" Style="opacity: 0.7;">@localizationService.GetString("NoSpecificParams")</MudText>
+                            break;
+                    }
+                }
+
+                <MudStack Row="true" Spacing="2">
+                    <MudButton @onclick="AddOrUpdateVar" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add">
+                        @(editingIndex is not null ? localizationService.GetString("Update") : localizationService.GetString("Add"))
+                    </MudButton>
+                    @if (editingIndex is not null)
+                    {
+                        <MudButton @onclick="CancelEdit" Color="Color.Default" Variant="Variant.Text">
+                            @localizationService.GetString("CancelEdit")
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    }
+
+    @if (globalVars.Count > 0)
+    {
+        <MudStack Row="true" Spacing="2" Align="Align.Center" Class="mb-2">
+            <MudTextField @bind-Value="_searchQuery"
+                          Label="@localizationService.GetString("SearchVariables")"
+                          Variant="Variant.Outlined" Dense="true"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="flex-grow-1" Immediate="true" DebounceInterval="300" />
+        </MudStack>
+
+        @if (_filteredVars.Any())
+        {
+            @foreach (var (item, index) in _filteredVars.Select((v, i) => (v, i)).Take(_displayCount))
+            {
+                <MudCard Elevation="2" Class="pa-4 mb-3">
+                    <MudStack Justify="@Justify.SpaceBetween" Row="true" Align="Align.Center">
+                        <MudStack Spacing="0" Class="flex-grow-1 me-2" Style="overflow: hidden; min-width: 0;">
+                            <MudStack Row="true" Align="Align.Center" Spacing="1">
+                                <MudText Color="Color.Primary" Typo="Typo.h6" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@item.Name</MudText>
+                                <MudChip Size="Size.Small" Color="Color.Info">@item.Type</MudChip>
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Style="opacity: 0.7;">@GetVarSummary(item)</MudText>
+                        </MudStack>
+                        <MudStack Row="true" Spacing="0">
+                            <MudIconButton @onclick="() => EditVar(index)" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Variant="Variant.Text" Size="Size.Medium" />
+                            <MudIconButton @onclick="() => RemoveVar(index)" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Medium" />
+                        </MudStack>
+                    </MudStack>
+                </MudCard>
+            }
+            @if (_filteredCount > _displayCount)
+            {
+                <div class="d-flex justify-center mt-3">
+                    <MudButton @onclick="() => _displayCount += 100" Color="Color.Primary" Variant="Variant.Filled">
+                        @localizationService.GetString("LoadMore")
+                    </MudButton>
+                </div>
+            }
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pa-4">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.body2" Align="Align.Center" Style="opacity: 0.7;">@localizationService.GetString("NoVariablesFound")</MudText>
+            </MudStack>
+        }
+    }
+    else
+    {
+        <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pa-8">
+            <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Default" />
+            <MudText Typo="Typo.body2" Align="Align.Center" Style="opacity: 0.7;">@localizationService.GetString("NoGlobalVarsYet")</MudText>
+        </MudStack>
+    }
+
+    @if (globalVars.Count > 0 || _isDirty)
+    {
+        <MudStack Row="true" Justify="@Justify.End" Spacing="2" Class="mt-2">
+            <MudButton @onclick="() => SaveAsync()" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Disabled="@_saving">
+                @localizationService.GetString("Save")
+            </MudButton>
+        </MudStack>
+    }
+</MudStack>
+
+@code {
+    private List<Var> globalVars = new();
+    private Var currentVar = new() { Params = new() };
+    private int? editingIndex = null;
+    private bool _showEditor = false;
+    private bool _isDirty = false;
+    private bool _saving = false;
+    private string _searchQuery = "";
+    private int _displayCount = 100;
+    private string _choicesText = "";
+    private string _argsText = "";
+    private MudTextField<string> _nameRef;
+
+    private IEnumerable<Var> _filteredVars =>
+        string.IsNullOrWhiteSpace(_searchQuery)
+            ? globalVars
+            : globalVars.Where(v => v.Name?.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) == true ||
+                                    v.Type?.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) == true);
+
+    private int _filteredCount => string.IsNullOrWhiteSpace(_searchQuery) ? globalVars.Count : _filteredVars.Count();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        localizationService.OnLanguageChanged += OnLanguageChanged;
+
+        if (File.Exists(AppSettings.GlobalVarsPath))
+        {
+            try
+            {
+                using var stream = File.OpenRead(AppSettings.GlobalVarsPath);
+                globalVars = JsonSerializer.Deserialize<List<Var>>(stream) ?? new();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(string.Format(localizationService.GetString("DictLoadFailed"), ex.Message), Severity.Error);
+                globalVars = new();
+            }
+        }
+    }
+
+    private void OnLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ToggleEditor()
+    {
+        if (_isDirty && _showEditor)
+        {
+            var confirm = await dialogService.DisplayConfirmAsync(
+                localizationService.GetString("UnsavedChanges"),
+                localizationService.GetString("DiscardChangesPrompt"),
+                localizationService.GetString("Discard"), localizationService.GetString("Cancel"));
+            if (!confirm) return;
+        }
+        _showEditor = !_showEditor;
+        if (_showEditor)
+        {
+            currentVar = new() { Params = new() };
+            editingIndex = null;
+            _choicesText = "";
+            _argsText = "";
+            _isDirty = false;
+            await Task.Delay(50);
+            if (_nameRef is not null)
+                await _nameRef.FocusAsync();
+        }
+    }
+
+    private async Task OnEditorKeyDown(KeyboardEventArgs e)
+    {
+        _isDirty = true;
+        if (e.Key == "Enter")
+        {
+            await AddOrUpdateVar();
+        }
+        else if (e.Key == "Escape")
+        {
+            CancelEdit();
+        }
+    }
+
+    private void EditVar(int index)
+    {
+        var actualIndex = globalVars.IndexOf(_filteredVars.ElementAt(index));
+        if (actualIndex < 0) return;
+
+        editingIndex = actualIndex;
+        var item = globalVars[actualIndex];
+        currentVar = new Var(item) { Params = new(item.Params) };
+        if (item.Params?.Choices?.Count > 0)
+            _choicesText = string.Join(", ", item.Params.Choices);
+        if (item.Params?.Args?.Count > 0)
+            _argsText = string.Join(", ", item.Params.Args);
+        _showEditor = true;
+        _isDirty = false;
+        StateHasChanged();
+    }
+
+    private void CancelEdit()
+    {
+        editingIndex = null;
+        currentVar = new() { Params = new() };
+        _choicesText = "";
+        _argsText = "";
+        _showEditor = false;
+        _isDirty = false;
+        StateHasChanged();
+    }
+
+    private Task AddOrUpdateVar()
+    {
+        if (string.IsNullOrWhiteSpace(currentVar.Name))
+        {
+            Snackbar.Add(localizationService.GetString("VariableNameRequired"), Severity.Warning);
+            return Task.CompletedTask;
+        }
+        if (string.IsNullOrEmpty(currentVar.Type))
+        {
+            Snackbar.Add(localizationService.GetString("SelectVariableType"), Severity.Warning);
+            return Task.CompletedTask;
+        }
+
+        var copy = new Var(currentVar) { Params = new(currentVar.Params) };
+
+        if (!string.IsNullOrEmpty(copy.Params.Format))
+        {
+            copy.Params.Format = Utils.GetTheRealFormat(copy.Params.Format);
+        }
+
+        if (currentVar.Type is "random" or "choice")
+        {
+            copy.Params.Choices = _choicesText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        }
+
+        if (currentVar.Type == "script" && !string.IsNullOrWhiteSpace(_argsText))
+        {
+            copy.Params.Args = _argsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        }
+
+        if (editingIndex is not null)
+        {
+            globalVars[editingIndex.Value] = copy;
+        }
+        else
+        {
+            if (globalVars.Any(v => v.Name == copy.Name))
+            {
+                Snackbar.Add(string.Format(localizationService.GetString("DuplicateVarName"), copy.Name), Severity.Warning);
+                return Task.CompletedTask;
+            }
+            globalVars.Add(copy);
+        }
+
+        editingIndex = null;
+        currentVar = new() { Params = new() };
+        _choicesText = "";
+        _argsText = "";
+        _isDirty = true;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private async Task RemoveVar(int index)
+    {
+        var actualIndex = globalVars.IndexOf(_filteredVars.ElementAt(index));
+        if (actualIndex < 0) return;
+
+        var item = globalVars[actualIndex];
+        var confirm = await dialogService.DisplayConfirmAsync(
+            localizationService.GetString("DeleteVariable"),
+            string.Format(localizationService.GetString("ConfirmDeleteVariable"), item.Name),
+            localizationService.GetString("Delete"),
+            localizationService.GetString("Cancel"));
+        if (confirm)
+        {
+            globalVars.RemoveAt(actualIndex);
+            _isDirty = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_saving) return;
+        _saving = true;
+        try
+        {
+            var str = JsonSerializer.Serialize(globalVars);
+            await File.WriteAllTextAsync(AppSettings.GlobalVarsPath, str);
+            WeakReferenceMessenger.Default.Send(new AcGlobalsMessage(globalVars));
+
+            var config = SyncManager.GetConfig();
+            if (config.Method != SyncMethod.None && !string.IsNullOrEmpty(config.SyncUri))
+            {
+                var dictPath = AppSettings.DictPath;
+                if (File.Exists(dictPath))
+                {
+                    using var stream = File.OpenRead(dictPath);
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(stream);
+                    _ = SyncManager.PushAsync(dict, globalVars);
+                }
+            }
+
+            _isDirty = false;
+            Snackbar.Add(localizationService.GetString("SaveSuccessfulMessage"), Severity.Success);
+        }
+        catch (Exception e)
+        {
+            await dialogService.DisplayConfirmAsync(localizationService.GetString("Error"), e.Message);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static string GetVarSummary(Var v)
+    {
+        if (v.Params == null) return "";
+        return v.Type switch
+        {
+            "echo" => v.Params.Echo,
+            "date" => $"format: {v.Params.Format}",
+            "shell" => v.Params.Cmd,
+            "http" => v.Params.Url,
+            "javascript" => v.Params.Code?.Length > 50 ? v.Params.Code[..50] + "..." : v.Params.Code,
+            "random" or "choice" => v.Params.Choices != null ? string.Join(", ", v.Params.Choices) : "",
+            "clipboard" => "clipboard",
+            _ => ""
+        };
+    }
+
+    public void Dispose()
+    {
+        localizationService.OnLanguageChanged -= OnLanguageChanged;
+    }
+}

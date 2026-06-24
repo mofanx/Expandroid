@@ -8,14 +8,6 @@
     -webkit-overflow-scrolling: touch;
 }
 
-::deep .lang-switcher .mud-input {
-    color: inherit;
-}
-
-::deep .lang-switcher .mud-input-adornment {
-    color: inherit;
-}
-
 @supports (-webkit-touch-callout: none) {
     .status-bar-safe-area {
         display: flex;

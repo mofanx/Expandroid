@@ -1015,4 +1015,46 @@
   <data name="AccessibilityNotEnabledHint" xml:space="preserve">
     <value>无障碍服务未启用，触发词将无法生效，请先开启权限。</value>
   </data>
+  <data name="Settings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="Appearance" xml:space="preserve">
+    <value>外观</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>主题</value>
+  </data>
+  <data name="Features" xml:space="preserve">
+    <value>功能</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="GlobalVariables" xml:space="preserve">
+    <value>全局变量</value>
+  </data>
+  <data name="AddGlobalVar" xml:space="preserve">
+    <value>添加全局变量</value>
+  </data>
+  <data name="EditGlobalVar" xml:space="preserve">
+    <value>编辑全局变量</value>
+  </data>
+  <data name="SearchVariables" xml:space="preserve">
+    <value>搜索变量</value>
+  </data>
+  <data name="NoVariablesFound" xml:space="preserve">
+    <value>未找到变量</value>
+  </data>
+  <data name="NoGlobalVarsYet" xml:space="preserve">
+    <value>暂无全局变量，添加一个开始使用吧。</value>
+  </data>
+  <data name="VariableNameRequired" xml:space="preserve">
+    <value>变量名称为必填项</value>
+  </data>
+  <data name="DuplicateVarName" xml:space="preserve">
+    <value>名为"{0}"的变量已存在</value>
+  </data>
+  <data name="Update" xml:space="preserve">
+    <value>更新</value>
+  </data>
 </root>

@@ -1,0 +1,178 @@
+@page "/settings"
+@inject IThemeService ThemeService
+@inject ILocalizationService LocalizationService
+@inject NavigationManager NavigationManager
+@implements IDisposable
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h5" Class="mt-2 mb-1">@LocalizationService.GetString("Appearance")</MudText>
+    <MudPaper Elevation="1" Class="pa-4">
+        <MudList>
+            <MudListItem>
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Palette" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1">@LocalizationService.GetString("Theme")</MudText>
+                    </MudStack>
+                    <MudToggleGroup Value="_themeValue" ValueChanged="@((string v) => OnThemeChanged(v))" Color="Color.Primary" Size="Size.Small">
+                        <MudToggleItem Value="@("light")" Icon="@Icons.Material.Filled.WbSunny" />
+                        <MudToggleItem Value="@("dark")" Icon="@Icons.Material.Filled.NightsStay" />
+                        <MudToggleItem Value="@("auto")" Icon="@Icons.Material.Filled.BrightnessAuto" />
+                    </MudToggleGroup>
+                </MudStack>
+            </MudListItem>
+            <MudListItem>
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Language" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1">@LocalizationService.GetString("Language")</MudText>
+                    </MudStack>
+                    <MudSelect T="string" Value="@_currentLang" ValueChanged="ChangeLanguage" Variant="Variant.Outlined" Dense="true" Style="min-width: 120px;">
+                        @foreach (var lang in LocalizationService.GetAvailableLanguages())
+                        {
+                            <MudSelectItem T="string" Value="@lang.Code">@lang.NativeName</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudStack>
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+
+    <MudText Typo="Typo.h5" Class="mt-2 mb-1">@LocalizationService.GetString("Sync")</MudText>
+    <MudPaper Elevation="1" Class="pa-4">
+        <MudList>
+            <MudListItem Clickable="true" OnClick="GoSyncSettings">
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Sync" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1">@LocalizationService.GetString("SyncSettings")</MudText>
+                    </MudStack>
+                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Style="opacity: 0.5;" />
+                </MudStack>
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+
+    <MudText Typo="Typo.h5" Class="mt-2 mb-1">@LocalizationService.GetString("Features")</MudText>
+    <MudPaper Elevation="1" Class="pa-4">
+        <MudList>
+            <MudListItem Clickable="true" OnClick="GoTools">
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1">@LocalizationService.GetString("Tools")</MudText>
+                    </MudStack>
+                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Style="opacity: 0.5;" />
+                </MudStack>
+            </MudListItem>
+            <MudListItem Clickable="true" OnClick="GoPackages">
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Extension" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1">@LocalizationService.GetString("PackageStore")</MudText>
+                    </MudStack>
+                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Style="opacity: 0.5;" />
+                </MudStack>
+            </MudListItem>
+            <MudListItem Clickable="true" OnClick="GoGlobalVars">
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.DataObject" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1">@LocalizationService.GetString("GlobalVariables")</MudText>
+                    </MudStack>
+                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Style="opacity: 0.5;" />
+                </MudStack>
+            </MudListItem>
+            <MudListItem Clickable="true" OnClick="GoPermissionCheck">
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.AccessibilityNew" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1">@LocalizationService.GetString("PermissionCheck")</MudText>
+                    </MudStack>
+                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Style="opacity: 0.5;" />
+                </MudStack>
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+
+    <MudText Typo="Typo.h5" Class="mt-2 mb-1">@LocalizationService.GetString("About")</MudText>
+    <MudPaper Elevation="1" Class="pa-4">
+        <MudList>
+            <MudListItem Clickable="true" OnClick="QuitApp">
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.PowerSettingsNew" Color="Color.Error" />
+                        <MudText Typo="Typo.subtitle1" Color="Color.Error">@LocalizationService.GetString("QuitApp")</MudText>
+                    </MudStack>
+                </MudStack>
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+</MudStack>
+
+@code {
+    private string _themeValue = "auto";
+    private string _currentLang = "en";
+
+    protected override void OnInitialized()
+    {
+        UpdateThemeValue();
+        _currentLang = LocalizationService.CurrentCulture.Name.StartsWith("zh") ? "zh" : "en";
+        ThemeService.OnThemeChanged += UpdateThemeValue;
+        LocalizationService.OnLanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged()
+    {
+        InvokeAsync(() =>
+        {
+            _currentLang = LocalizationService.CurrentCulture.Name.StartsWith("zh") ? "zh" : "en";
+            StateHasChanged();
+        });
+    }
+
+    private void UpdateThemeValue()
+    {
+        _themeValue = ThemeService.CurrentTheme switch
+        {
+            AppTheme.Light => "light",
+            AppTheme.Dark => "dark",
+            _ => "auto"
+        };
+        StateHasChanged();
+    }
+
+    private void OnThemeChanged(string value)
+    {
+        var theme = value switch
+        {
+            "light" => AppTheme.Light,
+            "dark" => AppTheme.Dark,
+            _ => AppTheme.Auto
+        };
+        ThemeService.SetTheme(theme);
+    }
+
+    private void ChangeLanguage(string lang)
+    {
+        _currentLang = lang;
+        LocalizationService.SetCulture(lang);
+    }
+
+    private void GoSyncSettings() => NavigationManager.NavigateTo("/syncsettings");
+    private void GoTools() => NavigationManager.NavigateTo("/tools");
+    private void GoPackages() => NavigationManager.NavigateTo("/packages");
+    private void GoGlobalVars() => NavigationManager.NavigateTo("/globalvars");
+    private void GoPermissionCheck()
+    {
+        Microsoft.Maui.Storage.Preferences.Set("permission_skipped", false);
+        NavigationManager.NavigateTo("/permission");
+    }
+    private void QuitApp() => Application.Current?.Quit();
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= UpdateThemeValue;
+        LocalizationService.OnLanguageChanged -= OnLanguageChanged;
+    }
+}

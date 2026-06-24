@@ -1015,4 +1015,46 @@
   <data name="AccessibilityNotEnabledHint" xml:space="preserve">
     <value>Accessibility service is not enabled. Triggers will not work until you enable it.</value>
   </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Appearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="Features" xml:space="preserve">
+    <value>Features</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="GlobalVariables" xml:space="preserve">
+    <value>Global Variables</value>
+  </data>
+  <data name="AddGlobalVar" xml:space="preserve">
+    <value>Add Global Variable</value>
+  </data>
+  <data name="EditGlobalVar" xml:space="preserve">
+    <value>Edit Global Variable</value>
+  </data>
+  <data name="SearchVariables" xml:space="preserve">
+    <value>Search variables</value>
+  </data>
+  <data name="NoVariablesFound" xml:space="preserve">
+    <value>No variables found</value>
+  </data>
+  <data name="NoGlobalVarsYet" xml:space="preserve">
+    <value>No global variables yet. Add one to get started.</value>
+  </data>
+  <data name="VariableNameRequired" xml:space="preserve">
+    <value>Variable name is required</value>
+  </data>
+  <data name="DuplicateVarName" xml:space="preserve">
+    <value>A variable named "{0}" already exists</value>
+  </data>
+  <data name="Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
 </root>

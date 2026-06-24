@@ -1,7 +1,5 @@
-@inject IThemeService ThemeService
 @inject NavigationManager NavigationManager
 @inject ILocalizationService LocalizationService
-@using Microsoft.Maui.Storage
 @using Microsoft.AspNetCore.Components.Routing
 
 <MudAppBar Elevation="2" Color="Color.Primary" Fixed="true" Style="padding-top: env(safe-area-inset-top); height: calc(64px + env(safe-area-inset-top));">
@@ -13,43 +11,18 @@
         @_pageTitle
     </MudText>
 
-    <MudMenu Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Size="Size.Small" Variant="Variant.Text" Class="mr-2">
-        <MudMenuItem Icon="@Icons.Material.Filled.Home" OnClick="GoHome">@LocalizationService.GetString("Home")</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.Build" OnClick="GoTools">@LocalizationService.GetString("Tools")</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.AccessibilityNew" OnClick="GoPermissionCheck">@LocalizationService.GetString("PermissionCheck")</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.Sync" OnClick="GoSyncSettings">@LocalizationService.GetString("SyncSettings")</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.Extension" OnClick="GoPackages">@LocalizationService.GetString("PackageStore")</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.WbSunny" OnClick="@(() => SetTheme("light"))">@LocalizationService.GetString("ThemeLight")</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.NightsStay" OnClick="@(() => SetTheme("dark"))">@LocalizationService.GetString("ThemeDark")</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.BrightnessAuto" OnClick="@(() => SetTheme("auto"))">@LocalizationService.GetString("ThemeAuto")</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.Language" OnClick="@(() => SwitchLanguage("zh"))">中文</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.Language" OnClick="@(() => SwitchLanguage("en"))">English</MudMenuItem>
-        <MudMenuItem Icon="@Icons.Material.Filled.PowerSettingsNew" OnClick="QuitApp">@LocalizationService.GetString("QuitApp")</MudMenuItem>
-    </MudMenu>
-
-    <MudToggleGroup Value="_themeValue" ValueChanged="@((string v) => OnThemeChanged(v))" Color="Color.Surface" Size="Size.Small" Class="mr-2 d-none d-sm-flex">
-        <MudToggleItem Value="@("light")" Icon="@Icons.Material.Filled.WbSunny" />
-        <MudToggleItem Value="@("dark")" Icon="@Icons.Material.Filled.NightsStay" />
-        <MudToggleItem Value="@("auto")" Icon="@Icons.Material.Filled.BrightnessAuto" />
-    </MudToggleGroup>
-
-    <div Class="d-none d-sm-flex">
-        <LanguageSwitcher />
-    </div>
+    <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Inherit" OnClick="GoSettings" />
 </MudAppBar>
 
 @implements IDisposable
 
 @code {
-    private string _themeValue = "auto";
     private string _pageTitle = "EspansoGo";
     private bool _showBack = false;
 
     protected override void OnInitialized()
     {
-        UpdateThemeValue();
         UpdateRouteInfo();
-        ThemeService.OnThemeChanged += UpdateThemeValue;
         LocalizationService.OnLanguageChanged += OnLanguageChanged;
         NavigationManager.LocationChanged += OnLocationChanged;
     }
@@ -106,9 +79,19 @@
             _pageTitle = LocalizationService.GetString("PackageStore");
             _showBack = true;
         }
+        else if (path.StartsWith("globalvars"))
+        {
+            _pageTitle = LocalizationService.GetString("GlobalVariables");
+            _showBack = true;
+        }
         else if (path.StartsWith("conflicts"))
         {
             _pageTitle = LocalizationService.GetString("ConflictResolution");
+            _showBack = true;
+        }
+        else if (path.StartsWith("settings"))
+        {
+            _pageTitle = LocalizationService.GetString("Settings");
             _showBack = true;
         }
         else
@@ -118,33 +101,6 @@
         }
     }
 
-    private void UpdateThemeValue()
-    {
-        _themeValue = ThemeService.CurrentTheme switch
-        {
-            AppTheme.Light => "light",
-            AppTheme.Dark => "dark",
-            _ => "auto"
-        };
-        StateHasChanged();
-    }
-
-    private void OnThemeChanged(string value)
-    {
-        var theme = value switch
-        {
-            "light" => AppTheme.Light,
-            "dark" => AppTheme.Dark,
-            _ => AppTheme.Auto
-        };
-        ThemeService.SetTheme(theme);
-    }
-
-    private void SetTheme(string value) => OnThemeChanged(value);
-
-    private void SwitchLanguage(string lang) => LocalizationService.SetCulture(lang);
-
-    private void GoHome() => NavigationManager.NavigateTo("/");
     private void GoBack()
     {
         var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
@@ -153,19 +109,10 @@
         else
             NavigationManager.NavigateTo("/");
     }
-    private void GoTools() => NavigationManager.NavigateTo("/tools");
-    private void GoPermissionCheck()
-    {
-        Preferences.Set("permission_skipped", false);
-        NavigationManager.NavigateTo("/permission");
-    }
-    private void GoSyncSettings() => NavigationManager.NavigateTo("/syncsettings");
-    private void GoPackages() => NavigationManager.NavigateTo("/packages");
-    private void QuitApp() => Application.Current?.Quit();
+    private void GoSettings() => NavigationManager.NavigateTo("/settings");
 
     public void Dispose()
     {
-        ThemeService.OnThemeChanged -= UpdateThemeValue;
         LocalizationService.OnLanguageChanged -= OnLanguageChanged;
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
