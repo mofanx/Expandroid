@@ -1,4 +1,3 @@
-#nullable enable
 @inject IThemeService ThemeService
 @inject NavigationManager NavigationManager
 @inject ILocalizationService LocalizationService
@@ -18,7 +17,7 @@
         <MudMenuItem Icon="@Icons.Material.Filled.PowerSettingsNew" OnClick="QuitApp">@LocalizationService.GetString("QuitApp")</MudMenuItem>
     </MudMenu>
 
-    <MudToggleGroup Value="_themeValue" ValueChanged="@((string? v) => OnThemeChanged(v))" Color="Color.Surface" Size="Size.Small" Class="mr-2 d-none d-sm-flex">
+    <MudToggleGroup Value="_themeValue" ValueChanged="@((string v) => OnThemeChanged(v))" Color="Color.Surface" Size="Size.Small" Class="mr-2 d-none d-sm-flex">
         <MudToggleItem Value="@("light")" Icon="@Icons.Material.Filled.WbSunny" />
         <MudToggleItem Value="@("dark")" Icon="@Icons.Material.Filled.NightsStay" />
         <MudToggleItem Value="@("auto")" Icon="@Icons.Material.Filled.BrightnessAuto" />
@@ -32,7 +31,7 @@
 @implements IDisposable
 
 @code {
-    private string? _themeValue;
+    private string _themeValue = "auto";
 
     protected override void OnInitialized()
     {
@@ -57,7 +56,7 @@
         StateHasChanged();
     }
 
-    private void OnThemeChanged(string? value)
+    private void OnThemeChanged(string value)
     {
         var theme = value switch
         {
