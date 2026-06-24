@@ -178,12 +178,11 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
             {
                 string className = node.ClassName?.ToString();
 
-                bool isEditText =
-                    !string.IsNullOrEmpty(className) &&
-                    className.Contains("EditText") &&
-                    node.Editable;
+                bool isEditable = node.Editable;
 
-                if (isEditText &&
+                Android.Util.Log.Debug("A11Y", $"NodeCheck: class={className}, editable={isEditable}, focused={node.Focused}");
+
+                if (isEditable &&
                     e.Text != null &&
                     e.Text.Count > 0)
                 {
@@ -239,6 +238,7 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
         {
             try
             {
+                Android.Util.Log.Debug("A11Y", $"Watcher started for {packageName}");
                 while (!token.IsCancellationRequested)
                 {
                     var root = RootInActiveWindow;
@@ -269,13 +269,17 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
                             if (changed)
                             {
                                 _lastKnownText[packageName] = text;
-
+                                Android.Util.Log.Debug("A11Y", $"Watcher[{packageName}]: text changed to: {text}");
                                 await HandleTextExpansionAsync(triggerEvent, text);
                             }
                         }
 
                         await Task.Delay(1000, token);
                         continue;
+                    }
+                    else
+                    {
+                        Android.Util.Log.Debug("A11Y", $"Watcher[{packageName}]: no focused editable node found");
                     }
 
                     // --------------------------------------------------
@@ -315,18 +319,13 @@ public class ExpanderAccessibilityservice : AccessibilityService, Android.Views.
 
         try
         {
-            string className = node.ClassName?.ToString();
-
-            bool isEditText =
-                !string.IsNullOrEmpty(className) &&
-                className.Contains("EditText") &&
-                node.Editable;
+            bool isEditable = node.Editable;
 
             bool isFocused =
                 node.Focused ||
                 node.AccessibilityFocused;
 
-            if (isEditText && isFocused)
+            if (isEditable && isFocused)
                 return node;
 
             for (int i = 0; i < node.ChildCount; i++)
