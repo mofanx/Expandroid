@@ -13,6 +13,10 @@ namespace EspansoGo.Services
 {
     internal class CheckIfActivated : ICheckIfActivated
     {
+        private const string ShizukuProviderAuthority = "moe.shizuku.privileged.api";
+        private const string ShizukuPermission = "moe.shizuku.manager.permission.API_V23";
+        private const int ShizukuRequestCode = 10001;
+
         public bool IsActivated()
         {
             var context = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity.BaseContext;
@@ -87,6 +91,71 @@ namespace EspansoGo.Services
 
             ActivityCompat.RequestPermissions(activity, new[] { Manifest.Permission.WriteExternalStorage }, 1);
 
+            return false;
+        }
+
+        public bool IsShizukuAvailable()
+        {
+            try
+            {
+                var context = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity?.BaseContext;
+                if (context == null) return false;
+
+                // Check if Shizuku package is installed
+                var pm = context.PackageManager;
+                var shizukuInfo = pm.GetPackageInfo("moe.shizuku.privileged.api", 0);
+                if (shizukuInfo == null) return false;
+
+                // Check if Shizuku binder is alive by querying its ContentProvider
+                var uri = Android.Net.Uri.Parse($"content://{ShizukuProviderAuthority}");
+                using var cursor = context.ContentResolver.Query(uri, null, null, null, null);
+                return cursor != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public bool IsShizukuAuthorized()
+        {
+            try
+            {
+                var context = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity?.BaseContext;
+                if (context == null) return false;
+
+                return ContextCompat.CheckSelfPermission(context, ShizukuPermission) == Permission.Granted;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public Task<bool> RequestShizukuAuthorization()
+        {
+            try
+            {
+                var activity = Platform.CurrentActivity;
+                if (activity == null) return Task.FromResult(false);
+
+                // Use ActivityCompat to request the Shizuku permission
+                ActivityCompat.RequestPermissions(activity, new[] { ShizukuPermission }, ShizukuRequestCode);
+                return Task.FromResult(true);
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine($"RequestShizukuAuthorization failed: {e.Message}");
+                return Task.FromResult(false);
+            }
+        }
+
+        public async Task<bool> TryEnableAccessibility()
+        {
+            // TODO: Implement via Shizuku bindUserService to call hidden API
+            // setAccessibilityServiceEnabled on AccessibilityManager
+            // For now, fallback to opening system settings
+            await Task.Delay(100);
             return false;
         }
     }

@@ -1132,4 +1132,28 @@
   <data name="ConfirmPush" xml:space="preserve">
     <value>确认推送</value>
   </data>
+  <data name="AccessibilityService" xml:space="preserve">
+    <value>无障碍服务</value>
+  </data>
+  <data name="AccessibilityStatusEnabled" xml:space="preserve">
+    <value>已启用</value>
+  </data>
+  <data name="AccessibilityNotEnabled" xml:space="preserve">
+    <value>未启用</value>
+  </data>
+  <data name="OneClickEnable" xml:space="preserve">
+    <value>一键启用</value>
+  </data>
+  <data name="ShizukuHint" xml:space="preserve">
+    <value>安装 Shizuku 可实现应用内一键开启无障碍，无需手动跳转系统设置。</value>
+  </data>
+  <data name="LearnMore" xml:space="preserve">
+    <value>了解详情</value>
+  </data>
+  <data name="Enabling" xml:space="preserve">
+    <value>正在启用...</value>
+  </data>
+  <data name="ShizukuAuthNeeded" xml:space="preserve">
+    <value>需要 Shizuku 授权，请在弹窗中允许权限。</value>
+  </data>
 </root>

@@ -38,7 +38,7 @@ else
             <MudStack Row="true" Align="Align.Center" Spacing="2" Justify="@Justify.SpaceBetween" Style="width: 100%;">
                 <MudText Typo="Typo.body2">@localizationService.GetString("AccessibilityNotEnabledHint")</MudText>
                 <MudButton Color="Color.Warning" Variant="Variant.Filled" Size="Size.Small" OnClick="GoToPermission">
-                    @localizationService.GetString("PermissionCheck")
+                    @localizationService.GetString("Settings")
                 </MudButton>
             </MudStack>
         </MudAlert>
@@ -143,8 +143,7 @@ else
 
     private void GoToPermission()
     {
-        Preferences.Set("permission_skipped", false);
-        NavigationManager.NavigateTo("/permission");
+        NavigationManager.NavigateTo("/settings");
     }
 
     private void GoToNewMatch()

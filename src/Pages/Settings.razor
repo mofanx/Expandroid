@@ -1,7 +1,11 @@
 @page "/settings"
+@using EspansoGo.Models
+@using CommunityToolkit.Mvvm.Messaging
 @inject IThemeService ThemeService
 @inject ILocalizationService LocalizationService
 @inject NavigationManager NavigationManager
+@inject ICheckIfActivated AcService
+@inject ISnackbar Snackbar
 @implements IDisposable
 
 <MudStack Spacing="3">
@@ -65,16 +69,48 @@
                     <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Style="opacity: 0.5;" />
                 </MudStack>
             </MudListItem>
-            <MudListItem Clickable="true" OnClick="GoPermissionCheck">
-                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
-                    <MudStack Row="true" Align="Align.Center" Spacing="2">
-                        <MudIcon Icon="@Icons.Material.Filled.AccessibilityNew" Color="Color.Primary" />
-                        <MudText Typo="Typo.subtitle1">@LocalizationService.GetString("PermissionCheck")</MudText>
-                    </MudStack>
-                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Style="opacity: 0.5;" />
-                </MudStack>
-            </MudListItem>
         </MudList>
+    </MudPaper>
+
+    <MudText Typo="Typo.h5" Class="mt-2 mb-1">@LocalizationService.GetString("AccessibilityService")</MudText>
+    <MudPaper Elevation="1" Class="pa-4">
+        <MudStack Spacing="2">
+            <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween">
+                <MudStack Row="true" Align="Align.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.AccessibilityNew" Color="Color.Primary" />
+                    <MudText Typo="Typo.subtitle1">@LocalizationService.GetString("AccessibilityService")</MudText>
+                </MudStack>
+                @if (_accessibilityEnabled)
+                {
+                    <MudChip Color="Color.Success" Size="Size.Small">@LocalizationService.GetString("AccessibilityStatusEnabled")</MudChip>
+                }
+                else
+                {
+                    <MudChip Color="Color.Warning" Size="Size.Small">@LocalizationService.GetString("AccessibilityNotEnabled")</MudChip>
+                }
+            </MudStack>
+
+            @if (!_accessibilityEnabled)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EnableAccessibility" Disabled="@_enabling"
+                           StartIcon="@Icons.Material.Filled.PowerSettingsNew">
+                    @if (_enabling) { @LocalizationService.GetString("Enabling") } else { @LocalizationService.GetString("OneClickEnable") }
+                </MudButton>
+
+                @if (!_shizukuAvailable && !_shizukuHintDismissed)
+                {
+                    <MudAlert Severity="Severity.Info" Class="mt-2" ShowDismissIcon="true" Dismissed="@(_shizukuHintDismissed)"
+                              DismissedChanged="@(v => { _shizukuHintDismissed = v; Microsoft.Maui.Storage.Preferences.Set("shizuku_hint_dismissed", v); StateHasChanged(); })">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.body2">@LocalizationService.GetString("ShizukuHint")</MudText>
+                            <MudButton Variant="Variant.Text" Color="Color.Info" Size="Size.Small" OnClick="OpenShizukuWebsite">
+                                @LocalizationService.GetString("LearnMore")
+                            </MudButton>
+                        </MudStack>
+                    </MudAlert>
+                }
+            }
+        </MudStack>
     </MudPaper>
 
     <MudText Typo="Typo.h5" Class="mt-2 mb-1">@LocalizationService.GetString("About")</MudText>
@@ -95,6 +131,10 @@
 @code {
     private string _themeValue = "auto";
     private string _currentLang = "en";
+    private bool _accessibilityEnabled = false;
+    private bool _enabling = false;
+    private bool _shizukuAvailable = false;
+    private bool _shizukuHintDismissed = false;
 
     protected override void OnInitialized()
     {
@@ -102,6 +142,12 @@
         _currentLang = LocalizationService.CurrentCulture.Name.StartsWith("zh") ? "zh" : "en";
         ThemeService.OnThemeChanged += UpdateThemeValue;
         LocalizationService.OnLanguageChanged += OnLanguageChanged;
+        _shizukuHintDismissed = Microsoft.Maui.Storage.Preferences.Get("shizuku_hint_dismissed", false);
+        _ = CheckAccessibilityStatusAsync();
+        WeakReferenceMessenger.Default.Register<AppResumedMessage>(this, (r, m) =>
+        {
+            InvokeAsync(() => CheckAccessibilityStatusAsync());
+        });
     }
 
     private void OnLanguageChanged()
@@ -143,16 +189,73 @@
 
     private void GoSyncSettings() => NavigationManager.NavigateTo("/syncsettings");
     private void GoGlobalVars() => NavigationManager.NavigateTo("/globalvars");
-    private void GoPermissionCheck()
+
+    private async Task CheckAccessibilityStatusAsync()
     {
-        Microsoft.Maui.Storage.Preferences.Set("permission_skipped", false);
-        NavigationManager.NavigateTo("/permission");
+        await Task.Run(() =>
+        {
+            _accessibilityEnabled = AcService.IsActivated();
+            _shizukuAvailable = AcService.IsShizukuAvailable();
+        });
+        StateHasChanged();
     }
+
+    private async Task EnableAccessibility()
+    {
+        _enabling = true;
+        StateHasChanged();
+        try
+        {
+            if (_shizukuAvailable)
+            {
+                if (!AcService.IsShizukuAuthorized())
+                {
+                    await AcService.RequestShizukuAuthorization();
+                    // Permission result is async (system dialog). User may not have granted yet.
+                    // Fallback to system settings for now; once Shizuku bindUserService is implemented,
+                    // we can retry TryEnableAccessibility after a short delay.
+                    Snackbar.Add(LocalizationService.GetString("ShizukuAuthNeeded"), Severity.Info);
+                    AcService.OpenSettings();
+                    return;
+                }
+                var enabled = await AcService.TryEnableAccessibility();
+                if (enabled)
+                {
+                    _accessibilityEnabled = true;
+                    Snackbar.Add(LocalizationService.GetString("AccessibilityEnabled"), Severity.Success);
+                    return;
+                }
+            }
+            // Fallback: open system settings
+            AcService.OpenSettings();
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+        finally
+        {
+            _enabling = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OpenShizukuWebsite()
+    {
+        try
+        {
+            var url = "https://shizuku.fankes.top/";
+            Microsoft.Maui.ApplicationModel.Browser.OpenAsync(url);
+        }
+        catch { }
+    }
+
     private void QuitApp() => Application.Current?.Quit();
 
     public void Dispose()
     {
         ThemeService.OnThemeChanged -= UpdateThemeValue;
         LocalizationService.OnLanguageChanged -= OnLanguageChanged;
+        WeakReferenceMessenger.Default.Unregister<AppResumedMessage>(this);
     }
 }

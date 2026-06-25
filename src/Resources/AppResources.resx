@@ -1132,4 +1132,28 @@
   <data name="ConfirmPush" xml:space="preserve">
     <value>Confirm &amp; Push</value>
   </data>
+  <data name="AccessibilityService" xml:space="preserve">
+    <value>Accessibility Service</value>
+  </data>
+  <data name="AccessibilityStatusEnabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="AccessibilityNotEnabled" xml:space="preserve">
+    <value>Not enabled</value>
+  </data>
+  <data name="OneClickEnable" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="ShizukuHint" xml:space="preserve">
+    <value>Install Shizuku to enable accessibility without leaving the app.</value>
+  </data>
+  <data name="LearnMore" xml:space="preserve">
+    <value>Learn More</value>
+  </data>
+  <data name="Enabling" xml:space="preserve">
+    <value>Enabling...</value>
+  </data>
+  <data name="ShizukuAuthNeeded" xml:space="preserve">
+    <value>Shizuku authorization required. Please grant permission in the dialog.</value>
+  </data>
 </root>
