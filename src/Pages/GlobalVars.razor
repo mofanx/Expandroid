@@ -25,7 +25,7 @@
 
     @if (_showEditor)
     {
-        <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudPaper Class="pa-4" Elevation="1">
             <MudStack Spacing="3">
                 <MudTextField @ref="_nameRef" @bind-Value="currentVar.Name" Label="@localizationService.GetString("VariableName")" Variant="Variant.Outlined" Dense="true" KeyDown="OnEditorKeyDown" />
                 <MudSelect @bind-Value="currentVar.Type" T="string" Label="@localizationService.GetString("VariableType")" Dense="true" Variant="Variant.Outlined" Class="mb-2">
