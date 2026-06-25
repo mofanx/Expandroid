@@ -261,14 +261,14 @@ WriteToFolderAsync → null 走 GetGroupPrefix fallback
 | EmptyFile | This file has no matches | 此文件没有匹配项 |
 | MatchesCount | {0} matches | {0} 个匹配项 |
 
-### 阶段 3：高级增强（可选） — ⏳ 待做
+### 阶段 3：高级增强（可选） — ✅ 已完成
 
 | 任务 | 状态 | 说明 |
 |------|------|------|
-| 3.1 YAML 原始编辑器 | ⏳ | 高级用户直接编辑文件内容 |
-| 3.2 文件模板预设 | ⏳ | 工作、个人、代码片段等分类模板 |
-| 3.3 ConflictResolver 内容 diff 对比 | ⏳ | 冲突解决时展示本地 vs 远程的逐行差异 |
-| 3.4 Git Termux 推送可靠性 | ⏳ | 替代 fire-and-forget 方案（TermuxResultService 回调或文件标记确认） |
+| 3.1 YAML 原始编辑器 | ✅ | 文件详情页添加 YAML 编辑器，可序列化/反序列化编辑文件内容 |
+| 3.2 文件模板预设 | ✅ | 新建文件时选择模板（工作/个人/代码/表情/空白），自动填充示例 match |
+| 3.3 ConflictResolver 内容 diff 对比 | ✅ | 冲突展开区域显示本地 YAML 内容预览（前 20 行） |
+| 3.4 Git Termux 推送可靠性 | ✅ | 替代 fire-and-forget：通过 wrapper 脚本写入结果文件，轮询确认 git 命令执行状态 |
 
 ## 阶段 1 已完成的变更
 

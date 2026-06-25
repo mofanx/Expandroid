@@ -216,24 +216,45 @@ namespace EspansoGo.Services
 #if ANDROID
         private async Task<bool> RunGitViaTermuxAsync(string args, string workingDir, CancellationToken ct)
         {
+            var resultFile = Path.Combine(FileSystem.Current.CacheDirectory, $"git_result_{Guid.NewGuid():N}.txt");
+            if (File.Exists(resultFile)) File.Delete(resultFile);
+
+            var escapedArgs = args.Replace("'", "'\\''");
+            var wrapperScript = $"git {escapedArgs}; echo $? > '{resultFile}'";
+
             var intent = new Android.Content.Intent();
             intent.SetClassName("com.termux", "com.termux.app.RunCommandService");
             intent.SetAction("com.termux.RUN_COMMAND");
-            intent.PutExtra("com.termux.RUN_COMMAND_PATH", "/data/data/com.termux/files/usr/bin/git");
-            intent.PutExtra("com.termux.RUN_COMMAND_ARGUMENTS", new string[] { args });
+            intent.PutExtra("com.termux.RUN_COMMAND_PATH", "/data/data/com.termux/files/usr/bin/sh");
+            intent.PutExtra("com.termux.RUN_COMMAND_ARGUMENTS", new string[] { "-c", wrapperScript });
             intent.PutExtra("com.termux.RUN_COMMAND_WORKDIR", workingDir);
             intent.PutExtra("com.termux.RUN_COMMAND_BACKGROUND", false);
             intent.PutExtra("com.termux.RUN_COMMAND_SESSION_ACTION", "0");
 
             AndroidX.Core.Content.ContextCompat.StartForegroundService(Android.App.Application.Context, intent);
 
-            // Termux RUN_COMMAND is fire-and-forget: there is no synchronous way to know if the
-            // git command succeeded. We wait a fixed delay as a best-effort heuristic.
-            // For long operations (clone/push), this may return true before completion.
-            // A more robust solution would use Termux:Tasker or a result callback via
-            // TermuxResultService, but that requires additional Termux configuration.
-            await Task.Delay(5000, ct);
-            return true;
+            var timeout = TimeSpan.FromSeconds(30);
+            var deadline = DateTime.UtcNow + timeout;
+            while (DateTime.UtcNow < deadline)
+            {
+                await Task.Delay(1000, ct);
+                if (File.Exists(resultFile))
+                {
+                    try
+                    {
+                        var content = await File.ReadAllTextAsync(resultFile, ct);
+                        if (int.TryParse(content.Trim(), out var exitCode))
+                        {
+                            File.Delete(resultFile);
+                            return exitCode == 0;
+                        }
+                    }
+                    catch { }
+                }
+            }
+
+            Debug.WriteLine($"RunGitViaTermuxAsync timed out waiting for result file: {args}");
+            return false;
         }
 #endif
 

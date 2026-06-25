@@ -1099,4 +1099,28 @@
   <data name="LocalContent" xml:space="preserve">
     <value>Local Content Preview</value>
   </data>
+  <data name="YamlEditor" xml:space="preserve">
+    <value>YAML Editor</value>
+  </data>
+  <data name="FileTemplates" xml:space="preserve">
+    <value>File Templates</value>
+  </data>
+  <data name="TemplateWork" xml:space="preserve">
+    <value>Work</value>
+  </data>
+  <data name="TemplatePersonal" xml:space="preserve">
+    <value>Personal</value>
+  </data>
+  <data name="TemplateCode" xml:space="preserve">
+    <value>Code Snippets</value>
+  </data>
+  <data name="TemplateEmoji" xml:space="preserve">
+    <value>Emoji</value>
+  </data>
+  <data name="TemplateBlank" xml:space="preserve">
+    <value>Blank</value>
+  </data>
+  <data name="SelectTemplate" xml:space="preserve">
+    <value>Select a template</value>
+  </data>
 </root>

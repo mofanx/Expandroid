@@ -203,6 +203,12 @@ namespace EspansoGo.Services
             return _serializer.Serialize(dict);
         }
 
+        public string SerializeFileMatches(List<Match> matches)
+        {
+            var group = new MatchGroup { Matches = matches };
+            return SerializeMatchGroup(group);
+        }
+
         public async Task WriteToFolderAsync(string folderPath, Dictionary<string, Match> dict, List<Var> globalVars = null, CancellationToken ct = default)
         {
             var grouped = GroupMatchesBySourceFile(dict);

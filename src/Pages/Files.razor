@@ -61,30 +61,45 @@
 else
 {
     <MudStack Spacing="3">
-        <MudTextField @bind-Value="_searchQuery" Label="@LocalizationService.GetString("Search")" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" />
-
-        @if (_filteredMatches.Count == 0)
+        @if (_yamlEditMode)
         {
-            <MudPaper Elevation="1" Class="pa-8 text-center">
-                <MudText Typo="Typo.body1" Color="Color.Default">@LocalizationService.GetString("EmptyFile")</MudText>
-            </MudPaper>
+            <MudText Typo="Typo.h6">@LocalizationService.GetString("YamlEditor")</MudText>
+            <MudTextField @bind-Value="_yamlText" Variant="Variant.Outlined" Lines="20" Style="font-family: monospace; font-size: 0.85rem;" />
+            <MudStack Row="true" Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveYamlEdit">@LocalizationService.GetString("Save")</MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="CancelYamlEdit">@LocalizationService.GetString("Cancel")</MudButton>
+            </MudStack>
         }
         else
         {
-            @foreach (var item in _filteredMatches)
-            {
-                <MatchCard Item="item" OnEdit="() => EditMatch(item)" OnDelete="async () => await DeleteMatch(item)" @key="item.Key" />
-            }
-        }
+            <MudTextField @bind-Value="_searchQuery" Label="@LocalizationService.GetString("Search")" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" />
 
-        <MudStack Row="true" Spacing="2" Class="mt-2">
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="OpenRenameDialog">
-                @LocalizationService.GetString("RenameFile")
-            </MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="ConfirmDeleteFile">
-                @LocalizationService.GetString("DeleteFile")
-            </MudButton>
-        </MudStack>
+            @if (_filteredMatches.Count == 0)
+            {
+                <MudPaper Elevation="1" Class="pa-8 text-center">
+                    <MudText Typo="Typo.body1" Color="Color.Default">@LocalizationService.GetString("EmptyFile")</MudText>
+                </MudPaper>
+            }
+            else
+            {
+                @foreach (var item in _filteredMatches)
+                {
+                    <MatchCard Item="item" OnEdit="() => EditMatch(item)" OnDelete="async () => await DeleteMatch(item)" @key="item.Key" />
+                }
+            }
+
+            <MudStack Row="true" Spacing="2" Class="mt-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="OpenRenameDialog">
+                    @LocalizationService.GetString("RenameFile")
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="ConfirmDeleteFile">
+                    @LocalizationService.GetString("DeleteFile")
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Code" OnClick="EnterYamlEditMode">
+                    @LocalizationService.GetString("YamlEditor")
+                </MudButton>
+            </MudStack>
+        }
     </MudStack>
 }
 
@@ -98,6 +113,8 @@ else
 
     private List<IGrouping<string, KeyValuePair<string, Match>>> _fileGroups = new();
     private List<KeyValuePair<string, Match>> _filteredMatches = new();
+    private bool _yamlEditMode = false;
+    private string _yamlText = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -210,9 +227,82 @@ else
         }
 
         Preferences.Set("last_source_file", newName);
+
+        var template = await Application.Current.MainPage.DisplayActionSheet(
+            LocalizationService.GetString("SelectTemplate"),
+            LocalizationService.GetString("Cancel"),
+            null,
+            LocalizationService.GetString("TemplateBlank"),
+            LocalizationService.GetString("TemplateWork"),
+            LocalizationService.GetString("TemplatePersonal"),
+            LocalizationService.GetString("TemplateCode"),
+            LocalizationService.GetString("TemplateEmoji"));
+
+        if (template == LocalizationService.GetString("Cancel") || string.IsNullOrEmpty(template))
+        {
+            UpdateView();
+            StateHasChanged();
+            return;
+        }
+
+        var seedMatches = GetTemplateMatches(template, newName);
+        if (seedMatches.Count > 0)
+        {
+            foreach (var m in seedMatches)
+            {
+                if (!string.IsNullOrEmpty(m.Trigger) && !_dict.ContainsKey(m.Trigger))
+                    _dict[m.Trigger] = m;
+            }
+            await SaveDictAsync();
+        }
+
         Snackbar.Add(LocalizationService.GetString("NewFile") + ": " + newName, Severity.Success);
         UpdateView();
         StateHasChanged();
+    }
+
+    private List<Match> GetTemplateMatches(string templateName, string sourceFile)
+    {
+        var blank = LocalizationService.GetString("TemplateBlank");
+        var work = LocalizationService.GetString("TemplateWork");
+        var personal = LocalizationService.GetString("TemplatePersonal");
+        var code = LocalizationService.GetString("TemplateCode");
+        var emoji = LocalizationService.GetString("TemplateEmoji");
+
+        if (templateName == work)
+        {
+            return new()
+            {
+                new() { Trigger = ":sig", Replace = "Best regards,\nYour Name", SourceFile = sourceFile, Vars = new() },
+                new() { Trigger = ":meeting", Replace = "Meeting notes:\n\nDate: \nAttendees: \nAgenda: ", SourceFile = sourceFile, Vars = new() },
+            };
+        }
+        if (templateName == personal)
+        {
+            return new()
+            {
+                new() { Trigger = ":addr", Replace = "123 Main St, City, Country", SourceFile = sourceFile, Vars = new() },
+                new() { Trigger = ":phone", Replace = "+1-555-0100", SourceFile = sourceFile, Vars = new() },
+            };
+        }
+        if (templateName == code)
+        {
+            return new()
+            {
+                new() { Trigger = ":for", Replace = "for (int i = 0; i < count; i++)\n{\n    \n}", SourceFile = sourceFile, Vars = new() },
+                new() { Trigger = ":try", Replace = "try\n{\n    \n}\ncatch (Exception ex)\n{\n    \n}", SourceFile = sourceFile, Vars = new() },
+            };
+        }
+        if (templateName == emoji)
+        {
+            return new()
+            {
+                new() { Trigger = ":happy", Replace = "😊", SourceFile = sourceFile, Vars = new() },
+                new() { Trigger = ":sad", Replace = "😢", SourceFile = sourceFile, Vars = new() },
+                new() { Trigger = ":heart", Replace = "❤️", SourceFile = sourceFile, Vars = new() },
+            };
+        }
+        return new();
     }
 
     private async Task OpenRenameDialog()
@@ -272,6 +362,69 @@ else
 
         await SaveDictAsync();
         NavigationManager.NavigateTo("/files");
+    }
+
+    private void EnterYamlEditMode()
+    {
+        var currentName = FileName == "__uncategorized__" ? null : FileName;
+        var matches = _dict.Where(kv =>
+            (kv.Value.SourceFile == currentName) ||
+            (kv.Value.SourceFile == null && FileName == "__uncategorized__"))
+            .Select(kv => kv.Value).ToList();
+        _yamlText = YamlWorkspace.SerializeFileMatches(matches);
+        _yamlEditMode = true;
+    }
+
+    private void CancelYamlEdit()
+    {
+        _yamlEditMode = false;
+        _yamlText = "";
+    }
+
+    private async Task SaveYamlEdit()
+    {
+        try
+        {
+            var group = YamlWorkspace.ParseYaml(_yamlText, FileName == "__uncategorized__" ? null : FileName);
+            if (group.Matches == null || group.Matches.Count == 0)
+            {
+                Snackbar.Add(LocalizationService.GetString("EmptyFile"), Severity.Warning);
+                return;
+            }
+
+            var currentName = FileName == "__uncategorized__" ? null : FileName;
+            var keysToRemove = _dict.Where(kv => kv.Value.SourceFile == currentName).Select(kv => kv.Key).ToList();
+            foreach (var key in keysToRemove)
+                _dict.Remove(key);
+
+            foreach (var match in group.Matches)
+            {
+                match.SourceFile = currentName;
+                if (match.Triggers is not null && match.Triggers.Count > 0)
+                {
+                    foreach (var t in match.Triggers)
+                    {
+                        var clone = new Match(match) { Trigger = t, SourceFile = currentName };
+                        _dict[t] = clone;
+                    }
+                }
+                else if (!string.IsNullOrEmpty(match.Trigger))
+                {
+                    _dict[match.Trigger] = match;
+                }
+            }
+
+            await SaveDictAsync();
+            _yamlEditMode = false;
+            _yamlText = "";
+            UpdateView();
+            StateHasChanged();
+            Snackbar.Add(LocalizationService.GetString("Saved"), Severity.Success);
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add(e.Message, Severity.Error);
+        }
     }
 
     private async Task SaveDictAsync()

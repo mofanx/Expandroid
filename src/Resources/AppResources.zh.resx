@@ -1099,4 +1099,28 @@
   <data name="LocalContent" xml:space="preserve">
     <value>本地内容预览</value>
   </data>
+  <data name="YamlEditor" xml:space="preserve">
+    <value>YAML 编辑器</value>
+  </data>
+  <data name="FileTemplates" xml:space="preserve">
+    <value>文件模板</value>
+  </data>
+  <data name="TemplateWork" xml:space="preserve">
+    <value>工作</value>
+  </data>
+  <data name="TemplatePersonal" xml:space="preserve">
+    <value>个人</value>
+  </data>
+  <data name="TemplateCode" xml:space="preserve">
+    <value>代码片段</value>
+  </data>
+  <data name="TemplateEmoji" xml:space="preserve">
+    <value>表情符号</value>
+  </data>
+  <data name="TemplateBlank" xml:space="preserve">
+    <value>空白</value>
+  </data>
+  <data name="SelectTemplate" xml:space="preserve">
+    <value>选择模板</value>
+  </data>
 </root>
