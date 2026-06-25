@@ -11,7 +11,10 @@
         @_pageTitle
     </MudText>
 
-    <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Inherit" OnClick="GoSettings" />
+    @if (!_hideSettings)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Inherit" OnClick="GoSettings" />
+    }
 </MudAppBar>
 
 @implements IDisposable
@@ -19,6 +22,7 @@
 @code {
     private string _pageTitle = "EspansoGo";
     private bool _showBack = false;
+    private bool _hideSettings = false;
 
     protected override void OnInitialized()
     {
@@ -53,67 +57,80 @@
         {
             _pageTitle = "EspansoGo";
             _showBack = false;
+            _hideSettings = false;
         }
         else if (path.StartsWith("tools"))
         {
             _pageTitle = LocalizationService.GetString("ToolsTitle");
-            _showBack = true;
+            _showBack = false;
+            _hideSettings = false;
         }
         else if (path.StartsWith("permission"))
         {
             _pageTitle = LocalizationService.GetString("PermissionCheck");
             _showBack = false;
+            _hideSettings = true;
         }
         else if (path.StartsWith("match-editor"))
         {
             _pageTitle = path.Contains("edit=") ? LocalizationService.GetString("EditMatch") : LocalizationService.GetString("AddNewMatch");
             _showBack = true;
+            _hideSettings = true;
         }
         else if (path.StartsWith("syncsetup"))
         {
             _pageTitle = LocalizationService.GetString("SetupWizardTitle");
             _showBack = true;
+            _hideSettings = true;
         }
         else if (path.StartsWith("syncsettings"))
         {
             _pageTitle = LocalizationService.GetString("SyncSettings");
             _showBack = true;
+            _hideSettings = true;
         }
         else if (path.StartsWith("packages"))
         {
             _pageTitle = LocalizationService.GetString("PackageStore");
-            _showBack = true;
+            _showBack = false;
+            _hideSettings = false;
         }
         else if (path.StartsWith("globalvars"))
         {
             _pageTitle = LocalizationService.GetString("GlobalVariables");
             _showBack = true;
+            _hideSettings = true;
         }
         else if (path.StartsWith("files/"))
         {
             var fileName = path.Substring("files/".Length);
             _pageTitle = fileName == "__uncategorized__" ? LocalizationService.GetString("Uncategorized") : Uri.UnescapeDataString(fileName);
             _showBack = true;
+            _hideSettings = false;
         }
         else if (path.StartsWith("files"))
         {
             _pageTitle = LocalizationService.GetString("Files");
             _showBack = false;
+            _hideSettings = false;
         }
         else if (path.StartsWith("conflicts"))
         {
             _pageTitle = LocalizationService.GetString("ConflictResolution");
             _showBack = true;
+            _hideSettings = true;
         }
         else if (path.StartsWith("settings"))
         {
             _pageTitle = LocalizationService.GetString("Settings");
             _showBack = true;
+            _hideSettings = true;
         }
         else
         {
             _pageTitle = "EspansoGo";
             _showBack = false;
+            _hideSettings = false;
         }
     }
 
@@ -128,7 +145,7 @@
             NavigationManager.NavigateTo("/");
         else if (path.StartsWith("syncsetup"))
             NavigationManager.NavigateTo("/syncsettings");
-        else if (path.StartsWith("syncsettings") || path.StartsWith("globalvars") || path.StartsWith("packages"))
+        else if (path.StartsWith("syncsettings") || path.StartsWith("globalvars"))
             NavigationManager.NavigateTo("/settings");
         else
             NavigationManager.NavigateTo("/");

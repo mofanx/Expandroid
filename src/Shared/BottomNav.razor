@@ -19,9 +19,9 @@
                             Href="/tools" Active="@(_currentRoute == "/tools")" Class="bottom-nav-item">
                     <MudText Typo="Typo.caption">@LocalizationService.GetString("Tools")</MudText>
                 </MudNavLink>
-                <MudNavLink Icon="@Icons.Material.Filled.Settings" Title="@LocalizationService.GetString("Settings")"
-                            Href="/settings" Active="@(_currentRoute == "/settings")" Class="bottom-nav-item">
-                    <MudText Typo="Typo.caption">@LocalizationService.GetString("Settings")</MudText>
+                <MudNavLink Icon="@Icons.Material.Filled.Extension" Title="@LocalizationService.GetString("PackageStore")"
+                            Href="/packages" Active="@(_currentRoute == "/packages")" Class="bottom-nav-item">
+                    <MudText Typo="Typo.caption">@LocalizationService.GetString("PackageStore")</MudText>
                 </MudNavLink>
             </MudNavMenu>
         </MudStack>
@@ -132,7 +132,12 @@
         }
         else if (path.StartsWith("settings"))
         {
-            _currentRoute = "/settings";
+            _currentRoute = path;
+            _showNav = false;
+        }
+        else if (path.StartsWith("packages"))
+        {
+            _currentRoute = "/packages";
             _showNav = true;
         }
         else if (path.StartsWith("globalvars"))
