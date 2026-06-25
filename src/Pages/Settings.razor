@@ -56,6 +56,15 @@
     <MudText Typo="Typo.h5" Class="mt-2 mb-1">@LocalizationService.GetString("Features")</MudText>
     <MudPaper Elevation="1" Class="pa-4">
         <MudList>
+            <MudListItem Clickable="true" OnClick="GoFiles">
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Folder" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1">@LocalizationService.GetString("FileManagement")</MudText>
+                    </MudStack>
+                    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Style="opacity: 0.5;" />
+                </MudStack>
+            </MudListItem>
             <MudListItem Clickable="true" OnClick="GoTools">
                 <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
                     <MudStack Row="true" Align="Align.Center" Spacing="2">
@@ -160,6 +169,7 @@
     }
 
     private void GoSyncSettings() => NavigationManager.NavigateTo("/syncsettings");
+    private void GoFiles() => NavigationManager.NavigateTo("/files");
     private void GoTools() => NavigationManager.NavigateTo("/tools");
     private void GoPackages() => NavigationManager.NavigateTo("/packages");
     private void GoGlobalVars() => NavigationManager.NavigateTo("/globalvars");

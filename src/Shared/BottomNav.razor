@@ -11,9 +11,17 @@
                             Href="/" Active="@(_currentRoute == "/")" Class="bottom-nav-item">
                     <MudText Typo="Typo.caption">@LocalizationService.GetString("Matches")</MudText>
                 </MudNavLink>
+                <MudNavLink Icon="@Icons.Material.Filled.Folder" Title="@LocalizationService.GetString("Files")"
+                            Href="/files" Active="@(_currentRoute == "/files")" Class="bottom-nav-item">
+                    <MudText Typo="Typo.caption">@LocalizationService.GetString("Files")</MudText>
+                </MudNavLink>
                 <MudNavLink Icon="@Icons.Material.Filled.Build" Title="@LocalizationService.GetString("Tools")"
                             Href="/tools" Active="@(_currentRoute == "/tools")" Class="bottom-nav-item">
                     <MudText Typo="Typo.caption">@LocalizationService.GetString("Tools")</MudText>
+                </MudNavLink>
+                <MudNavLink Icon="@Icons.Material.Filled.Settings" Title="@LocalizationService.GetString("Settings")"
+                            Href="/settings" Active="@(_currentRoute == "/settings")" Class="bottom-nav-item">
+                    <MudText Typo="Typo.caption">@LocalizationService.GetString("Settings")</MudText>
                 </MudNavLink>
             </MudNavMenu>
         </MudStack>
@@ -89,6 +97,11 @@
         if (string.IsNullOrEmpty(path) || path == "/")
         {
             _currentRoute = "/";
+            _showNav = true;
+        }
+        else if (path.StartsWith("files"))
+        {
+            _currentRoute = "/files";
             _showNav = true;
         }
         else if (path.StartsWith("tools"))

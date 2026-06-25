@@ -1,0 +1,297 @@
+@page "/files"
+@page "/files/{FileName}"
+@using EspansoGo.Models
+@using EspansoGo.Services
+@using System.Text.Json
+@using System.Linq
+@inject ILocalizationService LocalizationService
+@inject EspansoGo.Services.IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject SyncManager SyncManager
+@inject YamlWorkspace YamlWorkspace
+@inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+@implements IDisposable
+
+@if (string.IsNullOrEmpty(FileName))
+{
+    <MudStack Spacing="3">
+        <MudStack Row="true" Justify="@Justify.SpaceBetween" Align="Align.Center">
+            <MudText Typo="Typo.h5" Class="mt-2 mb-1">@LocalizationService.GetString("Files")</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+                @LocalizationService.GetString("NewFile")
+            </MudButton>
+        </MudStack>
+
+        @if (_loading)
+        {
+            @for (int i = 0; i < 4; i++)
+            {
+                <MudSkeleton Height="56px" Elevation="1" />
+            }
+        }
+        else if (_fileGroups.Count == 0)
+        {
+            <MudPaper Elevation="1" Class="pa-8 text-center">
+                <MudText Typo="Typo.body1" Color="Color.Default">@LocalizationService.GetString("EmptyFile")</MudText>
+            </MudPaper>
+        }
+        else
+        {
+            <MudPaper Elevation="1" Class="pa-2">
+                <MudList>
+                    @foreach (var group in _fileGroups)
+                    {
+                        <MudListItem Clickable="true" OnClick="() => OpenFile(group.Key)">
+                            <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                                <MudStack Row="true" Align="Align.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" />
+                                    <MudText Typo="Typo.subtitle1">@(group.Key == null ? LocalizationService.GetString("Uncategorized") : group.Key)</MudText>
+                                </MudStack>
+                                <MudChip Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                                    @string.Format(LocalizationService.GetString("MatchesCount"), group.Count)
+                                </MudChip>
+                            </MudStack>
+                        </MudListItem>
+                    }
+                </MudList>
+            </MudPaper>
+        }
+    </MudStack>
+}
+else
+{
+    <MudStack Spacing="3">
+        <MudTextField @bind-Value="_searchQuery" Label="@LocalizationService.GetString("Search")" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" />
+
+        @if (_filteredMatches.Count == 0)
+        {
+            <MudPaper Elevation="1" Class="pa-8 text-center">
+                <MudText Typo="Typo.body1" Color="Color.Default">@LocalizationService.GetString("EmptyFile")</MudText>
+            </MudPaper>
+        }
+        else
+        {
+            @foreach (var item in _filteredMatches)
+            {
+                <MatchCard Item="item" OnEdit="() => EditMatch(item)" OnDelete="async () => await DeleteMatch(item)" @key="item.Key" />
+            }
+        }
+
+        <MudStack Row="true" Spacing="2" Class="mt-2">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="OpenRenameDialog">
+                @LocalizationService.GetString("RenameFile")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="ConfirmDeleteFile">
+                @LocalizationService.GetString("DeleteFile")
+            </MudButton>
+        </MudStack>
+    </MudStack>
+}
+
+@code {
+    [Parameter] public string FileName { get; set; }
+
+    private Dictionary<string, Match> _dict = new();
+    private bool _loading = true;
+    private string _searchQuery = "";
+    private List<Var> _globalVars = new();
+
+    private List<IGrouping<string, KeyValuePair<string, Match>>> _fileGroups = new();
+    private List<KeyValuePair<string, Match>> _filteredMatches = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDictAsync();
+        _loading = false;
+        UpdateView();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!_loading)
+            UpdateView();
+    }
+
+    private async Task LoadDictAsync()
+    {
+        if (File.Exists(AppSettings.DictPath))
+        {
+            try
+            {
+                using var stream = File.OpenRead(AppSettings.DictPath);
+                _dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(stream);
+            }
+            catch
+            {
+                _dict = new();
+            }
+        }
+
+        if (File.Exists(AppSettings.GlobalVarsPath))
+        {
+            try
+            {
+                _globalVars = JsonSerializer.Deserialize<List<Var>>(File.ReadAllText(AppSettings.GlobalVarsPath));
+            }
+            catch { }
+        }
+    }
+
+    private void UpdateView()
+    {
+        if (string.IsNullOrEmpty(FileName))
+        {
+            _fileGroups = _dict
+                .GroupBy(kv => kv.Value.SourceFile)
+                .OrderBy(g => g.Key == null ? 1 : 0)
+                .ThenBy(g => g.Key)
+                .ToList();
+        }
+        else
+        {
+            var matches = _dict.Where(kv =>
+                (kv.Value.SourceFile == FileName) ||
+                (kv.Value.SourceFile == null && FileName == "__uncategorized__"))
+                .ToList();
+
+            if (!string.IsNullOrEmpty(_searchQuery))
+            {
+                matches = matches.Where(kv =>
+                    kv.Key.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    (kv.Value.Replace?.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ?? false))
+                    .ToList();
+            }
+
+            _filteredMatches = matches;
+        }
+    }
+
+    private void OpenFile(string fileName)
+    {
+        var route = fileName == null ? "/files/__uncategorized__" : $"/files/{fileName}";
+        NavigationManager.NavigateTo(route);
+    }
+
+    private void EditMatch(KeyValuePair<string, Match> item)
+    {
+        NavigationManager.NavigateTo($"/?edit={Uri.EscapeDataString(item.Key)}");
+    }
+
+    private async Task DeleteMatch(KeyValuePair<string, Match> item)
+    {
+        _dict.Remove(item.Key);
+        await SaveDictAsync();
+        UpdateView();
+        StateHasChanged();
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var newName = await Application.Current.MainPage.DisplayPromptAsync(
+            LocalizationService.GetString("NewFile"),
+            LocalizationService.GetString("FileNameRequired"),
+            LocalizationService.GetString("Create"),
+            LocalizationService.GetString("Cancel"));
+
+        if (string.IsNullOrWhiteSpace(newName)) return;
+
+        newName = newName.Trim();
+        if (!newName.EndsWith(".yml") && !newName.EndsWith(".yaml"))
+        {
+            Snackbar.Add(LocalizationService.GetString("InvalidFileName"), Severity.Error);
+            return;
+        }
+
+        var existing = _dict.Values.Select(m => m.SourceFile).Where(s => !string.IsNullOrEmpty(s)).ToHashSet();
+        if (existing.Contains(newName))
+        {
+            Snackbar.Add(LocalizationService.GetString("FileAlreadyExists"), Severity.Error);
+            return;
+        }
+
+        Preferences.Set("last_source_file", newName);
+        Snackbar.Add(LocalizationService.GetString("NewFile") + ": " + newName, Severity.Success);
+        UpdateView();
+        StateHasChanged();
+    }
+
+    private async Task OpenRenameDialog()
+    {
+        var currentName = FileName == "__uncategorized__" ? null : FileName;
+        if (currentName == null) return;
+
+        var newName = await Application.Current.MainPage.DisplayPromptAsync(
+            LocalizationService.GetString("RenameFile"),
+            LocalizationService.GetString("FileNameRequired"),
+            LocalizationService.GetString("Rename"),
+            LocalizationService.GetString("Cancel"),
+            initialValue: currentName);
+
+        if (string.IsNullOrWhiteSpace(newName)) return;
+
+        newName = newName.Trim();
+        if (!newName.EndsWith(".yml") && !newName.EndsWith(".yaml"))
+        {
+            Snackbar.Add(LocalizationService.GetString("InvalidFileName"), Severity.Error);
+            return;
+        }
+
+        var existing = _dict.Values.Select(m => m.SourceFile).Where(s => !string.IsNullOrEmpty(s) && s != currentName).ToHashSet();
+        if (existing.Contains(newName))
+        {
+            Snackbar.Add(LocalizationService.GetString("FileAlreadyExists"), Severity.Error);
+            return;
+        }
+
+        foreach (var kv in _dict)
+        {
+            if (kv.Value.SourceFile == currentName)
+                kv.Value.SourceFile = newName;
+        }
+
+        await SaveDictAsync();
+        NavigationManager.NavigateTo($"/files/{newName}");
+    }
+
+    private async Task ConfirmDeleteFile()
+    {
+        var currentName = FileName == "__uncategorized__" ? null : FileName;
+        if (currentName == null) return;
+
+        var confirm = await DialogService.DisplayConfirmAsync(
+            LocalizationService.GetString("DeleteFile"),
+            LocalizationService.GetString("DeleteFileWarning"),
+            LocalizationService.GetString("Delete"),
+            LocalizationService.GetString("Cancel"));
+
+        if (!confirm) return;
+
+        var keysToRemove = _dict.Where(kv => kv.Value.SourceFile == currentName).Select(kv => kv.Key).ToList();
+        foreach (var key in keysToRemove)
+            _dict.Remove(key);
+
+        await SaveDictAsync();
+        NavigationManager.NavigateTo("/files");
+    }
+
+    private async Task SaveDictAsync()
+    {
+        try
+        {
+            var str = JsonSerializer.Serialize(_dict);
+            await File.WriteAllTextAsync(AppSettings.DictPath, str);
+
+            var config = SyncManager.GetConfig();
+            if (config.Method != SyncMethod.None && !string.IsNullOrEmpty(config.SyncUri))
+            {
+                _ = SyncManager.PushAsync(_dict, _globalVars);
+            }
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add(e.Message, Severity.Error);
+        }
+    }
+
+    public void Dispose() { }
+}

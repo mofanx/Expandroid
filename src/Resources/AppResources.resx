@@ -1057,4 +1057,43 @@
   <data name="Update" xml:space="preserve">
     <value>Update</value>
   </data>
+  <data name="Files" xml:space="preserve">
+    <value>Files</value>
+  </data>
+  <data name="FileManagement" xml:space="preserve">
+    <value>File Management</value>
+  </data>
+  <data name="NewFile" xml:space="preserve">
+    <value>New File</value>
+  </data>
+  <data name="RenameFile" xml:space="preserve">
+    <value>Rename File</value>
+  </data>
+  <data name="DeleteFile" xml:space="preserve">
+    <value>Delete File</value>
+  </data>
+  <data name="DeleteFileWarning" xml:space="preserve">
+    <value>All matches in this file will be deleted. Continue?</value>
+  </data>
+  <data name="MoveTo" xml:space="preserve">
+    <value>Move to</value>
+  </data>
+  <data name="Uncategorized" xml:space="preserve">
+    <value>Uncategorized</value>
+  </data>
+  <data name="FileNameRequired" xml:space="preserve">
+    <value>File name is required</value>
+  </data>
+  <data name="InvalidFileName" xml:space="preserve">
+    <value>File name must end with .yml or .yaml</value>
+  </data>
+  <data name="FileAlreadyExists" xml:space="preserve">
+    <value>A file with this name already exists</value>
+  </data>
+  <data name="EmptyFile" xml:space="preserve">
+    <value>This file has no matches</value>
+  </data>
+  <data name="MatchesCount" xml:space="preserve">
+    <value>{0} matches</value>
+  </data>
 </root>

@@ -84,6 +84,17 @@
             _pageTitle = LocalizationService.GetString("GlobalVariables");
             _showBack = true;
         }
+        else if (path.StartsWith("files/"))
+        {
+            var fileName = path.Substring("files/".Length);
+            _pageTitle = fileName == "__uncategorized__" ? LocalizationService.GetString("Uncategorized") : Uri.UnescapeDataString(fileName);
+            _showBack = true;
+        }
+        else if (path.StartsWith("files"))
+        {
+            _pageTitle = LocalizationService.GetString("Files");
+            _showBack = false;
+        }
         else if (path.StartsWith("conflicts"))
         {
             _pageTitle = LocalizationService.GetString("ConflictResolution");
@@ -106,6 +117,12 @@
         var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         if (path.StartsWith("conflicts"))
             NavigationManager.NavigateTo("/syncsettings");
+        else if (path.StartsWith("files/"))
+            NavigationManager.NavigateTo("/files");
+        else if (path.StartsWith("syncsetup"))
+            NavigationManager.NavigateTo("/syncsettings");
+        else if (path.StartsWith("syncsettings") || path.StartsWith("globalvars") || path.StartsWith("packages"))
+            NavigationManager.NavigateTo("/settings");
         else
             NavigationManager.NavigateTo("/");
     }

@@ -1057,4 +1057,43 @@
   <data name="Update" xml:space="preserve">
     <value>更新</value>
   </data>
+  <data name="Files" xml:space="preserve">
+    <value>文件</value>
+  </data>
+  <data name="FileManagement" xml:space="preserve">
+    <value>文件管理</value>
+  </data>
+  <data name="NewFile" xml:space="preserve">
+    <value>新建文件</value>
+  </data>
+  <data name="RenameFile" xml:space="preserve">
+    <value>重命名文件</value>
+  </data>
+  <data name="DeleteFile" xml:space="preserve">
+    <value>删除文件</value>
+  </data>
+  <data name="DeleteFileWarning" xml:space="preserve">
+    <value>该文件下所有匹配项将被删除，是否继续？</value>
+  </data>
+  <data name="MoveTo" xml:space="preserve">
+    <value>移动到</value>
+  </data>
+  <data name="Uncategorized" xml:space="preserve">
+    <value>未分类</value>
+  </data>
+  <data name="FileNameRequired" xml:space="preserve">
+    <value>文件名为必填项</value>
+  </data>
+  <data name="InvalidFileName" xml:space="preserve">
+    <value>文件名必须以 .yml 或 .yaml 结尾</value>
+  </data>
+  <data name="FileAlreadyExists" xml:space="preserve">
+    <value>同名文件已存在</value>
+  </data>
+  <data name="EmptyFile" xml:space="preserve">
+    <value>此文件没有匹配项</value>
+  </data>
+  <data name="MatchesCount" xml:space="preserve">
+    <value>{0} 个匹配项</value>
+  </data>
 </root>
