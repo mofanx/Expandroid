@@ -631,6 +631,9 @@ namespace EspansoGo.Services
 
             foreach (var item in group.Matches)
             {
+                if (string.IsNullOrEmpty(item.SourceFile) && !string.IsNullOrEmpty(group.SourceFile))
+                    item.SourceFile = group.SourceFile;
+
                 if (item.Triggers is not null && item.Triggers.Count > 0)
                 {
                     foreach (var t in item.Triggers)

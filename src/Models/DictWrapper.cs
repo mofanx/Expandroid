@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace EspansoGo.Models
 {
@@ -39,6 +40,7 @@ namespace EspansoGo.Models
             PropagateCase = og.PropagateCase;
             UppercaseStyle = og.UppercaseStyle;
             Regex = og.Regex;
+            SourceFile = og.SourceFile;
         }
         public string Trigger { get; set; }
         [YamlMember(Alias = "triggers")]
@@ -59,6 +61,10 @@ namespace EspansoGo.Models
         public string UppercaseStyle { get; set; }
         [YamlMember(Alias = "regex")]
         public string Regex { get; set; }
+
+        [YamlIgnore]
+        [JsonIgnore]
+        public string SourceFile { get; set; }
     }
     public class Var
     {
