@@ -48,7 +48,7 @@
                                     <MudText Typo="Typo.subtitle1">@(group.Key == null ? LocalizationService.GetString("Uncategorized") : group.Key)</MudText>
                                 </MudStack>
                                 <MudChip Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
-                                    @string.Format(LocalizationService.GetString("MatchesCount"), group.Count)
+                                    @string.Format(LocalizationService.GetString("MatchesCount"), group.Count())
                                 </MudChip>
                             </MudStack>
                         </MudListItem>
