@@ -220,7 +220,7 @@ namespace EspansoGo.Services
             if (File.Exists(resultFile)) File.Delete(resultFile);
 
             var escapedArgs = args.Replace("'", "'\\''");
-            var wrapperScript = $"git {escapedArgs}; echo $? > '{resultFile}'";
+            var wrapperScript = $"git {escapedArgs}; echo $? > '{resultFile}' 2>/dev/null || echo 1 > '{resultFile}'";
 
             var intent = new Android.Content.Intent();
             intent.SetClassName("com.termux", "com.termux.app.RunCommandService");
@@ -233,11 +233,12 @@ namespace EspansoGo.Services
 
             AndroidX.Core.Content.ContextCompat.StartForegroundService(Android.App.Application.Context, intent);
 
-            var timeout = TimeSpan.FromSeconds(30);
+            var timeout = TimeSpan.FromSeconds(60);
             var deadline = DateTime.UtcNow + timeout;
             while (DateTime.UtcNow < deadline)
             {
                 await Task.Delay(1000, ct);
+                if (ct.IsCancellationRequested) break;
                 if (File.Exists(resultFile))
                 {
                     try
@@ -245,7 +246,7 @@ namespace EspansoGo.Services
                         var content = await File.ReadAllTextAsync(resultFile, ct);
                         if (int.TryParse(content.Trim(), out var exitCode))
                         {
-                            File.Delete(resultFile);
+                            try { File.Delete(resultFile); } catch { }
                             return exitCode == 0;
                         }
                     }
@@ -254,6 +255,7 @@ namespace EspansoGo.Services
             }
 
             Debug.WriteLine($"RunGitViaTermuxAsync timed out waiting for result file: {args}");
+            try { File.Delete(resultFile); } catch { }
             return false;
         }
 #endif

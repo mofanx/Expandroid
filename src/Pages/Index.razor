@@ -409,6 +409,22 @@ else
         StartSafObserver();
 #endif
         _loading = false;
+
+        var query = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query.TrimStart('?');
+        var pairs = query.Split('&');
+        foreach (var pair in pairs)
+        {
+            var kv = pair.Split('=', 2);
+            if (kv.Length == 2 && kv[0] == "edit")
+            {
+                var editKey = Uri.UnescapeDataString(kv[1]);
+                if (dict.ContainsKey(editKey))
+                {
+                    await EditItem(new KeyValuePair<string, Match>(editKey, dict[editKey]));
+                }
+                break;
+            }
+        }
     }
     private async Task ImportAsync()
     {
@@ -647,6 +663,7 @@ else
     {
         dict[item.Trigger] = item;
         SendMessage("Add", item);
+        UpdateAvailableFiles();
         Snackbar.Add(localizationService.GetString("Restored"), Severity.Success);
     }
     private async Task SaveDictAsync(bool silent = false)
@@ -812,9 +829,7 @@ else
             if (!confirm) return;
         }
         editingKey = item.Key;
-        currentMatch.Trigger = item.Value.Trigger;
-        currentMatch.Replace = item.Value.Replace;
-        currentMatch.SourceFile = item.Value.SourceFile;
+        currentMatch = new Match(item.Value);
         if (item.Value.Vars is not null)
         {
             currentMatch.Vars = item.Value.Vars.Select(v => new Var(v)).ToList();
@@ -833,7 +848,7 @@ else
     {
         editingKey = null;
         _editingVar = null;
-        currentMatch = new() { Replace = "", Trigger = "", Vars = new() };
+        currentMatch = new() { Replace = "", Trigger = "", Vars = new(), SourceFile = GetDefaultSourceFile() };
         _showEditor = false;
         _isDirty = false;
         StateHasChanged();

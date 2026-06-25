@@ -284,18 +284,24 @@
             var grouped = YamlWorkspace.GroupMatchesBySourceFile(dict);
             var syncFolder = SyncManager.GetSyncFolderPath();
             var remoteFiles = new HashSet<string>();
-            if (!string.IsNullOrEmpty(syncFolder))
+            var canCheckRemote = !string.IsNullOrEmpty(syncFolder);
+            if (canCheckRemote)
             {
-                var remoteList = YamlWorkspace.GetFileList(syncFolder);
-                foreach (var rf in remoteList)
-                    remoteFiles.Add(Path.GetFileName(rf.Path));
+                try
+                {
+                    var remoteList = YamlWorkspace.GetFileList(syncFolder);
+                    foreach (var rf in remoteList)
+                        remoteFiles.Add(Path.GetFileName(rf.Path));
+                }
+                catch { }
             }
 
             _pushPreview.Clear();
             foreach (var (fileName, matches) in grouped)
             {
                 var exists = remoteFiles.Contains(fileName);
-                _pushPreview.Add($"{fileName} ({matches.Count}){(exists ? " ⚠️" : " ✨")}");
+                var marker = !canCheckRemote ? "" : exists ? " ⚠️" : " ✨";
+                _pushPreview.Add($"{fileName} ({matches.Count}){marker}");
             }
             List<Var> gv = null;
             if (File.Exists(AppSettings.GlobalVarsPath))
@@ -306,7 +312,8 @@
             if (gv != null && gv.Count > 0)
             {
                 var gvExists = remoteFiles.Contains("global_vars.yml");
-                _pushPreview.Add($"global_vars.yml ({gv.Count}){(gvExists ? " ⚠️" : " ✨")}");
+                var gvMarker = !canCheckRemote ? "" : gvExists ? " ⚠️" : " ✨";
+                _pushPreview.Add($"global_vars.yml ({gv.Count}){gvMarker}");
             }
             StateHasChanged();
         }

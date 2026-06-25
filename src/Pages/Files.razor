@@ -135,8 +135,8 @@ else
         {
             try
             {
-                using var stream = File.OpenRead(AppSettings.DictPath);
-                _dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(stream);
+                var json = await File.ReadAllTextAsync(AppSettings.DictPath);
+                _dict = JsonSerializer.Deserialize<Dictionary<string, Match>>(json);
             }
             catch
             {
@@ -148,7 +148,8 @@ else
         {
             try
             {
-                _globalVars = JsonSerializer.Deserialize<List<Var>>(File.ReadAllText(AppSettings.GlobalVarsPath));
+                var gvJson = await File.ReadAllTextAsync(AppSettings.GlobalVarsPath);
+                _globalVars = JsonSerializer.Deserialize<List<Var>>(gvJson);
             }
             catch { }
         }
