@@ -42,7 +42,7 @@
                 <MudRadioGroup T="string" Value="_currentLang" ValueChanged="ChangeLanguage" Class="ml-4">
                     @foreach (var lang in LocalizationService.GetAvailableLanguages())
                     {
-                        <MudRadioItem Value="@lang.Code" Label="@lang.NativeName" />
+                        <MudRadio Value="@lang.Code" Label="@lang.NativeName" />
                     }
                 </MudRadioGroup>
             </MudStack>
