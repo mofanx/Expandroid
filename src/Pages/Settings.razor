@@ -247,8 +247,8 @@
         StateHasChanged();
         try
         {
-            // Check if Shizuku is available and enabled
-            if (_shizukuAvailable && _useShizuku)
+            // If Shizuku is available, try to use it first
+            if (_shizukuAvailable)
             {
                 // Try to grant Shizuku authorization if not authorized
                 if (!AcService.IsShizukuAuthorized())
