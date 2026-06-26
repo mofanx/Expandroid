@@ -213,6 +213,12 @@ namespace EspansoGo.Services
         {
             var grouped = GroupMatchesBySourceFile(dict);
 
+            // Auto-create base.yml if folder is empty
+            if (grouped.Count == 0 && dict.Count > 0)
+            {
+                grouped.Add(("base.yml", dict.Values.ToList()));
+            }
+
             if (IsSafPath(folderPath))
             {
 #if ANDROID
@@ -312,12 +318,12 @@ namespace EspansoGo.Services
 
         private static string GetGroupPrefix(string trigger)
         {
-            if (string.IsNullOrEmpty(trigger)) return "misc";
+            if (string.IsNullOrEmpty(trigger)) return "base";
             var c = trigger[0];
             if (char.IsLetter(c)) return "base";
             if (c == ':') return "emoji";
             if (c == '/' || c == '\\') return "symbols";
-            return "misc";
+            return "base";
         }
 
         public List<SyncFileInfo> GetFileList(string folderPath)

@@ -45,7 +45,7 @@
                             <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
                                 <MudStack Row="true" Align="Align.Center" Spacing="2">
                                     <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Color="Color.Primary" />
-                                    <MudText Typo="Typo.body2">@(group.Key == null ? LocalizationService.GetString("Uncategorized") : group.Key)</MudText>
+                                    <MudText Typo="Typo.body2">@(group.Key == null ? "base.yml" : group.Key)</MudText>
                                 </MudStack>
                                 <MudChip Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
                                     @string.Format(LocalizationService.GetString("MatchesCount"), group.Count())
