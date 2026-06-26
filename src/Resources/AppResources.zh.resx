@@ -1177,7 +1177,4 @@
   <data name="ThemeLight" xml:space="preserve">
     <value>浅色</value>
   </data>
-  <data name="ThemeDark" xml:space="preserve">
-    <value>深色</value>
-  </data>
 </root>
