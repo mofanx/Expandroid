@@ -1168,4 +1168,10 @@
   <data name="ShizukuDescription" xml:space="preserve">
     <value>Enable one-click accessibility toggle</value>
   </data>
+  <data name="AccessibilityDescription" xml:space="preserve">
+    <value>Required for text expansion functionality</value>
+  </data>
+  <data name="ShizukuOptimization" xml:space="preserve">
+    <value>Shizuku Optimization</value>
+  </data>
 </root>

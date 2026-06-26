@@ -80,69 +80,52 @@
     <MudText Typo="Typo.h6" Class="mb-2 mt-4" Style="opacity: 0.7;">@LocalizationService.GetString("AccessibilityService")</MudText>
     <MudPaper Elevation="0" Class="rounded-lg overflow-hidden">
         <MudList DisablePadding="true">
+            <!-- Accessibility Service Toggle -->
             <MudListItem Class="px-4 py-3">
-                <MudStack Spacing="3" Class="w-100">
-                    <!-- Status -->
-                    <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
-                        <MudStack Row="true" Align="Align.Center" Spacing="3">
-                            <MudIcon Icon="@Icons.Material.Filled.AccessibilityNew" Size="Size.Medium" Color="Color.Primary" />
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="3">
+                        <MudIcon Icon="@Icons.Material.Filled.AccessibilityNew" Size="Size.Medium" Color="Color.Primary" />
+                        <MudStack Spacing="0">
                             <MudText Typo="Typo.body1" Class="font-weight-medium">@LocalizationService.GetString("AccessibilityService")</MudText>
+                            <MudText Typo="Typo.caption" Style="opacity: 0.6;">@LocalizationService.GetString("AccessibilityDescription")</MudText>
                         </MudStack>
-                        @if (_accessibilityEnabled)
-                        {
-                            <MudChip Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">@LocalizationService.GetString("AccessibilityStatusEnabled")</MudChip>
-                        }
-                        else
-                        {
-                            <MudChip Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled">@LocalizationService.GetString("AccessibilityNotEnabled")</MudChip>
-                        }
                     </MudStack>
-
-                    <!-- Shizuku Toggle -->
-                    @if (_shizukuAvailable)
-                    {
-                        <MudDivider Class="my-2" />
-                        <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
-                            <MudStack Row="true" Align="Align.Center" Spacing="3">
-                                <MudIcon Icon="@Icons.Material.Filled.Android" Size="Size.Medium" Color="Color.Secondary" />
-                                <MudStack Spacing="0">
-                                    <MudText Typo="Typo.body1" Class="font-weight-medium">Shizuku</MudText>
-                                    <MudText Typo="Typo.caption" Style="opacity: 0.6;">@LocalizationService.GetString("ShizukuDescription")</MudText>
-                                </MudStack>
-                            </MudStack>
-                            <MudSwitch T="bool" @bind-Value="@_useShizuku" @bind-Value:after="OnUseShizukuChanged" Color="Color.Secondary" />
-                        </MudStack>
-                    }
-
-                    <!-- Action Button -->
-                    <MudDivider Class="my-2" />
-                    @if (!_accessibilityEnabled)
-                    {
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EnableAccessibility" Disabled="@_enabling"
-                                   StartIcon="@Icons.Material.Filled.PowerSettingsNew" FullWidth="true" Class="py-3">
-                            @if (_enabling) { @LocalizationService.GetString("Enabling") } else { @LocalizationService.GetString("OneClickEnable") }
-                        </MudButton>
-
-                        @if (!_shizukuAvailable && !_shizukuHintDismissed)
-                        {
-                            <MudAlert Severity="Severity.Info" Class="mt-2" Dense="true" Elevation="0" ShowDismissIcon="true" Dismissed="@(_shizukuHintDismissed)"
-                                      DismissedChanged="@(EventCallback.Factory.Create<bool>(this, v => { _shizukuHintDismissed = v; Microsoft.Maui.Storage.Preferences.Set("shizuku_hint_dismissed", v); StateHasChanged(); }))">
-                                <MudText Typo="Typo.body2">@LocalizationService.GetString("ShizukuHint")</MudText>
-                                <MudButton Variant="Variant.Text" Color="Color.Info" Size="Size.Small" OnClick="OpenShizukuWebsite" Class="pa-0">
-                                    @LocalizationService.GetString("LearnMore")
-                                </MudButton>
-                            </MudAlert>
-                        }
-                    }
-                    else
-                    {
-                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="DisableAccessibility" Disabled="@_enabling"
-                                   StartIcon="@Icons.Material.Filled.PowerOff" FullWidth="true" Class="py-3">
-                            @if (_enabling) { @LocalizationService.GetString("Disabling") } else { @LocalizationService.GetString("Disable") }
-                        </MudButton>
-                    }
+                    <MudSwitch T="bool" @bind-Checked="@_accessibilityEnabled" @bind-Checked:after="OnAccessibilityToggled" Color="Color.Primary" Disabled="@_enabling" />
                 </MudStack>
             </MudListItem>
+
+            <!-- Shizuku Toggle -->
+            @if (_shizukuAvailable)
+            {
+                <MudDivider />
+                <MudListItem Class="px-4 py-3">
+                    <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                        <MudStack Row="true" Align="Align.Center" Spacing="3">
+                            <MudIcon Icon="@Icons.Material.Filled.Android" Size="Size.Medium" Color="Color.Secondary" />
+                            <MudStack Spacing="0">
+                                <MudText Typo="Typo.body1" Class="font-weight-medium">@LocalizationService.GetString("ShizukuOptimization")</MudText>
+                                <MudText Typo="Typo.caption" Style="opacity: 0.6;">@LocalizationService.GetString("ShizukuDescription")</MudText>
+                            </MudStack>
+                        </MudStack>
+                        <MudSwitch T="bool" @bind-Value="@_useShizuku" @bind-Value:after="OnUseShizukuChanged" Color="Color.Secondary" />
+                    </MudStack>
+                </MudListItem>
+            }
+
+            <!-- Shizuku Hint -->
+            @if (!_shizukuAvailable && !_shizukuHintDismissed)
+            {
+                <MudDivider />
+                <MudListItem Class="px-4 py-3">
+                    <MudAlert Severity="Severity.Info" Dense="true" Elevation="0" ShowDismissIcon="true" Dismissed="@(_shizukuHintDismissed)"
+                              DismissedChanged="@(EventCallback.Factory.Create<bool>(this, v => { _shizukuHintDismissed = v; Microsoft.Maui.Storage.Preferences.Set("shizuku_hint_dismissed", v); StateHasChanged(); }))">
+                        <MudText Typo="Typo.body2">@LocalizationService.GetString("ShizukuHint")</MudText>
+                        <MudButton Variant="Variant.Text" Color="Color.Info" Size="Size.Small" OnClick="OpenShizukuWebsite" Class="pa-0">
+                            @LocalizationService.GetString("LearnMore")
+                        </MudButton>
+                    </MudAlert>
+                </MudListItem>
+            }
         </MudList>
     </MudPaper>
 
@@ -241,87 +224,92 @@
         StateHasChanged();
     }
 
-    private async Task EnableAccessibility()
+    private async Task OnAccessibilityToggled()
     {
         _enabling = true;
         StateHasChanged();
         try
         {
-            // If Shizuku is available, try to use it first
-            if (_shizukuAvailable)
+            if (_accessibilityEnabled)
             {
-                // Try to grant Shizuku authorization if not authorized
-                if (!AcService.IsShizukuAuthorized())
+                // Enable accessibility
+                // If Shizuku is available and enabled, try to use it first
+                if (_shizukuAvailable && _useShizuku)
                 {
-                    await AcService.RequestShizukuAuthorization();
-                    // Wait a moment for permission result
-                    await Task.Delay(500);
-                    // Re-check authorization status
+                    // Try to grant Shizuku authorization if not authorized
                     if (!AcService.IsShizukuAuthorized())
                     {
-                        Snackbar.Add(LocalizationService.GetString("ShizukuAuthNeeded"), Severity.Info);
-                        AcService.OpenSettings();
+                        await AcService.RequestShizukuAuthorization();
+                        // Wait a moment for permission result
+                        await Task.Delay(500);
+                        // Re-check authorization status
+                        if (!AcService.IsShizukuAuthorized())
+                        {
+                            Snackbar.Add(LocalizationService.GetString("ShizukuAuthNeeded"), Severity.Info);
+                            AcService.OpenSettings();
+                            _accessibilityEnabled = false;
+                            StateHasChanged();
+                            return;
+                        }
+                    }
+
+                    // Try to enable accessibility via Shizuku
+                    var enabled = await AcService.TryEnableAccessibility();
+                    if (!enabled)
+                    {
+                        Snackbar.Add("Failed to enable accessibility via Shizuku", Severity.Warning);
+                        _accessibilityEnabled = false;
+                        StateHasChanged();
                         return;
                     }
-                }
-
-                // Try to enable accessibility via Shizuku
-                var enabled = await AcService.TryEnableAccessibility();
-                if (enabled)
-                {
-                    _accessibilityEnabled = true;
-                    Snackbar.Add(LocalizationService.GetString("AccessibilityEnabled"), Severity.Success);
-                    return;
+                    else
+                    {
+                        Snackbar.Add(LocalizationService.GetString("AccessibilityEnabled"), Severity.Success);
+                    }
                 }
                 else
                 {
-                    Snackbar.Add("Failed to enable accessibility via Shizuku", Severity.Warning);
-                }
-            }
-
-            // Fallback: open system settings
-            AcService.OpenSettings();
-        }
-        catch (Exception e)
-        {
-            Snackbar.Add(e.Message, Severity.Error);
-        }
-        finally
-        {
-            _enabling = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task DisableAccessibility()
-    {
-        _enabling = true;
-        StateHasChanged();
-        try
-        {
-            // Check if Shizuku is available and enabled
-            if (_shizukuAvailable && _useShizuku)
-            {
-                // Try to disable accessibility via Shizuku
-                var disabled = await AcService.TryDisableAccessibility();
-                if (disabled)
-                {
+                    // Fallback: open system settings
+                    AcService.OpenSettings();
                     _accessibilityEnabled = false;
-                    Snackbar.Add(LocalizationService.GetString("AccessibilityDisabled"), Severity.Success);
+                    StateHasChanged();
                     return;
+                }
+            }
+            else
+            {
+                // Disable accessibility
+                // If Shizuku is available and enabled, try to use it first
+                if (_shizukuAvailable && _useShizuku)
+                {
+                    var disabled = await AcService.TryDisableAccessibility();
+                    if (!disabled)
+                    {
+                        Snackbar.Add("Failed to disable accessibility via Shizuku", Severity.Warning);
+                        _accessibilityEnabled = true;
+                        StateHasChanged();
+                        return;
+                    }
+                    else
+                    {
+                        Snackbar.Add(LocalizationService.GetString("AccessibilityDisabled"), Severity.Success);
+                    }
                 }
                 else
                 {
-                    Snackbar.Add("Failed to disable accessibility via Shizuku", Severity.Warning);
+                    // Fallback: open system settings
+                    AcService.OpenSettings();
+                    _accessibilityEnabled = true;
+                    StateHasChanged();
+                    return;
                 }
             }
-
-            // Fallback: open system settings
-            AcService.OpenSettings();
         }
         catch (Exception e)
         {
             Snackbar.Add(e.Message, Severity.Error);
+            _accessibilityEnabled = !_accessibilityEnabled;
+            StateHasChanged();
         }
         finally
         {

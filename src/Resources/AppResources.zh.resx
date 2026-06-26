@@ -1168,4 +1168,10 @@
   <data name="ShizukuDescription" xml:space="preserve">
     <value>开启后可实现应用内一键切换无障碍</value>
   </data>
+  <data name="AccessibilityDescription" xml:space="preserve">
+    <value>文本扩展功能必需</value>
+  </data>
+  <data name="ShizukuOptimization" xml:space="preserve">
+    <value>Shizuku 优化</value>
+  </data>
 </root>
