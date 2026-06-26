@@ -15,30 +15,36 @@
             <MudText Typo="Typo.caption" Class="mb-1" Style="opacity: 0.6; font-weight: 500;">@LocalizationService.GetString("Appearance")</MudText>
         </MudListItem>
         <MudListItem Class="px-4 py-3">
-            <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
-                <MudStack Row="true" Align="Align.Center" Spacing="3">
+            <MudStack Spacing="2" Style="width: 100%;">
+                <MudStack Row="true" Align="Align.Center" Spacing="2">
                     <MudIcon Icon="@Icons.Material.Filled.Palette" Size="Size.Small" Color="Color.Primary" />
                     <MudText Typo="Typo.body2">@LocalizationService.GetString("Theme")</MudText>
                 </MudStack>
-                <MudToggleGroup Value="_themeValue" ValueChanged="@((string v) => OnThemeChanged(v))" Color="Color.Primary" Dense="true" Class="toggle-group-compact">
-                    <MudToggleItem Value="@("light")" Icon="@Icons.Material.Filled.WbSunny" />
-                    <MudToggleItem Value="@("dark")" Icon="@Icons.Material.Filled.NightsStay" />
-                    <MudToggleItem Value="@("auto")" Icon="@Icons.Material.Filled.BrightnessAuto" />
-                </MudToggleGroup>
+                <MudRadioGroup T="string" Value="_themeValue" ValueChanged="@((string v) => OnThemeChanged(v))" Class="ml-4">
+                    <MudRadioItem Value="@("light")" Label="@LocalizationService.GetString("ThemeLight")">
+                        <MudIcon Icon="@Icons.Material.Filled.WbSunny" Size="Size.Small" Class="mr-2" />
+                    </MudRadioItem>
+                    <MudRadioItem Value="@("dark")" Label="@LocalizationService.GetString("ThemeDark")">
+                        <MudIcon Icon="@Icons.Material.Filled.NightsStay" Size="Size.Small" Class="mr-2" />
+                    </MudRadioItem>
+                    <MudRadioItem Value="@("auto")" Label="@LocalizationService.GetString("ThemeAuto")">
+                        <MudIcon Icon="@Icons.Material.Filled.BrightnessAuto" Size="Size.Small" Class="mr-2" />
+                    </MudRadioItem>
+                </MudRadioGroup>
             </MudStack>
         </MudListItem>
         <MudListItem Class="px-4 py-3">
-            <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
-                <MudStack Row="true" Align="Align.Center" Spacing="3">
+            <MudStack Spacing="2" Style="width: 100%;">
+                <MudStack Row="true" Align="Align.Center" Spacing="2">
                     <MudIcon Icon="@Icons.Material.Filled.Language" Size="Size.Small" Color="Color.Primary" />
                     <MudText Typo="Typo.body2">@LocalizationService.GetString("Language")</MudText>
                 </MudStack>
-                <MudSelect T="string" Value="@_currentLang" ValueChanged="ChangeLanguage" Variant="Variant.Outlined" Dense="true" Style="min-width: 100px;" Class="select-compact">
+                <MudRadioGroup T="string" Value="_currentLang" ValueChanged="ChangeLanguage" Class="ml-4">
                     @foreach (var lang in LocalizationService.GetAvailableLanguages())
                     {
-                        <MudSelectItem T="string" Value="@lang.Code">@lang.NativeName</MudSelectItem>
+                        <MudRadioItem Value="@lang.Code" Label="@lang.NativeName" />
                     }
-                </MudSelect>
+                </MudRadioGroup>
             </MudStack>
         </MudListItem>
 
@@ -145,18 +151,6 @@
 <style>
     .settings-container {
         background-color: var(--mud-palette-surface);
-    }
-    .toggle-group-compact .mud-toggle-item {
-        padding: 4px;
-        min-width: 32px;
-        min-height: 32px;
-    }
-    .select-compact .mud-select-input {
-        font-size: 0.875rem;
-        padding: 4px 8px;
-    }
-    .alert-compact {
-        background-color: rgba(var(--mud-palette-info-rgb), 0.08);
     }
 </style>
 
