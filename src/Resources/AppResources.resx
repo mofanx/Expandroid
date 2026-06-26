@@ -1180,7 +1180,4 @@
   <data name="ThemeDark" xml:space="preserve">
     <value>Dark</value>
   </data>
-  <data name="ThemeAuto" xml:space="preserve">
-    <value>Follow System</value>
-  </data>
 </root>
