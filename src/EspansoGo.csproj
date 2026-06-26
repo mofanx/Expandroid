@@ -64,9 +64,13 @@
     <PackageReference Include="Xamarin.AndroidX.Work.Runtime" Version="2.9.0.2" />
     <PackageReference Include="Xamarin.AndroidX.DocumentFile" Version="1.0.1.23" />
     <PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.2.0.9" ExcludeAssets="all" PrivateAssets="all" />
+    <PackageReference Include="Xamarin.AndroidX.Annotation" Version="1.7.0.4" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.Contains('android'))">
     <!-- SZ-3: Shizuku API + Provider AAR (Bind=false, accessed via JNI reflection) -->
+    <!-- Transitive deps must be explicitly listed for AndroidMavenLibrary -->
+    <AndroidMavenLibrary Include="dev.rikka.shizuku:shared" Version="13.1.5" Bind="false" />
+    <AndroidMavenLibrary Include="dev.rikka.shizuku:aidl" Version="13.1.5" Bind="false" />
     <AndroidMavenLibrary Include="dev.rikka.shizuku:api" Version="13.1.5" Bind="false" />
     <AndroidMavenLibrary Include="dev.rikka.shizuku:provider" Version="13.1.5" Bind="false" />
   </ItemGroup>
