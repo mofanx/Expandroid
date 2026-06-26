@@ -89,6 +89,17 @@
                 </MudStack>
             </MudStack>
 
+            @if (_shizukuAvailable)
+            {
+                <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
+                    <MudStack Row="true" Align="Align.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Android" Color="Color.Secondary" />
+                        <MudText Typo="Typo.body2">Shizuku</MudText>
+                    </MudStack>
+                    <MudSwitch T="bool" @bind-Checked="@_useShizuku" @bind-Checked:after="OnUseShizukuChanged" Color="Color.Secondary" />
+                </MudStack>
+            }
+
             @if (!_accessibilityEnabled)
             {
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EnableAccessibility" Disabled="@_enabling"
@@ -132,6 +143,7 @@
     private bool _enabling = false;
     private bool _shizukuAvailable = false;
     private bool _shizukuHintDismissed = false;
+    private bool _useShizuku = false;
 
     protected override void OnInitialized()
     {
@@ -140,11 +152,17 @@
         ThemeService.OnThemeChanged += UpdateThemeValue;
         LocalizationService.OnLanguageChanged += OnLanguageChanged;
         _shizukuHintDismissed = Microsoft.Maui.Storage.Preferences.Get("shizuku_hint_dismissed", false);
+        _useShizuku = Microsoft.Maui.Storage.Preferences.Get("use_shizuku", false);
         _ = CheckAccessibilityStatusAsync();
         WeakReferenceMessenger.Default.Register<AppResumedMessage>(this, (r, m) =>
         {
             InvokeAsync(() => CheckAccessibilityStatusAsync());
         });
+    }
+
+    private void OnUseShizukuChanged()
+    {
+        Microsoft.Maui.Storage.Preferences.Set("use_shizuku", _useShizuku);
     }
 
     private void OnLanguageChanged()
@@ -203,17 +221,20 @@
         StateHasChanged();
         try
         {
-            if (_shizukuAvailable)
+            if (_shizukuAvailable && _useShizuku)
             {
                 if (!AcService.IsShizukuAuthorized())
                 {
                     await AcService.RequestShizukuAuthorization();
-                    // Permission result is async (system dialog). User may not have granted yet.
-                    // Fallback to system settings for now; once Shizuku bindUserService is implemented,
-                    // we can retry TryEnableAccessibility after a short delay.
-                    Snackbar.Add(LocalizationService.GetString("ShizukuAuthNeeded"), Severity.Info);
-                    AcService.OpenSettings();
-                    return;
+                    // Wait a moment for permission result
+                    await Task.Delay(500);
+                    // Re-check authorization status
+                    if (!AcService.IsShizukuAuthorized())
+                    {
+                        Snackbar.Add(LocalizationService.GetString("ShizukuAuthNeeded"), Severity.Info);
+                        AcService.OpenSettings();
+                        return;
+                    }
                 }
                 var enabled = await AcService.TryEnableAccessibility();
                 if (enabled)
@@ -221,6 +242,10 @@
                     _accessibilityEnabled = true;
                     Snackbar.Add(LocalizationService.GetString("AccessibilityEnabled"), Severity.Success);
                     return;
+                }
+                else
+                {
+                    Snackbar.Add("Shizuku enable failed, falling back to system settings", Severity.Warning);
                 }
             }
             // Fallback: open system settings
@@ -235,6 +260,13 @@
             _enabling = false;
             StateHasChanged();
         }
+    }
+
+    private void OnUseShizukuChanged(bool value)
+    {
+        _useShizuku = value;
+        Microsoft.Maui.Storage.Preferences.Set("use_shizuku", value);
+        StateHasChanged();
     }
 
     private async Task OpenShizukuWebsite()
