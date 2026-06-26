@@ -6,7 +6,7 @@
 
 @if (SyncManager.GetConfig().Method != SyncMethod.None)
 {
-    <MudAlert Severity="@GetSeverity()" Dense="true" Elevation="0" Class="mb-2 alert-compact" Style="cursor: pointer;" OnClick="OnClick">
+    <MudAlert Severity="@GetSeverity()" Dense="true" Elevation="0" Class="mb-2" Style="cursor: pointer;" OnClick="OnClick">
         <MudStack Row="true" Align="Align.Center" Spacing="2" Justify="@Justify.SpaceBetween" Style="width: 100%;">
             <MudStack Row="true" Align="Align.Center" Spacing="2" Style="overflow: hidden;">
                 <MudIcon Icon="@GetStatusIcon()" Size="Size.Small" />
@@ -99,8 +99,3 @@
     }
 }
 
-<style>
-    .alert-compact {
-        background-color: rgba(var(--mud-palette-info-rgb), 0.08);
-    }
-</style>

@@ -6,6 +6,7 @@
 @using System.Linq
 @inject ILocalizationService LocalizationService
 @inject EspansoGo.Services.IDialogService DialogService
+@inject MudBlazor.IDialogService MudDialogService
 @inject ISnackbar Snackbar
 @inject SyncManager SyncManager
 @inject YamlWorkspace YamlWorkspace
@@ -21,6 +22,8 @@
                     @LocalizationService.GetString("NewFile")
                 </MudButton>
             </MudStack>
+
+            <MudDivider Class="my-2" />
 
             @if (_loading)
             {
@@ -73,7 +76,7 @@ else
         }
         else
         {
-            <MudTextField @bind-Value="_searchQuery" Label="@LocalizationService.GetString("Search")" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" Class="px-2" />
+            <MudTextField @bind-Value="_searchQuery" Label="@LocalizationService.GetString("Search")" Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" DebounceInterval="300" Class="px-2" />
 
             @if (_filteredMatches.Count == 0)
             {
@@ -208,15 +211,18 @@ else
 
     private async Task OpenCreateDialog()
     {
-        var newName = await Application.Current.MainPage.DisplayPromptAsync(
-            LocalizationService.GetString("NewFile"),
-            LocalizationService.GetString("FileNameRequired"),
-            LocalizationService.GetString("Create"),
-            LocalizationService.GetString("Cancel"));
+        var parameters = new DialogParameters
+        {
+            { "ShowTemplate", true },
+            { "SubmitLabel", LocalizationService.GetString("Create") },
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = MudDialogService.Show<FileNameDialog>(LocalizationService.GetString("NewFile"), parameters, options);
+        var result = await dialog.Result;
+        if (result.Canceled || result.Data is not (string newName, string template)) return;
 
         if (string.IsNullOrWhiteSpace(newName)) return;
 
-        newName = newName.Trim();
         if (!newName.EndsWith(".yml") && !newName.EndsWith(".yaml"))
         {
             Snackbar.Add(LocalizationService.GetString("InvalidFileName"), Severity.Error);
@@ -232,17 +238,7 @@ else
 
         Preferences.Set("last_source_file", newName);
 
-        var template = await Application.Current.MainPage.DisplayActionSheet(
-            LocalizationService.GetString("SelectTemplate"),
-            LocalizationService.GetString("Cancel"),
-            null,
-            LocalizationService.GetString("TemplateBlank"),
-            LocalizationService.GetString("TemplateWork"),
-            LocalizationService.GetString("TemplatePersonal"),
-            LocalizationService.GetString("TemplateCode"),
-            LocalizationService.GetString("TemplateEmoji"));
-
-        if (template == LocalizationService.GetString("Cancel") || string.IsNullOrEmpty(template))
+        if (template == LocalizationService.GetString("TemplateBlank") || string.IsNullOrEmpty(template))
         {
             UpdateView();
             StateHasChanged();
@@ -314,16 +310,19 @@ else
         var currentName = FileName == "__uncategorized__" ? null : FileName;
         if (currentName == null) return;
 
-        var newName = await Application.Current.MainPage.DisplayPromptAsync(
-            LocalizationService.GetString("RenameFile"),
-            LocalizationService.GetString("FileNameRequired"),
-            LocalizationService.GetString("Rename"),
-            LocalizationService.GetString("Cancel"),
-            initialValue: currentName);
+        var parameters = new DialogParameters
+        {
+            { "ShowTemplate", false },
+            { "InitialValue", currentName },
+            { "SubmitLabel", LocalizationService.GetString("Rename") },
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = MudDialogService.Show<FileNameDialog>(LocalizationService.GetString("RenameFile"), parameters, options);
+        var result = await dialog.Result;
+        if (result.Canceled || result.Data is not (string newName, _)) return;
 
         if (string.IsNullOrWhiteSpace(newName)) return;
 
-        newName = newName.Trim();
         if (!newName.EndsWith(".yml") && !newName.EndsWith(".yaml"))
         {
             Snackbar.Add(LocalizationService.GetString("InvalidFileName"), Severity.Error);
@@ -452,9 +451,3 @@ else
 
     public void Dispose() { }
 }
-
-<style>
-    .page-container {
-        background-color: var(--mud-palette-surface);
-    }
-</style>

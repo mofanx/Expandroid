@@ -1,0 +1,54 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudTextField @bind-Value="_fileName"
+                          Label="@LocalizationService.GetString("FileNameRequired")"
+                          Variant="Variant.Outlined"
+                          Immediate="true"
+                          AutoFocus="true" />
+            @if (ShowTemplate)
+            {
+                <MudSelect T="string" @bind-Value="_selectedTemplate"
+                           Label="@LocalizationService.GetString("SelectTemplate")"
+                           Variant="Variant.Outlined" Dense="true">
+                    <MudSelectItem T="string" Value="@LocalizationService.GetString("TemplateBlank")">@LocalizationService.GetString("TemplateBlank")</MudSelectItem>
+                    <MudSelectItem T="string" Value="@LocalizationService.GetString("TemplateWork")">@LocalizationService.GetString("TemplateWork")</MudSelectItem>
+                    <MudSelectItem T="string" Value="@LocalizationService.GetString("TemplatePersonal")">@LocalizationService.GetString("TemplatePersonal")</MudSelectItem>
+                    <MudSelectItem T="string" Value="@LocalizationService.GetString("TemplateCode")">@LocalizationService.GetString("TemplateCode")</MudSelectItem>
+                    <MudSelectItem T="string" Value="@LocalizationService.GetString("TemplateEmoji")">@LocalizationService.GetString("TemplateEmoji")</MudSelectItem>
+                </MudSelect>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Default">@LocalizationService.GetString("Cancel")</MudButton>
+        <MudButton OnClick="Submit" Color="Color.Primary" Variant="Variant.Filled">@SubmitLabel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Inject] ILocalizationService LocalizationService { get; set; }
+
+    [Parameter] public bool ShowTemplate { get; set; } = true;
+    [Parameter] public string InitialValue { get; set; } = "";
+    [Parameter] public string SubmitLabel { get; set; } = "";
+
+    private string _fileName = "";
+    private string _selectedTemplate = "";
+
+    protected override void OnInitialized()
+    {
+        _fileName = InitialValue;
+        _selectedTemplate = LocalizationService.GetString("TemplateBlank");
+        if (string.IsNullOrEmpty(SubmitLabel))
+            SubmitLabel = LocalizationService.GetString("Create");
+    }
+
+    private void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok((_fileName.Trim(), _selectedTemplate)));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

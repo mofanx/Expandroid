@@ -6,7 +6,7 @@
 
 .status-bar-safe-area {
     height: env(safe-area-inset-top);
-    background: #6366f1;
+    background: var(--mud-palette-appbar-background, #6366f1);
     position: fixed;
     top: 0;
     left: 0;
@@ -129,6 +129,14 @@ h1:focus {
 
 .mud-popover-cascading {
     z-index: 1200 !important;
+}
+
+.page-container {
+    background-color: var(--mud-palette-surface);
+}
+
+.settings-container {
+    background-color: var(--mud-palette-surface);
 }
 
 @media (prefers-color-scheme: dark) {

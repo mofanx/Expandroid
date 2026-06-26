@@ -21,7 +21,7 @@
                 </MudNavLink>
                 <MudNavLink Icon="@Icons.Material.Filled.Extension" Title="@LocalizationService.GetString("PackageStore")"
                             Href="/packages" Active="@(_currentRoute == "/packages")" Class="bottom-nav-item">
-                    <MudText Typo="Typo.caption">@LocalizationService.GetString("PackageStore")</MudText>
+                    <MudText Typo="Typo.caption">@LocalizationService.GetString("Packages")</MudText>
                 </MudNavLink>
             </MudNavMenu>
         </MudStack>
@@ -75,14 +75,19 @@
         padding: 0 !important;
         width: 24px;
         height: 24px;
+        flex-shrink: 0;
     }
     .bottom-nav-menu .mud-nav-link .mud-typography {
-        font-size: 0.68rem;
-        line-height: 1;
+        font-size: 0.7rem;
+        line-height: 1.2;
         text-align: center;
         margin: 0;
         padding: 0;
         width: 100%;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .bottom-nav-menu .mud-nav-link .mud-ripple {
         border-radius: 0;

@@ -15,36 +15,30 @@
             <MudText Typo="Typo.caption" Class="mb-1" Style="opacity: 0.6; font-weight: 500;">@LocalizationService.GetString("Appearance")</MudText>
         </MudListItem>
         <MudListItem Class="px-4 py-3">
-            <MudStack Spacing="2" Style="width: 100%;">
+            <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
                 <MudStack Row="true" Align="Align.Center" Spacing="2">
                     <MudIcon Icon="@Icons.Material.Filled.Palette" Size="Size.Small" Color="Color.Primary" />
                     <MudText Typo="Typo.body2">@LocalizationService.GetString("Theme")</MudText>
                 </MudStack>
-                <MudRadioGroup T="string" Value="_themeValue" ValueChanged="@((string v) => OnThemeChanged(v))" Class="ml-4">
-                    <MudRadio Value="@("light")" Label="@LocalizationService.GetString("ThemeLight")">
-                        <MudIcon Icon="@Icons.Material.Filled.WbSunny" Size="Size.Small" Class="mr-2" />
-                    </MudRadio>
-                    <MudRadio Value="@("dark")" Label="@LocalizationService.GetString("ThemeDark")">
-                        <MudIcon Icon="@Icons.Material.Filled.NightsStay" Size="Size.Small" Class="mr-2" />
-                    </MudRadio>
-                    <MudRadio Value="@("auto")" Label="@LocalizationService.GetString("ThemeAuto")">
-                        <MudIcon Icon="@Icons.Material.Filled.BrightnessAuto" Size="Size.Small" Class="mr-2" />
-                    </MudRadio>
-                </MudRadioGroup>
+                <MudToggleGroup Value="_themeValue" ValueChanged="@((string v) => OnThemeChanged(v))" Color="Color.Primary" Size="Size.Small">
+                    <MudToggleItem Value="@("light")"><MudIcon Icon="@Icons.Material.Filled.WbSunny" /></MudToggleItem>
+                    <MudToggleItem Value="@("dark")"><MudIcon Icon="@Icons.Material.Filled.NightsStay" /></MudToggleItem>
+                    <MudToggleItem Value="@("auto")"><MudIcon Icon="@Icons.Material.Filled.BrightnessAuto" /></MudToggleItem>
+                </MudToggleGroup>
             </MudStack>
         </MudListItem>
         <MudListItem Class="px-4 py-3">
-            <MudStack Spacing="2" Style="width: 100%;">
+            <MudStack Row="true" Align="Align.Center" Justify="@Justify.SpaceBetween" Style="width: 100%;">
                 <MudStack Row="true" Align="Align.Center" Spacing="2">
                     <MudIcon Icon="@Icons.Material.Filled.Language" Size="Size.Small" Color="Color.Primary" />
                     <MudText Typo="Typo.body2">@LocalizationService.GetString("Language")</MudText>
                 </MudStack>
-                <MudRadioGroup T="string" Value="_currentLang" ValueChanged="ChangeLanguage" Class="ml-4">
+                <MudSelect T="string" Value="@_currentLang" ValueChanged="ChangeLanguage" Variant="Variant.Outlined" Dense="true" Style="min-width: 120px;">
                     @foreach (var lang in LocalizationService.GetAvailableLanguages())
                     {
-                        <MudRadio Value="@lang.Code" Label="@lang.NativeName" />
+                        <MudSelectItem T="string" Value="@lang.Code">@lang.NativeName</MudSelectItem>
                     }
-                </MudRadioGroup>
+                </MudSelect>
             </MudStack>
         </MudListItem>
 
@@ -121,7 +115,7 @@
         @if (!_shizukuAvailable && !_shizukuHintDismissed)
         {
             <MudListItem Class="px-4 py-3">
-                <MudAlert Severity="Severity.Info" Dense="true" Elevation="0" Class="alert-compact" ShowDismissIcon="true" Dismissed="@(_shizukuHintDismissed)"
+                <MudAlert Severity="Severity.Info" Dense="true" Elevation="0" ShowDismissIcon="true" Dismissed="@(_shizukuHintDismissed)"
                           DismissedChanged="@(EventCallback.Factory.Create<bool>(this, v => { _shizukuHintDismissed = v; Microsoft.Maui.Storage.Preferences.Set("shizuku_hint_dismissed", v); StateHasChanged(); }))">
                     <MudText Typo="Typo.caption">@LocalizationService.GetString("ShizukuHint")</MudText>
                     <MudButton Variant="Variant.Text" Color="Color.Info" Size="Size.Small" OnClick="OpenShizukuWebsite" Class="pa-0">
@@ -147,15 +141,6 @@
         </MudListItem>
     </MudList>
 </MudPaper>
-
-<style>
-    .settings-container {
-        background-color: var(--mud-palette-surface);
-    }
-    .alert-compact {
-        background-color: rgba(var(--mud-palette-info-rgb), 0.08);
-    }
-</style>
 
 @code {
     private string _themeValue = "auto";
@@ -269,7 +254,7 @@
                     var enabled = await AcService.TryEnableAccessibility();
                     if (!enabled)
                     {
-                        Snackbar.Add("Failed to enable accessibility via Shizuku", Severity.Warning);
+                        Snackbar.Add(LocalizationService.GetString("ShizukuEnableFailed"), Severity.Warning);
                         _accessibilityEnabled = false;
                         StateHasChanged();
                         return;
@@ -297,7 +282,7 @@
                     var disabled = await AcService.TryDisableAccessibility();
                     if (!disabled)
                     {
-                        Snackbar.Add("Failed to disable accessibility via Shizuku", Severity.Warning);
+                        Snackbar.Add(LocalizationService.GetString("ShizukuDisableFailed"), Severity.Warning);
                         _accessibilityEnabled = true;
                         StateHasChanged();
                         return;

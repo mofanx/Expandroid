@@ -36,7 +36,7 @@ else
         <MudStack Spacing="2">
         @if (!canTextExpand)
         {
-            <MudAlert Severity="Severity.Warning" Dense="true" Elevation="0" Class="alert-compact">
+            <MudAlert Severity="Severity.Warning" Dense="true" Elevation="0">
                 <MudStack Row="true" Align="Align.Center" Spacing="2" Justify="@Justify.SpaceBetween" Style="width: 100%;">
                     <MudText Typo="Typo.body2">@localizationService.GetString("AccessibilityNotEnabledHint")</MudText>
                     <MudButton Color="Color.Warning" Variant="Variant.Filled" Size="Size.Small" OnClick="GoToPermission">
@@ -57,6 +57,7 @@ else
                 }
             </MudStack>
             <MudStack Row="true" Spacing="1" Align="Align.Center">
+                <MudIconButton @onclick="ToggleSort" Icon="@(_sortMode == 0 ? Icons.Material.Filled.SortByAlpha : Icons.Material.Filled.Sort)" Color="Color.Default" Variant="Variant.Text" Size="Size.Medium" Title="@localizationService.GetString(_sortMode == 0 ? "SortByTrigger" : "SortByRecent")" />
                 <MudIconButton @onclick="SyncNowAsync" Icon="@Icons.Material.Filled.Sync" Color="Color.Default" Variant="Variant.Text" Size="Size.Medium" Disabled="@_syncing" />
                 <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Default" Variant="Variant.Text" Size="Size.Medium">
                     <MudMenuItem Icon="@Icons.Material.Filled.Upload" OnClick="ImportAsync">@localizationService.GetString("Import")</MudMenuItem>
@@ -121,12 +122,6 @@ else
         bottom: calc(72px + env(safe-area-inset-bottom));
         right: 16px;
         z-index: 10;
-    }
-    .page-container {
-        background-color: var(--mud-palette-surface);
-    }
-    .alert-compact {
-        background-color: rgba(var(--mud-palette-warning-rgb), 0.08);
     }
 </style>
 
@@ -630,6 +625,13 @@ else
         {
             lazyLoadIndex += diff;
         }
+    }
+
+    private void ToggleSort()
+    {
+        _sortMode = _sortMode == 0 ? 1 : 0;
+        AdjustLazyLoad();
+        StateHasChanged();
     }
 
     private void OnLanguageChanged()

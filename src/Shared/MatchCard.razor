@@ -7,11 +7,11 @@
     <MudStack Justify="@Justify.SpaceBetween" Row="true" Align="Align.Center">
         <MudStack Spacing="0" Class="flex-grow-1 me-2" Style="overflow: hidden; min-width: 0;">
             <MudText Color="Color.Primary" Typo="Typo.body2" Class="font-weight-medium" Align="Align.Start" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@Item.Key</MudText>
-            <MudText Typo="Typo.caption" Align="Align.Start" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8;">@Item.Value.Replace</MudText>
+            <MudText Typo="Typo.caption" Align="Align.Start" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.65;">@Item.Value.Replace</MudText>
         </MudStack>
         <MudStack Row="true" Spacing="1">
-            <MudIconButton OnClick="OnEdit" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Variant="Variant.Text" Size="Size.Small" />
-            <MudIconButton OnClick="ConfirmDelete" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Small" />
+            <MudIconButton OnClick="OnEdit" Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Variant="Variant.Text" Size="Size.Medium" />
+            <MudIconButton OnClick="ConfirmDelete" Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text" Size="Size.Medium" />
         </MudStack>
     </MudStack>
     @if (Item.Value.Vars?.Count > 0)

@@ -52,13 +52,13 @@
             }
             @if (SyncManager.LastMergeWarnings?.Count > 0)
             {
-                <MudAlert Severity="Severity.Warning" Dense="true" Elevation="0" Class="alert-compact">
+                <MudAlert Severity="Severity.Warning" Dense="true" Elevation="0">
                     @foreach (var w in SyncManager.LastMergeWarnings) { <div>@w</div> }
                 </MudAlert>
             }
             @if (_lastResult != null)
             {
-                <MudAlert Severity="@(_lastResult.Success ? Severity.Success : Severity.Error)" Dense="true" Elevation="0" Class="alert-compact">
+                <MudAlert Severity="@(_lastResult.Success ? Severity.Success : Severity.Error)" Dense="true" Elevation="0">
                     @if (_lastResult.Success)
                     {
                         <text>@string.Format(localizationService.GetString("SyncedFiles"), _lastResult.FilesSynced) @if (_lastResult.Conflicts > 0) { <text>@string.Format(localizationService.GetString("ConflictsDetected"), _lastResult.Conflicts)</text> }</text>
@@ -71,7 +71,7 @@
             }
             @if (_pushPreview.Count > 0)
             {
-                <MudAlert Severity="Severity.Info" Dense="true" Elevation="0" Class="alert-compact">
+                <MudAlert Severity="Severity.Info" Dense="true" Elevation="0">
                     <MudText Typo="Typo.caption">@localizationService.GetString("PushPreview")</MudText>
                     @foreach (var f in _pushPreview)
                     {
@@ -466,13 +466,7 @@
 }
 
 <style>
-    .page-container {
-        background-color: var(--mud-palette-surface);
-    }
     .summary-section {
         background-color: rgba(var(--mud-palette-action-default-rgb), 0.04);
-    }
-    .alert-compact {
-        background-color: rgba(var(--mud-palette-info-rgb), 0.08);
     }
 </style>

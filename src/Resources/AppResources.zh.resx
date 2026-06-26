@@ -1174,4 +1174,25 @@
   <data name="ShizukuOptimization" xml:space="preserve">
     <value>Shizuku 优化</value>
   </data>
+  <data name="ShizukuEnableFailed" xml:space="preserve">
+    <value>通过 Shizuku 启用无障碍服务失败</value>
+  </data>
+  <data name="ShizukuDisableFailed" xml:space="preserve">
+    <value>通过 Shizuku 禁用无障碍服务失败</value>
+  </data>
+  <data name="Packages" xml:space="preserve">
+    <value>包</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>创建</value>
+  </data>
+  <data name="Rename" xml:space="preserve">
+    <value>重命名</value>
+  </data>
+  <data name="Saved" xml:space="preserve">
+    <value>已保存</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>搜索</value>
+  </data>
 </root>
