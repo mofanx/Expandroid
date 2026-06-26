@@ -64,7 +64,7 @@
     <PackageReference Include="Xamarin.AndroidX.Work.Runtime" Version="2.9.0.2" />
     <PackageReference Include="Xamarin.AndroidX.DocumentFile" Version="1.0.1.23" />
     <PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.2.0.9" ExcludeAssets="all" PrivateAssets="all" />
-    <PackageReference Include="Xamarin.AndroidX.Annotation" Version="1.7.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Annotation" Version="1.7.1.2" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.Contains('android'))">
     <!-- SZ-3: Shizuku API + Provider AAR (Bind=false, accessed via JNI reflection) -->
