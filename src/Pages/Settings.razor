@@ -96,7 +96,7 @@
                         <MudText Typo="Typo.caption" Style="opacity: 0.5; font-size: 0.65rem;">@LocalizationService.GetString("AccessibilityDescription")</MudText>
                     </MudStack>
                 </MudStack>
-                <MudSwitch T="bool" @bind-Checked="@_accessibilityEnabled" @bind-Checked:after="OnAccessibilityToggled" Color="Color.Primary" Disabled="@_enabling" Dense="true" />
+                <MudSwitch T="bool" @bind-Value="@_accessibilityEnabled" @bind-Value:after="OnAccessibilityToggled" Color="Color.Primary" Disabled="@_enabling" Dense="true" />
             </MudStack>
         </MudListItem>
 
