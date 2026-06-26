@@ -21,15 +21,15 @@
                     <MudText Typo="Typo.body2">@LocalizationService.GetString("Theme")</MudText>
                 </MudStack>
                 <MudRadioGroup T="string" Value="_themeValue" ValueChanged="@((string v) => OnThemeChanged(v))" Class="ml-4">
-                    <MudRadioItem Value="@("light")" Label="@LocalizationService.GetString("ThemeLight")">
+                    <MudRadio Value="@("light")" Label="@LocalizationService.GetString("ThemeLight")">
                         <MudIcon Icon="@Icons.Material.Filled.WbSunny" Size="Size.Small" Class="mr-2" />
-                    </MudRadioItem>
-                    <MudRadioItem Value="@("dark")" Label="@LocalizationService.GetString("ThemeDark")">
+                    </MudRadio>
+                    <MudRadio Value="@("dark")" Label="@LocalizationService.GetString("ThemeDark")">
                         <MudIcon Icon="@Icons.Material.Filled.NightsStay" Size="Size.Small" Class="mr-2" />
-                    </MudRadioItem>
-                    <MudRadioItem Value="@("auto")" Label="@LocalizationService.GetString("ThemeAuto")">
+                    </MudRadio>
+                    <MudRadio Value="@("auto")" Label="@LocalizationService.GetString("ThemeAuto")">
                         <MudIcon Icon="@Icons.Material.Filled.BrightnessAuto" Size="Size.Small" Class="mr-2" />
-                    </MudRadioItem>
+                    </MudRadio>
                 </MudRadioGroup>
             </MudStack>
         </MudListItem>
